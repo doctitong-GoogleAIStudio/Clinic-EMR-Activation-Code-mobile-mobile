@@ -460,6 +460,124 @@ const PatientProfilePage = () => {
           </Card>
         </TabsContent>
 
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <Card className="bg-white border-slate-100 shadow-sm">
+            <CardHeader>
+              <CardTitle className="font-heading flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#0F766E]" />
+                Medical Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {prescriptions.length === 0 && certificates.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                  <p>No documents saved yet</p>
+                  <p className="text-sm mt-1">Prescriptions and certificates will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Prescriptions */}
+                  {prescriptions.length > 0 && (
+                    <div>
+                      <h3 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                        <Pill className="w-4 h-4 text-[#0F766E]" />
+                        Prescriptions ({prescriptions.length})
+                      </h3>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {prescriptions.map((rx) => (
+                          <div 
+                            key={rx.id}
+                            className="p-4 rounded-xl border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                            data-testid={`doc-rx-${rx.id}`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-medium text-slate-900">
+                                  {format(parseISO(rx.created_at), 'MMMM d, yyyy')}
+                                </p>
+                                <p className="text-sm text-slate-500">
+                                  {rx.medications?.length || 0} medication(s)
+                                </p>
+                                <div className="mt-2 space-y-1">
+                                  {rx.medications?.slice(0, 2).map((med, i) => (
+                                    <p key={i} className="text-xs text-slate-600">
+                                      • {med.name} {med.dosage}
+                                    </p>
+                                  ))}
+                                  {rx.medications?.length > 2 && (
+                                    <p className="text-xs text-slate-400">+{rx.medications.length - 2} more</p>
+                                  )}
+                                </div>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => reprintDocument(rx, 'prescription')}
+                                className="text-[#0F766E] hover:bg-[#0F766E]/10"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Certificates */}
+                  {certificates.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                        <Award className="w-4 h-4 text-[#0F766E]" />
+                        Certificates ({certificates.length})
+                      </h3>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {certificates.map((cert) => (
+                          <div 
+                            key={cert.id}
+                            className="p-4 rounded-xl border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                            data-testid={`doc-cert-${cert.id}`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  {cert.certificate_type === 'medical_certificate' && <Award className="w-4 h-4 text-blue-600" />}
+                                  {cert.certificate_type === 'fit_to_work' && <Briefcase className="w-4 h-4 text-green-600" />}
+                                  {cert.certificate_type === 'referral' && <Send className="w-4 h-4 text-purple-600" />}
+                                  <span className="font-medium text-slate-900">{getCertificateTypeName(cert.certificate_type)}</span>
+                                </div>
+                                <p className="text-sm text-slate-500 mt-1">
+                                  {format(parseISO(cert.created_at), 'MMMM d, yyyy')}
+                                </p>
+                                {cert.certificate_type === 'medical_certificate' && cert.content?.diagnosis && (
+                                  <p className="text-xs text-slate-600 mt-2 line-clamp-1">{cert.content.diagnosis}</p>
+                                )}
+                                {cert.certificate_type === 'referral' && cert.content?.to_specialty && (
+                                  <p className="text-xs text-slate-600 mt-2">To: {cert.content.to_specialty}</p>
+                                )}
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => reprintDocument(cert, 'certificate')}
+                                className="text-[#0F766E] hover:bg-[#0F766E]/10"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Attachments Tab */}
         <TabsContent value="attachments">
           <Card className="bg-white border-slate-100 shadow-sm">
