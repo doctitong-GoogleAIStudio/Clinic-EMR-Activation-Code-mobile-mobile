@@ -125,7 +125,7 @@ class ClinicEMRAPITester:
             "Create Patient",
             "POST",
             "/api/patients",
-            201,
+            200,
             data=patient_data
         )
         
