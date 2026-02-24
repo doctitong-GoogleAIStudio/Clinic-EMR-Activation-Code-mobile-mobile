@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   User, Phone, Mail, MapPin, Calendar, Heart, AlertTriangle, 
   Edit, Save, Plus, FileText, Image, Upload, Trash2, 
-  Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer
+  Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -23,7 +23,7 @@ import { format, parseISO } from 'date-fns';
 const PatientProfilePage = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { isDoctor, user } = useAuth();
+  const { isDoctor, isAdmin, user } = useAuth();
   const fileInputRef = useRef(null);
   const docPrintRef = useRef(null);
   
