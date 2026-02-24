@@ -119,9 +119,13 @@ const VisitDetailPage = () => {
         notes: rxData.notes
       });
       toast.success('Prescription saved');
-      handlePrintRx();
+      // Close dialog first, then print after a short delay
       setShowRx(false);
-      fetchData(); // Refresh to show saved form
+      // Use setTimeout to ensure the print template is rendered
+      setTimeout(() => {
+        handlePrintRx();
+        fetchData(); // Refresh to show saved form
+      }, 300);
     } catch (error) {
       toast.error('Failed to save prescription');
     }
@@ -136,13 +140,17 @@ const VisitDetailPage = () => {
         content: data
       });
       toast.success('Certificate saved');
-      if (type === 'medical_certificate') handlePrintMedCert();
-      else if (type === 'fit_to_work') handlePrintFitToWork();
-      else if (type === 'referral') handlePrintReferral();
+      // Close dialogs first
       setShowMedCert(false);
       setShowFitToWork(false);
       setShowReferral(false);
-      fetchData(); // Refresh to show saved form
+      // Then print after a short delay
+      setTimeout(() => {
+        if (type === 'medical_certificate') handlePrintMedCert();
+        else if (type === 'fit_to_work') handlePrintFitToWork();
+        else if (type === 'referral') handlePrintReferral();
+        fetchData(); // Refresh to show saved form
+      }, 300);
     } catch (error) {
       toast.error('Failed to save certificate');
     }
