@@ -27,6 +27,10 @@ const VisitDetailPage = () => {
   const [patient, setPatient] = useState(null);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+  const [savedPrescriptions, setSavedPrescriptions] = useState([]);
+  const [savedCertificates, setSavedCertificates] = useState([]);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
+  const [selectedCertificate, setSelectedCertificate] = useState(null);
   
   // Print refs
   const prescriptionRef = useRef();
@@ -34,6 +38,8 @@ const VisitDetailPage = () => {
   const fitToWorkRef = useRef();
   const referralRef = useRef();
   const soapRef = useRef();
+  const savedRxRef = useRef();
+  const savedCertRef = useRef();
   
   // Form states
   const [showRx, setShowRx] = useState(false);
@@ -52,12 +58,16 @@ const VisitDetailPage = () => {
 
   const fetchData = async () => {
     try {
-      const [visitRes, settingsRes] = await Promise.all([
+      const [visitRes, settingsRes, rxRes, certRes] = await Promise.all([
         visitAPI.getOne(visitId),
-        settingsAPI.get()
+        settingsAPI.get(),
+        prescriptionAPI.getAll({ visit_id: visitId }),
+        certificateAPI.getAll({ visit_id: visitId })
       ]);
       setVisit(visitRes.data);
       setSettings(settingsRes.data);
+      setSavedPrescriptions(rxRes.data);
+      setSavedCertificates(certRes.data);
       
       const patientRes = await patientAPI.getOne(visitRes.data.patient_id);
       setPatient(patientRes.data);
