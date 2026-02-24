@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { patientAPI, visitAPI, attachmentAPI, appointmentAPI } from '../lib/api';
+import { patientAPI, visitAPI, attachmentAPI, appointmentAPI, prescriptionAPI, certificateAPI, settingsAPI } from '../lib/api';
+import { useReactToPrint } from 'react-to-print';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   User, Phone, Mail, MapPin, Calendar, Heart, AlertTriangle, 
   Edit, Save, Plus, FileText, Image, Upload, Trash2, 
-  Stethoscope, Clock, ArrowLeft, Paperclip, X
+  Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -24,10 +25,15 @@ const PatientProfilePage = () => {
   const navigate = useNavigate();
   const { isDoctor, user } = useAuth();
   const fileInputRef = useRef(null);
+  const docPrintRef = useRef(null);
   
   const [patient, setPatient] = useState(null);
   const [visits, setVisits] = useState([]);
   const [attachments, setAttachments] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({});
@@ -37,6 +43,8 @@ const PatientProfilePage = () => {
   const [showAppointment, setShowAppointment] = useState(false);
   const [appointmentData, setAppointmentData] = useState({ date: '', time: '', reason: '' });
 
+  const handlePrintDoc = useReactToPrint({ contentRef: docPrintRef, documentTitle: 'Document' });
+
   useEffect(() => {
     fetchPatientData();
   }, [patientId]);
@@ -44,10 +52,13 @@ const PatientProfilePage = () => {
   const fetchPatientData = async () => {
     try {
       setLoading(true);
-      const [patientRes, visitsRes, attachmentsRes] = await Promise.all([
+      const [patientRes, visitsRes, attachmentsRes, rxRes, certRes, settingsRes] = await Promise.all([
         patientAPI.getOne(patientId),
         visitAPI.getAll({ patient_id: patientId }),
-        attachmentAPI.getAll({ patient_id: patientId })
+        attachmentAPI.getAll({ patient_id: patientId }),
+        prescriptionAPI.getAll({ patient_id: patientId }),
+        certificateAPI.getAll({ patient_id: patientId }),
+        settingsAPI.get()
       ]);
       setPatient(patientRes.data);
       setEditData(patientRes.data);
