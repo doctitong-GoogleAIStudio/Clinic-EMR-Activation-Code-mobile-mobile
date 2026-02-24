@@ -158,6 +158,16 @@ const VisitDetailPage = () => {
     setTimeout(() => handlePrintSavedCert(), 100);
   };
 
+  const viewPrescription = (rx) => {
+    setSelectedPrescription(rx);
+    setShowViewRx(true);
+  };
+
+  const viewCertificate = (cert) => {
+    setSelectedCertificate(cert);
+    setShowViewCert(true);
+  };
+
   const getCertificateTypeName = (type) => {
     const names = {
       'medical_certificate': 'Medical Certificate',
