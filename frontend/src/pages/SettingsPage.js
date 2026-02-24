@@ -462,6 +462,69 @@ const SettingsPage = () => {
             </Card>
           </TabsContent>
         )}
+
+        {/* About Tab */}
+        <TabsContent value="about">
+          <Card className="bg-white border-slate-100 shadow-sm">
+            <CardHeader className="text-center pb-2">
+              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#0F766E] to-[#115E59] flex items-center justify-center shadow-lg mb-4">
+                <Stethoscope className="w-10 h-10 text-white" />
+              </div>
+              <CardTitle className="font-heading text-2xl">Private Clinic EMR</CardTitle>
+              <CardDescription className="text-base">Electronic Medical Records System</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center py-4">
+                <p className="text-slate-600 max-w-md mx-auto">
+                  A comprehensive electronic medical records system designed for private medical clinics. 
+                  Streamline patient management, consultations, prescriptions, and medical certificates.
+                </p>
+              </div>
+
+              <div className="border-t border-b py-6">
+                <div className="text-center">
+                  <p className="text-sm text-slate-500 mb-2">Developed by</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#0F766E]/10 flex items-center justify-center">
+                      <User className="w-6 h-6 text-[#0F766E]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-heading font-bold text-lg text-slate-900">Vicente C. Cavalida, Jr. MD</p>
+                      <p className="text-sm text-slate-500">Physician & Developer</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-4 text-center">
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <Stethoscope className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
+                  <p className="font-medium text-slate-900">SOAP Notes</p>
+                  <p className="text-xs text-slate-500">Structured documentation</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <FileText className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
+                  <p className="font-medium text-slate-900">Print Forms</p>
+                  <p className="text-xs text-slate-500">Rx, MedCert, Referrals</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <Users className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
+                  <p className="font-medium text-slate-900">Multi-User</p>
+                  <p className="text-xs text-slate-500">Role-based access</p>
+                </div>
+              </div>
+
+              <div className="text-center pt-4 border-t">
+                <p className="text-xs text-slate-400">
+                  Version 1.0.0 • Built with React & FastAPI
+                </p>
+                <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
+                  Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> for healthcare professionals
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
