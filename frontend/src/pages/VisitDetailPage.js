@@ -583,6 +583,11 @@ const VisitDetailPage = () => {
                 </CardContent>
               </Card>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* Hidden Print Templates */}
       <div className="hidden">
         {/* Prescription Print */}
         <div ref={prescriptionRef} className="p-8 bg-white print-container">
