@@ -150,6 +150,20 @@ const PatientProfilePage = () => {
     }
   };
 
+  const handleDeletePatient = async () => {
+    setDeleting(true);
+    try {
+      await patientAPI.delete(patientId);
+      toast.success('Patient deleted successfully');
+      navigate('/patients');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete patient');
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const tagColors = {
     lab: 'bg-purple-100 text-purple-800',
     'x-ray': 'bg-blue-100 text-blue-800',
