@@ -311,7 +311,7 @@ async def register_user(user: UserCreate):
     
     await db.users.insert_one(user_dict)
     del user_dict["password"]
-    del user_dict["_id"] if "_id" in user_dict else None
+    user_dict.pop("_id", None)
     return user_dict
 
 @api_router.post("/auth/login")
@@ -370,7 +370,7 @@ async def create_patient(patient: PatientCreate, current_user: dict = Depends(ge
     await db.patients.insert_one(patient_dict)
     await log_audit(current_user["id"], current_user["full_name"], "create", "patient", patient_dict["id"], patient.full_name)
     
-    del patient_dict["_id"] if "_id" in patient_dict else None
+    patient_dict.pop("_id", None)
     return patient_dict
 
 @api_router.get("/patients", response_model=List[PatientResponse])
@@ -449,7 +449,7 @@ async def create_visit(visit: VisitCreate, current_user: dict = Depends(get_curr
     await db.visits.insert_one(visit_dict)
     await log_audit(current_user["id"], current_user["full_name"], "create", "visit", visit_dict["id"])
     
-    del visit_dict["_id"] if "_id" in visit_dict else None
+    visit_dict.pop("_id", None)
     return visit_dict
 
 @api_router.get("/visits", response_model=List[VisitResponse])
@@ -510,7 +510,7 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     apt_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.appointments.insert_one(apt_dict)
-    del apt_dict["_id"] if "_id" in apt_dict else None
+    apt_dict.pop("_id", None)
     return apt_dict
 
 @api_router.get("/appointments", response_model=List[AppointmentResponse])
@@ -586,7 +586,7 @@ async def upload_attachment(
     await db.attachments.insert_one(attachment)
     await log_audit(current_user["id"], current_user["full_name"], "upload", "attachment", attachment["id"], file.filename)
     
-    del attachment["_id"] if "_id" in attachment else None
+    attachment.pop("_id", None)
     return attachment
 
 @api_router.get("/attachments")
@@ -622,7 +622,7 @@ async def create_prescription(prescription: PrescriptionCreate, current_user: di
     rx_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.prescriptions.insert_one(rx_dict)
-    del rx_dict["_id"] if "_id" in rx_dict else None
+    rx_dict.pop("_id", None)
     return rx_dict
 
 @api_router.get("/prescriptions")
@@ -652,7 +652,7 @@ async def create_certificate(certificate: CertificateCreate, current_user: dict 
     cert_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.certificates.insert_one(cert_dict)
-    del cert_dict["_id"] if "_id" in cert_dict else None
+    cert_dict.pop("_id", None)
     return cert_dict
 
 @api_router.get("/certificates")
