@@ -85,6 +85,8 @@ const VisitDetailPage = () => {
   const handlePrintFitToWork = useReactToPrint({ contentRef: fitToWorkRef, documentTitle: 'Fit_To_Work' });
   const handlePrintReferral = useReactToPrint({ contentRef: referralRef, documentTitle: 'Referral' });
   const handlePrintSOAP = useReactToPrint({ contentRef: soapRef, documentTitle: 'Consultation_Notes' });
+  const handlePrintSavedRx = useReactToPrint({ contentRef: savedRxRef, documentTitle: 'Prescription' });
+  const handlePrintSavedCert = useReactToPrint({ contentRef: savedCertRef, documentTitle: 'Certificate' });
 
   const addMedication = () => {
     setRxData({
