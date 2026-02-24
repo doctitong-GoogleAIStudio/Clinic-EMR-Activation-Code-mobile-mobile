@@ -31,6 +31,8 @@ const VisitDetailPage = () => {
   const [savedCertificates, setSavedCertificates] = useState([]);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
+  const [showViewRx, setShowViewRx] = useState(false);
+  const [showViewCert, setShowViewCert] = useState(false);
   
   // Print refs
   const prescriptionRef = useRef();
