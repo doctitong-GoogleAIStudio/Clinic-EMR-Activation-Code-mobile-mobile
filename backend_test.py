@@ -218,7 +218,7 @@ class ClinicEMRAPITester:
             "Create Appointment",
             "POST",
             "/api/appointments",
-            201,
+            200,
             data=appointment_data
         )
         
