@@ -64,12 +64,29 @@ const PatientProfilePage = () => {
       setEditData(patientRes.data);
       setVisits(visitsRes.data);
       setAttachments(attachmentsRes.data);
+      setPrescriptions(rxRes.data);
+      setCertificates(certRes.data);
+      setSettings(settingsRes.data);
     } catch (error) {
       toast.error('Failed to load patient');
       navigate('/patients');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCertificateTypeName = (type) => {
+    const names = {
+      'medical_certificate': 'Medical Certificate',
+      'fit_to_work': 'Fit-to-Work Certificate',
+      'referral': 'Referral Letter'
+    };
+    return names[type] || type;
+  };
+
+  const reprintDocument = (doc, type) => {
+    setSelectedDoc({ ...doc, docType: type });
+    setTimeout(() => handlePrintDoc(), 100);
   };
 
   const handleSave = async () => {
