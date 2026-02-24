@@ -166,6 +166,10 @@ const SettingsPage = () => {
               </TabsTrigger>
             </>
           )}
+          <TabsTrigger value="about" data-testid="tab-about">
+            <Info className="w-4 h-4 mr-2" />
+            About
+          </TabsTrigger>
         </TabsList>
 
         {/* Clinic Settings */}
