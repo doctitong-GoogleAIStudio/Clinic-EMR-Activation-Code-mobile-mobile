@@ -543,7 +543,8 @@ const VisitDetailPage = () => {
                   {savedPrescriptions.map((rx) => (
                     <div 
                       key={rx.id} 
-                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 hover:bg-slate-50 transition-colors cursor-pointer"
+                      onClick={() => viewPrescription(rx)}
                       data-testid={`saved-rx-${rx.id}`}
                     >
                       <div className="flex items-center justify-between">
@@ -554,7 +555,7 @@ const VisitDetailPage = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => reprintPrescription(rx)}
+                          onClick={(e) => { e.stopPropagation(); reprintPrescription(rx); }}
                           className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
                         >
                           <Printer className="w-4 h-4" />
@@ -568,7 +569,8 @@ const VisitDetailPage = () => {
                   {savedCertificates.map((cert) => (
                     <div 
                       key={cert.id} 
-                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 hover:bg-slate-50 transition-colors cursor-pointer"
+                      onClick={() => viewCertificate(cert)}
                       data-testid={`saved-cert-${cert.id}`}
                     >
                       <div className="flex items-center justify-between">
@@ -581,7 +583,7 @@ const VisitDetailPage = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => reprintCertificate(cert)}
+                          onClick={(e) => { e.stopPropagation(); reprintCertificate(cert); }}
                           className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
                         >
                           <Printer className="w-4 h-4" />
@@ -595,6 +597,149 @@ const VisitDetailPage = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* View Prescription Modal */}
+            <Dialog open={showViewRx} onOpenChange={setShowViewRx}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Pill className="w-5 h-5 text-[#0F766E]" />
+                    Prescription Details
+                  </DialogTitle>
+                </DialogHeader>
+                {selectedPrescription && (
+                  <div className="space-y-4 mt-4">
+                    <div className="p-3 rounded-lg bg-slate-50 space-y-1">
+                      <p className="text-sm"><strong>Patient:</strong> {patient?.full_name}</p>
+                      <p className="text-sm"><strong>Date:</strong> {format(parseISO(selectedPrescription.created_at), 'MMMM d, yyyy h:mm a')}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-2">Medications</h4>
+                      <div className="space-y-2">
+                        {selectedPrescription.medications?.map((med, i) => (
+                          <div key={i} className="p-3 rounded-lg border border-slate-200">
+                            <p className="font-medium text-slate-900">{i + 1}. {med.name} {med.dosage}</p>
+                            <p className="text-sm text-slate-600">Sig: {med.frequency} for {med.duration}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {selectedPrescription.notes && (
+                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                        <p className="text-sm text-amber-800"><strong>Notes:</strong> {selectedPrescription.notes}</p>
+                      </div>
+                    )}
+                    <Button 
+                      onClick={() => { setShowViewRx(false); reprintPrescription(selectedPrescription); }}
+                      className="w-full bg-[#0F766E] hover:bg-[#115E59]"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Prescription
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* View Certificate Modal */}
+            <Dialog open={showViewCert} onOpenChange={setShowViewCert}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {selectedCertificate?.certificate_type === 'medical_certificate' && <Award className="w-5 h-5 text-[#0F766E]" />}
+                    {selectedCertificate?.certificate_type === 'fit_to_work' && <Briefcase className="w-5 h-5 text-[#0F766E]" />}
+                    {selectedCertificate?.certificate_type === 'referral' && <Send className="w-5 h-5 text-[#0F766E]" />}
+                    {selectedCertificate && getCertificateTypeName(selectedCertificate.certificate_type)}
+                  </DialogTitle>
+                </DialogHeader>
+                {selectedCertificate && (
+                  <div className="space-y-4 mt-4">
+                    <div className="p-3 rounded-lg bg-slate-50 space-y-1">
+                      <p className="text-sm"><strong>Patient:</strong> {patient?.full_name}</p>
+                      <p className="text-sm"><strong>Date:</strong> {format(parseISO(selectedCertificate.created_at), 'MMMM d, yyyy h:mm a')}</p>
+                    </div>
+                    
+                    {selectedCertificate.certificate_type === 'medical_certificate' && (
+                      <div className="space-y-3">
+                        {selectedCertificate.content?.diagnosis && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Diagnosis</p>
+                            <p className="font-medium text-slate-900">{selectedCertificate.content.diagnosis}</p>
+                          </div>
+                        )}
+                        {selectedCertificate.content?.start_date && selectedCertificate.content?.end_date && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Rest Period</p>
+                            <p className="font-medium text-slate-900">
+                              {format(parseISO(selectedCertificate.content.start_date), 'MMM d, yyyy')} to {format(parseISO(selectedCertificate.content.end_date), 'MMM d, yyyy')}
+                            </p>
+                          </div>
+                        )}
+                        {selectedCertificate.content?.remarks && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Remarks</p>
+                            <p className="text-slate-900">{selectedCertificate.content.remarks}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedCertificate.certificate_type === 'fit_to_work' && (
+                      <div className="space-y-3">
+                        {selectedCertificate.content?.examined_date && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Date Examined</p>
+                            <p className="font-medium text-slate-900">{format(parseISO(selectedCertificate.content.examined_date), 'MMMM d, yyyy')}</p>
+                          </div>
+                        )}
+                        {selectedCertificate.content?.fit_date && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Fit to Resume Work</p>
+                            <p className="font-medium text-slate-900">{format(parseISO(selectedCertificate.content.fit_date), 'MMMM d, yyyy')}</p>
+                          </div>
+                        )}
+                        {selectedCertificate.content?.restrictions && (
+                          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                            <p className="text-xs text-amber-600 mb-1">Restrictions</p>
+                            <p className="text-amber-800">{selectedCertificate.content.restrictions}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedCertificate.certificate_type === 'referral' && (
+                      <div className="space-y-3">
+                        <div className="p-3 rounded-lg border border-slate-200">
+                          <p className="text-xs text-slate-500 mb-1">Referred To</p>
+                          <p className="font-medium text-slate-900">{selectedCertificate.content?.to_doctor}</p>
+                          <p className="text-sm text-slate-600">{selectedCertificate.content?.to_specialty}</p>
+                        </div>
+                        {selectedCertificate.content?.reason && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Reason for Referral</p>
+                            <p className="text-slate-900">{selectedCertificate.content.reason}</p>
+                          </div>
+                        )}
+                        {selectedCertificate.content?.findings && (
+                          <div className="p-3 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Clinical Findings</p>
+                            <p className="text-slate-900">{selectedCertificate.content.findings}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <Button 
+                      onClick={() => { setShowViewCert(false); reprintCertificate(selectedCertificate); }}
+                      className="w-full bg-[#0F766E] hover:bg-[#115E59]"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Certificate
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </div>
