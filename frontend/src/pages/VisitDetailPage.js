@@ -695,6 +695,76 @@ const VisitDetailPage = () => {
           </div>
           <DoctorSignature />
         </div>
+
+        {/* Saved Prescription Reprint */}
+        {selectedPrescription && (
+          <div ref={savedRxRef} className="p-8 bg-white print-container">
+            <PrintHeader />
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold">PRESCRIPTION</h2>
+            </div>
+            <div className="mb-6">
+              <p><strong>Patient:</strong> {patient.full_name}</p>
+              <p><strong>Age/Sex:</strong> {patient.age} years / {patient.sex}</p>
+              <p><strong>Date:</strong> {format(parseISO(selectedPrescription.created_at), 'MMMM d, yyyy')}</p>
+            </div>
+            <div className="mb-8">
+              <p className="text-2xl font-bold mb-4">Rx</p>
+              {selectedPrescription.medications?.map((med, i) => (
+                <div key={i} className="mb-4 pl-4">
+                  <p className="font-medium">{i + 1}. {med.name} {med.dosage}</p>
+                  <p className="pl-4 text-slate-600">Sig: {med.frequency} for {med.duration}</p>
+                </div>
+              ))}
+              {selectedPrescription.notes && <p className="mt-4 text-sm italic">Note: {selectedPrescription.notes}</p>}
+            </div>
+            <DoctorSignature />
+          </div>
+        )}
+
+        {/* Saved Certificate Reprint */}
+        {selectedCertificate && (
+          <div ref={savedCertRef} className="p-8 bg-white print-container">
+            <PrintHeader />
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold">{getCertificateTypeName(selectedCertificate.certificate_type).toUpperCase()}</h2>
+            </div>
+            <div className="mb-6 space-y-4">
+              {selectedCertificate.certificate_type === 'medical_certificate' && (
+                <>
+                  <p>This is to certify that <strong>{patient.full_name}</strong>, {patient.age} years old, {patient.sex}, was seen and examined on <strong>{format(parseISO(selectedCertificate.created_at), 'MMMM d, yyyy')}</strong>.</p>
+                  {selectedCertificate.content?.diagnosis && <p><strong>Diagnosis:</strong> {selectedCertificate.content.diagnosis}</p>}
+                  {selectedCertificate.content?.start_date && selectedCertificate.content?.end_date && (
+                    <p><strong>Rest Period:</strong> {format(parseISO(selectedCertificate.content.start_date), 'MMMM d, yyyy')} to {format(parseISO(selectedCertificate.content.end_date), 'MMMM d, yyyy')}</p>
+                  )}
+                  {selectedCertificate.content?.remarks && <p><strong>Remarks:</strong> {selectedCertificate.content.remarks}</p>}
+                </>
+              )}
+              {selectedCertificate.certificate_type === 'fit_to_work' && (
+                <>
+                  <p>This is to certify that <strong>{patient.full_name}</strong>, {patient.age} years old, {patient.sex}, was examined on {selectedCertificate.content?.examined_date && format(parseISO(selectedCertificate.content.examined_date), 'MMMM d, yyyy')}.</p>
+                  <p>The above-named patient is deemed <strong>FIT TO RESUME WORK</strong> effective {selectedCertificate.content?.fit_date && format(parseISO(selectedCertificate.content.fit_date), 'MMMM d, yyyy')}.</p>
+                  {selectedCertificate.content?.restrictions && <p><strong>Restrictions:</strong> {selectedCertificate.content.restrictions}</p>}
+                </>
+              )}
+              {selectedCertificate.certificate_type === 'referral' && (
+                <>
+                  <p><strong>To:</strong> {selectedCertificate.content?.to_doctor} ({selectedCertificate.content?.to_specialty})</p>
+                  <p><strong>Re:</strong> {patient.full_name}, {patient.age} years old, {patient.sex}</p>
+                  <p><strong>Date:</strong> {format(parseISO(selectedCertificate.created_at), 'MMMM d, yyyy')}</p>
+                  <div className="mt-6">
+                    <p>Dear Colleague,</p>
+                    <p className="mt-4">I am referring the above-named patient for your expert evaluation and management.</p>
+                    {selectedCertificate.content?.reason && <p className="mt-4"><strong>Reason for Referral:</strong> {selectedCertificate.content.reason}</p>}
+                    {selectedCertificate.content?.findings && <p className="mt-4"><strong>Clinical Findings:</strong> {selectedCertificate.content.findings}</p>}
+                    <p className="mt-4">Thank you for your kind attention to this patient.</p>
+                  </div>
+                </>
+              )}
+            </div>
+            <DoctorSignature />
+          </div>
+        )}
       </div>
     </div>
   );
