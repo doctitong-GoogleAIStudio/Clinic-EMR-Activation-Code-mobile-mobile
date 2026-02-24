@@ -118,6 +118,8 @@ const VisitDetailPage = () => {
       });
       toast.success('Prescription saved');
       handlePrintRx();
+      setShowRx(false);
+      fetchData(); // Refresh to show saved form
     } catch (error) {
       toast.error('Failed to save prescription');
     }
@@ -135,9 +137,32 @@ const VisitDetailPage = () => {
       if (type === 'medical_certificate') handlePrintMedCert();
       else if (type === 'fit_to_work') handlePrintFitToWork();
       else if (type === 'referral') handlePrintReferral();
+      setShowMedCert(false);
+      setShowFitToWork(false);
+      setShowReferral(false);
+      fetchData(); // Refresh to show saved form
     } catch (error) {
       toast.error('Failed to save certificate');
     }
+  };
+
+  const reprintPrescription = (rx) => {
+    setSelectedPrescription(rx);
+    setTimeout(() => handlePrintSavedRx(), 100);
+  };
+
+  const reprintCertificate = (cert) => {
+    setSelectedCertificate(cert);
+    setTimeout(() => handlePrintSavedCert(), 100);
+  };
+
+  const getCertificateTypeName = (type) => {
+    const names = {
+      'medical_certificate': 'Medical Certificate',
+      'fit_to_work': 'Fit-to-Work Certificate',
+      'referral': 'Referral Letter'
+    };
+    return names[type] || type;
   };
 
   if (loading || !visit || !patient) {
