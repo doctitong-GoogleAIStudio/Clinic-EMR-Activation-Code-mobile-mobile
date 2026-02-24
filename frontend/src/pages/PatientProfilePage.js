@@ -250,6 +250,59 @@ const PatientProfilePage = () => {
               New Visit
             </Button>
           )}
+          {(isDoctor || isAdmin) && (
+            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300" data-testid="delete-patient-btn">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                    Delete Patient
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                    <p className="text-red-800 font-medium">Are you sure you want to delete this patient?</p>
+                    <p className="text-red-600 text-sm mt-2">
+                      This will permanently delete <strong>{patient?.full_name}</strong> and all associated records including visits, prescriptions, certificates, and attachments.
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-500">This action cannot be undone.</p>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      onClick={handleDeletePatient}
+                      disabled={deleting}
+                      data-testid="confirm-delete-patient-btn"
+                    >
+                      {deleting ? (
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Deleting...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Trash2 className="w-4 h-4" />
+                          Delete Patient
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
