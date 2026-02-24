@@ -1,0 +1,134 @@
+{
+  "identity": {
+    "name": "Private Clinic EMR",
+    "persona": "E1 - The Anti-AI Designer",
+    "vibe": "Organic & Earthy (Archetype 1) - Premium, Trustworthy, Calm",
+    "description": "A secure, mobile-responsive EMR for private clinics that balances medical sterility with boutique warmth."
+  },
+  "typography": {
+    "headings": {
+      "family": "Manrope, sans-serif",
+      "weights": ["600", "800"],
+      "usage": "Page titles, Section headers, Card titles",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "family": "Public Sans, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "General text, Form labels, Table data",
+      "letter_spacing": "tracking-normal"
+    },
+    "print_header": {
+      "family": "Merriweather, serif",
+      "weights": ["700"],
+      "usage": "Only for Printed Forms (Rx, Med Cert) Headers to convey official authority"
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "IDs, Codes, Medical Record Numbers"
+    }
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#0F766E", 
+      "foreground": "#FFFFFF",
+      "hover": "#115E59",
+      "description": "Deep Teal/Sage - Trust, Stability, Health (Not generic Blue)"
+    },
+    "secondary": {
+      "DEFAULT": "#F0FDFA", 
+      "foreground": "#0F766E",
+      "description": "Very pale teal/mint for backgrounds of active states"
+    },
+    "accent": {
+      "DEFAULT": "#F97316",
+      "foreground": "#FFFFFF",
+      "description": "Warm Orange - For Primary CTAs (Add Patient, Print) to create contrast"
+    },
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "text": {
+      "main": "#1E293B",
+      "muted": "#64748B"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    }
+  },
+  "visual_enhancers": {
+    "radius": "rounded-lg",
+    "shadows": {
+      "card": "shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
+      "floating": "shadow-[0_8px_24px_rgba(15,118,110,0.15)]"
+    },
+    "borders": "border-slate-200",
+    "glass": "bg-white/80 backdrop-blur-md border border-white/20"
+  },
+  "layout_strategy": {
+    "dashboard": "Bento Grid (Mode B - High Density)",
+    "mobile": "Stack vertical, large touch targets (min 44px)",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "spacing": "Generous (p-6, p-8) for readability"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-lg px-6 py-2.5 font-medium transition-all active:scale-95",
+      "secondary": "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm rounded-lg px-6 py-2.5 font-medium transition-all active:scale-95",
+      "accent": "bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg rounded-lg px-6 py-2.5 font-bold tracking-wide transition-all active:scale-95",
+      "ghost": "hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-md px-3 py-2 transition-colors"
+    },
+    "cards": {
+      "base": "bg-white rounded-xl border border-slate-100 shadow-card p-6",
+      "interactive": "bg-white rounded-xl border border-slate-100 shadow-card p-6 hover:border-primary/30 hover:shadow-floating transition-all cursor-pointer"
+    },
+    "inputs": {
+      "base": "flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "badges": {
+      "base": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+      "waiting": "border-transparent bg-amber-100 text-amber-800",
+      "in_consultation": "border-transparent bg-blue-100 text-blue-800",
+      "done": "border-transparent bg-emerald-100 text-emerald-800",
+      "no_show": "border-transparent bg-red-100 text-red-800"
+    }
+  },
+  "image_urls": {
+    "login_hero": {
+      "url": "https://images.unsplash.com/photo-1759691555407-3c5834e6991e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBwcml2YXRlJTIwbWVkaWNhbCUyMGNsaW5pYyUyMHJlY2VwdGlvbiUyMGJyaWdodCUyMGFlc3RoZXRpY3xlbnwwfHx8fDE3NzE5NDYwNjV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Modern, bright, waiting area with plants. Sets a calming tone."
+    },
+    "doctor_avatar": {
+      "url": "https://images.unsplash.com/photo-1645066928295-2506defde470?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBkb2N0b3IlMjBwb3J0cmFpdCUyMGZyaWVuZGx5fGVufDB8fHx8MTc3MTk0NjA2Nnww&ixlib=rb-4.1.0&q=85",
+      "description": "Professional male doctor avatar"
+    },
+    "placeholder_patient": "https://ui-avatars.com/api/?name=Patient+Name&background=random"
+  },
+  "libraries": {
+    "charts": "recharts",
+    "icons": "lucide-react",
+    "dates": "date-fns",
+    "printing": "react-to-print",
+    "forms": "react-hook-form + zod",
+    "toast": "sonner"
+  },
+  "instructions_to_main_agent": [
+    "Install 'recharts' and 'react-to-print' immediately.",
+    "Use 'lucide-react' for all icons. Use 'Stethoscope', 'Activity', 'Calendar', 'Users', 'FileText', 'Printer' icons heavily.",
+    "Implement the Dashboard with a Bento Grid layout: Queue (Large), Stats (Small), Quick Actions (Medium).",
+    "Ensure ALL interactive elements have 'data-testid' for testing.",
+    "For Print Forms: Create a dedicated 'PrintLayout' component that is hidden from screen but visible to print media query.",
+    "Use the 'Merriweather' font ONLY for the header of the printed forms (Prescription, Medical Certificate).",
+    "Mobile Responsiveness: The Queue list must be easily scrollable on mobile. Buttons must be full-width on mobile.",
+    "AI Features: Add a 'Sparkles' icon button for 'AI Assist' in the SOAP notes section. Mock the API call with a toast 'AI generating suggestions...'"
+  ],
+  "universal_guidelines": [
+    "No gradients on text. Keep it clean and high-contrast.",
+    "Use 24px (p-6) padding inside cards minimum.",
+    "Never center text in the dashboard widgets; align left for readability.",
+    "Use 'sonner' for all notifications (Success: 'Patient Added', Error: 'Failed to save').",
+    "Do not use generic blue for primary. Use the specified Teal (#0F766E)."
+  ]
+}
