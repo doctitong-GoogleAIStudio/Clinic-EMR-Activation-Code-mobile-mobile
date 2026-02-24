@@ -693,6 +693,100 @@ const PatientProfilePage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Hidden Print Template */}
+      {selectedDoc && (
+        <div className="hidden">
+          <div ref={docPrintRef} className="p-8 bg-white print-container">
+            {/* Print Header */}
+            <div className="print-header text-center border-b-2 border-[#0F766E] pb-4 mb-6">
+              <h1 className="font-print text-2xl font-bold text-[#0F766E]">{settings.clinic_name || 'Private Clinic EMR'}</h1>
+              {settings.address && <p className="text-sm text-slate-600">{settings.address}</p>}
+              {settings.phone && <p className="text-sm text-slate-600">Tel: {settings.phone}</p>}
+              {settings.license_no && <p className="text-xs text-slate-500">License No: {settings.license_no}</p>}
+            </div>
+
+            {/* Prescription Print */}
+            {selectedDoc.docType === 'prescription' && (
+              <>
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold">PRESCRIPTION</h2>
+                </div>
+                <div className="mb-6">
+                  <p><strong>Patient:</strong> {patient.full_name}</p>
+                  <p><strong>Age/Sex:</strong> {patient.age} years / {patient.sex}</p>
+                  <p><strong>Date:</strong> {format(parseISO(selectedDoc.created_at), 'MMMM d, yyyy')}</p>
+                </div>
+                <div className="mb-8">
+                  <p className="text-2xl font-bold mb-4">Rx</p>
+                  {selectedDoc.medications?.map((med, i) => (
+                    <div key={i} className="mb-4 pl-4">
+                      <p className="font-medium">{i + 1}. {med.name} {med.dosage}</p>
+                      <p className="pl-4 text-slate-600">Sig: {med.frequency} for {med.duration}</p>
+                    </div>
+                  ))}
+                  {selectedDoc.notes && <p className="mt-4 text-sm italic">Note: {selectedDoc.notes}</p>}
+                </div>
+              </>
+            )}
+
+            {/* Certificate Print */}
+            {selectedDoc.docType === 'certificate' && (
+              <>
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold">{getCertificateTypeName(selectedDoc.certificate_type).toUpperCase()}</h2>
+                </div>
+                <div className="mb-6 space-y-4">
+                  {selectedDoc.certificate_type === 'medical_certificate' && (
+                    <>
+                      <p>This is to certify that <strong>{patient.full_name}</strong>, {patient.age} years old, {patient.sex}, was seen and examined on <strong>{format(parseISO(selectedDoc.created_at), 'MMMM d, yyyy')}</strong>.</p>
+                      {selectedDoc.content?.diagnosis && <p><strong>Diagnosis:</strong> {selectedDoc.content.diagnosis}</p>}
+                      {selectedDoc.content?.start_date && selectedDoc.content?.end_date && (
+                        <p><strong>Rest Period:</strong> {format(parseISO(selectedDoc.content.start_date), 'MMMM d, yyyy')} to {format(parseISO(selectedDoc.content.end_date), 'MMMM d, yyyy')}</p>
+                      )}
+                      {selectedDoc.content?.remarks && <p><strong>Remarks:</strong> {selectedDoc.content.remarks}</p>}
+                    </>
+                  )}
+                  {selectedDoc.certificate_type === 'fit_to_work' && (
+                    <>
+                      <p>This is to certify that <strong>{patient.full_name}</strong>, {patient.age} years old, {patient.sex}, was examined on {selectedDoc.content?.examined_date && format(parseISO(selectedDoc.content.examined_date), 'MMMM d, yyyy')}.</p>
+                      <p>The above-named patient is deemed <strong>FIT TO RESUME WORK</strong> effective {selectedDoc.content?.fit_date && format(parseISO(selectedDoc.content.fit_date), 'MMMM d, yyyy')}.</p>
+                      {selectedDoc.content?.restrictions && <p><strong>Restrictions:</strong> {selectedDoc.content.restrictions}</p>}
+                    </>
+                  )}
+                  {selectedDoc.certificate_type === 'referral' && (
+                    <>
+                      <p><strong>To:</strong> {selectedDoc.content?.to_doctor} ({selectedDoc.content?.to_specialty})</p>
+                      <p><strong>Re:</strong> {patient.full_name}, {patient.age} years old, {patient.sex}</p>
+                      <p><strong>Date:</strong> {format(parseISO(selectedDoc.created_at), 'MMMM d, yyyy')}</p>
+                      <div className="mt-6">
+                        <p>Dear Colleague,</p>
+                        <p className="mt-4">I am referring the above-named patient for your expert evaluation and management.</p>
+                        {selectedDoc.content?.reason && <p className="mt-4"><strong>Reason for Referral:</strong> {selectedDoc.content.reason}</p>}
+                        {selectedDoc.content?.findings && <p className="mt-4"><strong>Clinical Findings:</strong> {selectedDoc.content.findings}</p>}
+                        <p className="mt-4">Thank you for your kind attention to this patient.</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Doctor Signature */}
+            <div className="mt-12 pt-6 border-t">
+              <div className="text-right">
+                <div className="inline-block text-center">
+                  <div className="w-48 border-b border-slate-900 mb-1"></div>
+                  <p className="font-medium">{user?.full_name}</p>
+                  {user?.license_no && <p className="text-sm text-slate-600">License No: {user.license_no}</p>}
+                  {user?.ptr_no && <p className="text-sm text-slate-600">PTR No: {user.ptr_no}</p>}
+                  {user?.prc_no && <p className="text-sm text-slate-600">PRC No: {user.prc_no}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
