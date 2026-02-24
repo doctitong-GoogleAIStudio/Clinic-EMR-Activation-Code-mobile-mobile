@@ -307,7 +307,7 @@ class ClinicEMRAPITester:
             "Create Visit",
             "POST",
             "/api/visits",
-            201,
+            200,
             data=visit_data
         )
         
