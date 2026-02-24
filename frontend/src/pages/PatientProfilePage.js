@@ -42,6 +42,8 @@ const PatientProfilePage = () => {
   const [uploadFile, setUploadFile] = useState(null);
   const [showAppointment, setShowAppointment] = useState(false);
   const [appointmentData, setAppointmentData] = useState({ date: '', time: '', reason: '' });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handlePrintDoc = useReactToPrint({ contentRef: docPrintRef, documentTitle: 'Document' });
 
