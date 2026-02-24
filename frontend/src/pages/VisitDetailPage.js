@@ -517,11 +517,72 @@ const VisitDetailPage = () => {
                 </Dialog>
               </CardContent>
             </Card>
-          </div>
-        )}
-      </div>
 
-      {/* Hidden Print Templates */}
+            {/* Saved Forms Section */}
+            {(savedPrescriptions.length > 0 || savedCertificates.length > 0) && (
+              <Card className="bg-white border-slate-100 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="font-heading text-lg flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-[#0F766E]" />
+                    Saved Forms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {savedPrescriptions.map((rx) => (
+                    <div 
+                      key={rx.id} 
+                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                      data-testid={`saved-rx-${rx.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Pill className="w-4 h-4 text-[#0F766E]" />
+                          <span className="font-medium text-sm">Prescription</span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => reprintPrescription(rx)}
+                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {rx.medications?.length || 0} medication(s) • {format(parseISO(rx.created_at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  ))}
+                  {savedCertificates.map((cert) => (
+                    <div 
+                      key={cert.id} 
+                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 transition-colors"
+                      data-testid={`saved-cert-${cert.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {cert.certificate_type === 'medical_certificate' && <Award className="w-4 h-4 text-[#0F766E]" />}
+                          {cert.certificate_type === 'fit_to_work' && <Briefcase className="w-4 h-4 text-[#0F766E]" />}
+                          {cert.certificate_type === 'referral' && <Send className="w-4 h-4 text-[#0F766E]" />}
+                          <span className="font-medium text-sm">{getCertificateTypeName(cert.certificate_type)}</span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => reprintCertificate(cert)}
+                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {format(parseISO(cert.created_at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
       <div className="hidden">
         {/* Prescription Print */}
         <div ref={prescriptionRef} className="p-8 bg-white print-container">
