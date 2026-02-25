@@ -614,7 +614,11 @@ const PatientProfilePage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {visits.map((visit) => (
+                  {visits.map((visit) => {
+                    const visitLabCount = attachments.filter(a => 
+                      ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag)
+                    ).length;
+                    return (
                     <div 
                       key={visit.id}
                       className="p-4 rounded-xl border border-slate-200 hover:border-[#0F766E]/30 hover:shadow-sm transition-all cursor-pointer"
@@ -622,7 +626,7 @@ const PatientProfilePage = () => {
                       data-testid={`visit-${visit.id}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-900">
                             {format(parseISO(visit.created_at), 'MMMM d, yyyy')} at {format(parseISO(visit.created_at), 'h:mm a')}
                           </p>
@@ -630,9 +634,15 @@ const PatientProfilePage = () => {
                           {visit.soap_assessment && (
                             <p className="text-sm text-slate-700 mt-2 line-clamp-2">{visit.soap_assessment}</p>
                           )}
+                          {visitLabCount > 0 && (
+                            <div className="flex items-center gap-1.5 mt-2" data-testid={`visit-attachments-${visit.id}`}>
+                              <Microscope className="w-3.5 h-3.5 text-[#0F766E]" />
+                              <span className="text-xs text-[#0F766E] font-medium">{visitLabCount} Lab{visitLabCount > 1 ? 's' : ''} & Imaging</span>
+                            </div>
+                          )}
                         </div>
                         {visit.vitals && (
-                          <div className="text-right text-sm text-slate-500">
+                          <div className="text-right text-sm text-slate-500 flex-shrink-0 ml-4">
                             {visit.vitals.bp_systolic && visit.vitals.bp_diastolic && (
                               <p>BP: {visit.vitals.bp_systolic}/{visit.vitals.bp_diastolic}</p>
                             )}
@@ -641,7 +651,8 @@ const PatientProfilePage = () => {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
