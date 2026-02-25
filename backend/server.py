@@ -918,16 +918,23 @@ async def export_visits(
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     today = date.today().isoformat()
+    user_id = current_user["id"]
     
-    total_patients = await db.patients.count_documents({})
-    today_appointments = await db.appointments.count_documents({"date": today})
-    waiting_count = await db.appointments.count_documents({"date": today, "status": "waiting"})
-    in_consultation = await db.appointments.count_documents({"date": today, "status": "in_consultation"})
-    done_count = await db.appointments.count_documents({"date": today, "status": "done"})
+    # Data isolation: only count user's own data
+    total_patients = await db.patients.count_documents({"owner_id": user_id})
+    today_appointments = await db.appointments.count_documents({"date": today, "owner_id": user_id})
+    waiting_count = await db.appointments.count_documents({"date": today, "status": "waiting", "owner_id": user_id})
+    in_consultation = await db.appointments.count_documents({"date": today, "status": "in_consultation", "owner_id": user_id})
+    done_count = await db.appointments.count_documents({"date": today, "status": "done", "owner_id": user_id})
     
-    # This week's visits
+    # This week's visits - only for owned patients
+    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1}).to_list(1000)
+    owned_patient_ids = [p["id"] for p in owned_patients]
     week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
-    week_visits = await db.visits.count_documents({"created_at": {"$gte": week_start}})
+    week_visits = await db.visits.count_documents({
+        "patient_id": {"$in": owned_patient_ids},
+        "created_at": {"$gte": week_start}
+    })
     
     return {
         "total_patients": total_patients,
