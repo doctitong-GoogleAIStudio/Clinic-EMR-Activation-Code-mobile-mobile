@@ -33,10 +33,10 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
 
 ## Key DB Schema
-- **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization}`
-- **patients**: `{id, patient_id, full_name, birthdate, sex, ..., owner_id}`
+- **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization, created_by}` (created_by links receptionist to doctor)
+- **patients**: `{id, patient_id, full_name, birthdate, sex, ..., owner_id, created_by}`
 - **visits**: `{id, patient_id, vitals, soap_*, ..., created_by, owner_id}`
-- **appointments**: `{id, patient_id, date, time, status, ..., owner_id}`
+- **appointments**: `{id, patient_id, date, time, status, ..., owner_id, created_by}`
 - **attachments**: `{id, patient_id, visit_id, filename, file_data, content_type, tag, notes, uploaded_by}`
 - **prescriptions**: `{id, patient_id, visit_id, medications, notes, created_by}`
 - **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
