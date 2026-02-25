@@ -622,10 +622,14 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     if not await verify_patient_access(appointment.patient_id, current_user):
         raise HTTPException(status_code=404, detail="Patient not found")
     
+    # Receptionist creates appointment under their doctor's name
+    owner_id = await get_owner_id_for_user(current_user)
+    
     apt_dict = appointment.model_dump()
     apt_dict["id"] = str(uuid.uuid4())
     apt_dict["created_at"] = datetime.now(timezone.utc).isoformat()
-    apt_dict["owner_id"] = current_user["id"]
+    apt_dict["owner_id"] = owner_id
+    apt_dict["created_by"] = current_user["id"]  # Track who actually created it
     
     await db.appointments.insert_one(apt_dict)
     apt_dict.pop("_id", None)
