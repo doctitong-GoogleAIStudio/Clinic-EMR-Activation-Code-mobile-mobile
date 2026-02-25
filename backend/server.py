@@ -497,11 +497,9 @@ async def verify_patient_ownership(patient_id: str, user_id: str) -> bool:
     return patient is not None
 
 async def verify_patient_access(patient_id: str, current_user: dict) -> bool:
-    """Receptionist can access all patients; others only their own."""
-    if current_user["role"] == "receptionist":
-        patient = await db.patients.find_one({"id": patient_id})
-        return patient is not None
-    return await verify_patient_ownership(patient_id, current_user["id"])
+    """Receptionist can access their doctor's patients; others only their own."""
+    owner_id = await get_owner_id_for_user(current_user)
+    return await verify_patient_ownership(patient_id, owner_id)
 
 # ============== VISIT ROUTES ==============
 @api_router.post("/visits", response_model=VisitResponse)
