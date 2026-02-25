@@ -359,7 +359,7 @@ async def create_receptionist(user: UserCreate, current_user: dict = Depends(get
         raise HTTPException(status_code=400, detail="Email already registered")
     
     user_dict = user.model_dump()
-    user_dict["id"] = str(uuid4())
+    user_dict["id"] = str(uuid.uuid4())
     user_dict["role"] = "receptionist"
     user_dict["password"] = hash_password(user_dict["password"])
     user_dict["created_at"] = datetime.now(timezone.utc).isoformat()
