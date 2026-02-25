@@ -31,6 +31,7 @@ export const visitAPI = {
   getOne: (id) => axios.get(`${API}/visits/${id}`),
   create: (data) => axios.post(`${API}/visits`, data),
   update: (id, data) => axios.put(`${API}/visits/${id}`, data),
+  delete: (id) => axios.delete(`${API}/visits/${id}`),
 };
 
 // Appointment APIs
