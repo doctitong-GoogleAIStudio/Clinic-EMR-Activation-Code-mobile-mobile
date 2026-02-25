@@ -630,6 +630,10 @@ async def upload_attachment(
     notes: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user)
 ):
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
     content = await file.read()
     file_data = base64.b64encode(content).decode('utf-8')
     
@@ -658,11 +662,21 @@ async def get_attachments(
     visit_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
+    # Data isolation: verify patient ownership if patient_id provided
+    if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
+        return []
+    
     query = {}
     if patient_id:
         query["patient_id"] = patient_id
     if visit_id:
         query["visit_id"] = visit_id
+    
+    # If no patient_id specified, only return attachments for owned patients
+    if not patient_id:
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patient_ids = [p["id"] for p in owned_patients]
+        query["patient_id"] = {"$in": owned_patient_ids}
     
     # Exclude file_data from list queries for performance
     attachments = await db.attachments.find(query, {"_id": 0, "file_data": 0}).sort("uploaded_at", -1).to_list(100)
@@ -674,10 +688,19 @@ async def get_attachment(attachment_id: str, current_user: dict = Depends(get_cu
     attachment = await db.attachments.find_one({"id": attachment_id}, {"_id": 0})
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
+    
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
     return attachment
 
 @api_router.delete("/attachments/{attachment_id}")
 async def delete_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
+    attachment = await db.attachments.find_one({"id": attachment_id})
+    if not attachment or not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
     await db.attachments.delete_one({"id": attachment_id})
     await log_audit(current_user["id"], current_user["full_name"], "delete", "attachment", attachment_id)
     return {"message": "Attachment deleted"}
@@ -687,6 +710,10 @@ async def delete_attachment(attachment_id: str, current_user: dict = Depends(get
 async def create_prescription(prescription: PrescriptionCreate, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Only doctors can create prescriptions")
+    
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(prescription.patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
     
     rx_dict = prescription.model_dump()
     rx_dict["id"] = str(uuid.uuid4())
