@@ -571,7 +571,8 @@ async def get_appointments(
     limit: int = Query(default=100, le=500),
     current_user: dict = Depends(get_current_user)
 ):
-    query = {}
+    # Data isolation: only show own appointments
+    query = {"owner_id": current_user["id"]}
     if date:
         query["date"] = date
     if status:
@@ -583,30 +584,40 @@ async def get_appointments(
 @api_router.get("/appointments/today", response_model=List[AppointmentResponse])
 async def get_today_appointments(current_user: dict = Depends(get_current_user)):
     today = date.today().isoformat()
-    appointments = await db.appointments.find({"date": today}, {"_id": 0}).sort("time", 1).to_list(100)
+    # Data isolation: only show own appointments
+    appointments = await db.appointments.find({"date": today, "owner_id": current_user["id"]}, {"_id": 0}).sort("time", 1).to_list(100)
     return appointments
 
 @api_router.get("/queue/today", response_model=List[AppointmentResponse])
 async def get_today_queue(current_user: dict = Depends(get_current_user)):
     today = date.today().isoformat()
+    # Data isolation: only show own queue
     appointments = await db.appointments.find(
-        {"date": today, "status": {"$in": ["waiting", "in_consultation"]}},
+        {"date": today, "status": {"$in": ["waiting", "in_consultation"]}, "owner_id": current_user["id"]},
         {"_id": 0}
     ).sort("time", 1).to_list(100)
     return appointments
 
 @api_router.put("/appointments/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(appointment_id: str, updates: AppointmentUpdate, current_user: dict = Depends(get_current_user)):
+    # Data isolation: verify ownership
+    apt = await db.appointments.find_one({"id": appointment_id, "owner_id": current_user["id"]})
+    if not apt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    
     update_dict = {k: v.value if isinstance(v, Enum) else v for k, v in updates.model_dump().items() if v is not None}
     
-    await db.appointments.update_one({"id": appointment_id}, {"$set": update_dict})
+    await db.appointments.update_one({"id": appointment_id, "owner_id": current_user["id"]}, {"$set": update_dict})
     
     apt = await db.appointments.find_one({"id": appointment_id}, {"_id": 0})
     return apt
 
 @api_router.delete("/appointments/{appointment_id}")
 async def delete_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
-    await db.appointments.delete_one({"id": appointment_id})
+    # Data isolation: only delete own appointments
+    result = await db.appointments.delete_one({"id": appointment_id, "owner_id": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
     return {"message": "Appointment deleted"}
 
 # ============== ATTACHMENT ROUTES ==============
