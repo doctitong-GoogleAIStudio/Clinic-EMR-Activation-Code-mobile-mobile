@@ -576,8 +576,7 @@ async def delete_visit(visit_id: str, current_user: dict = Depends(get_current_u
 # ============== APPOINTMENT ROUTES ==============
 @api_router.post("/appointments", response_model=AppointmentResponse)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
-    # Data isolation: verify patient ownership
-    if not await verify_patient_ownership(appointment.patient_id, current_user["id"]):
+    if not await verify_patient_access(appointment.patient_id, current_user):
         raise HTTPException(status_code=404, detail="Patient not found")
     
     apt_dict = appointment.model_dump()
