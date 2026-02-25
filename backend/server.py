@@ -695,6 +695,27 @@ async def get_attachment(attachment_id: str, current_user: dict = Depends(get_cu
     
     return attachment
 
+class AttachmentUpdate(BaseModel):
+    filename: Optional[str] = None
+    tag: Optional[str] = None
+    notes: Optional[str] = None
+
+@api_router.put("/attachments/{attachment_id}")
+async def update_attachment(attachment_id: str, updates: AttachmentUpdate, current_user: dict = Depends(get_current_user)):
+    attachment = await db.attachments.find_one({"id": attachment_id})
+    if not attachment or not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
+    update_dict = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    await db.attachments.update_one({"id": attachment_id}, {"$set": update_dict})
+    await log_audit(current_user["id"], current_user["full_name"], "update", "attachment", attachment_id, updates.filename)
+    
+    updated = await db.attachments.find_one({"id": attachment_id}, {"_id": 0, "file_data": 0})
+    return updated
+
 @api_router.delete("/attachments/{attachment_id}")
 async def delete_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
     attachment = await db.attachments.find_one({"id": attachment_id})
