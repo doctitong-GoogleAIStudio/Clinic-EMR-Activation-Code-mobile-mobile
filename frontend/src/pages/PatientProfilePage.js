@@ -67,21 +67,26 @@ const PatientProfilePage = () => {
   const fetchPatientData = async () => {
     try {
       setLoading(true);
-      const [patientRes, visitsRes, attachmentsRes, rxRes, certRes, settingsRes] = await Promise.all([
+      const [patientRes, attachmentsRes, settingsRes] = await Promise.all([
         patientAPI.getOne(patientId),
-        visitAPI.getAll({ patient_id: patientId }),
         attachmentAPI.getAll({ patient_id: patientId }),
-        prescriptionAPI.getAll({ patient_id: patientId }),
-        certificateAPI.getAll({ patient_id: patientId }),
         settingsAPI.get()
       ]);
       setPatient(patientRes.data);
       setEditData(patientRes.data);
-      setVisits(visitsRes.data);
       setAttachments(attachmentsRes.data);
-      setPrescriptions(rxRes.data);
-      setCertificates(certRes.data);
       setSettings(settingsRes.data);
+      
+      if (!isReceptionist) {
+        const [visitsRes, rxRes, certRes] = await Promise.all([
+          visitAPI.getAll({ patient_id: patientId }),
+          prescriptionAPI.getAll({ patient_id: patientId }),
+          certificateAPI.getAll({ patient_id: patientId })
+        ]);
+        setVisits(visitsRes.data);
+        setPrescriptions(rxRes.data);
+        setCertificates(certRes.data);
+      }
     } catch (error) {
       toast.error('Failed to load patient');
       navigate('/patients');
