@@ -521,6 +521,7 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
 async def get_appointments(
     date: Optional[str] = None,
     status: Optional[QueueStatus] = None,
+    limit: int = Query(default=100, le=500),
     current_user: dict = Depends(get_current_user)
 ):
     query = {}
@@ -529,7 +530,7 @@ async def get_appointments(
     if status:
         query["status"] = status.value
     
-    appointments = await db.appointments.find(query, {"_id": 0}).sort([("date", 1), ("time", 1)]).to_list(1000)
+    appointments = await db.appointments.find(query, {"_id": 0}).sort([("date", 1), ("time", 1)]).limit(limit).to_list(limit)
     return appointments
 
 @api_router.get("/appointments/today", response_model=List[AppointmentResponse])
