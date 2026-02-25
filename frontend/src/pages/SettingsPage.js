@@ -234,14 +234,12 @@ const SettingsPage = () => {
                   />
                 </div>
               </div>
-              {isAdmin && (
-                <div className="pt-4 border-t">
-                  <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-settings-btn">
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Settings
-                  </Button>
-                </div>
-              )}
+              <div className="pt-4 border-t">
+                <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-settings-btn">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
