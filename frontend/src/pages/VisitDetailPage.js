@@ -875,6 +875,63 @@ const VisitDetailPage = () => {
         )}
       </div>
 
+      {/* Image Viewer Modal */}
+      <Dialog open={!!viewingAttachment} onOpenChange={(open) => { if (!open) { setViewingAttachment(null); resetViewer(); } }}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3">
+            <DialogTitle className="flex items-center gap-2">
+              <FileImage className="w-5 h-5 text-[#0F766E]" />
+              {viewingAttachment?.filename}
+            </DialogTitle>
+          </DialogHeader>
+          {viewingAttachment && (
+            <div className="flex flex-col">
+              <div
+                className="relative bg-slate-950 overflow-hidden select-none"
+                style={{ height: '55vh', cursor: isPanning ? 'grabbing' : 'grab' }}
+                onWheel={handleWheel}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                data-testid="detail-lab-image-viewer-area"
+              >
+                <img
+                  src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
+                  alt={viewingAttachment.filename}
+                  draggable={false}
+                  className="absolute top-1/2 left-1/2 max-w-none"
+                  style={{
+                    transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
+                    transformOrigin: 'center center',
+                    transition: isPanning ? 'none' : 'transform 0.15s ease-out',
+                  }}
+                />
+              </div>
+              <div className="px-5 py-3 bg-white border-t border-slate-200">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge className={`${tagColors[viewingAttachment.tag]} text-xs flex-shrink-0`}>{viewingAttachment.tag}</Badge>
+                    {viewingAttachment.notes && <span className="text-sm text-slate-500 truncate">{viewingAttachment.notes}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} disabled={zoom <= 0.25}><ZoomOut className="w-4 h-4" /></Button>
+                    <input type="range" min="25" max="500" step="5" value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} className="w-24 h-1.5 accent-[#0F766E] cursor-pointer" />
+                    <Button variant="ghost" size="sm" onClick={() => setZoom(z => Math.min(5, z + 0.25))} disabled={zoom >= 5}><ZoomIn className="w-4 h-4" /></Button>
+                    <span className="text-xs text-slate-500 w-12 text-center font-mono">{Math.round(zoom * 100)}%</span>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <Button variant="ghost" size="sm" onClick={resetViewer}><RotateCcw className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}><Maximize2 className="w-4 h-4" /></Button>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <Button variant="outline" size="sm" onClick={() => downloadFile(viewingAttachment)}><Download className="w-4 h-4 mr-1" />Download</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Hidden Print Templates */}
       <div className="hidden">
         {/* Prescription Print */}
