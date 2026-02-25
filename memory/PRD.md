@@ -43,12 +43,13 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login`
+- `POST /api/users/create-receptionist` - Doctor/Admin creates receptionist (NEW)
 - `GET/POST /api/patients` | `GET/PUT/DELETE /api/patients/{id}`
-- `GET/POST /api/visits` | `GET/PUT /api/visits/{id}`
+- `GET/POST /api/visits` | `GET/PUT/DELETE /api/visits/{id}`
 - `GET/POST /api/appointments` | `PUT/DELETE /api/appointments/{id}`
-- `GET/POST /api/attachments` | `GET/DELETE /api/attachments/{id}`
+- `GET/POST /api/attachments` | `GET/PUT/DELETE /api/attachments/{id}`
 - `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
-- `GET/PUT /api/settings` | `POST /api/ai/assist`
+- `GET/PUT /api/settings` (per-user) | `POST /api/ai/assist`
 
 ## Credentials
 - Admin: admin@clinic.com / admin123
