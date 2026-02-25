@@ -781,7 +781,8 @@ async def get_prescriptions(
     visit_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: verify patient ownership if patient_id provided
+    if current_user["role"] == "receptionist":
+        return []
     if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
         return []
     
