@@ -15,7 +15,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **AI**: Emergent LLM Key (GPT-5.2 via emergentintegrations)
 
 ## Core Features - Implemented
-- [x] Login & public Sign Up
+- [x] Login & public Sign Up (Doctor, Admin only - Receptionist removed from public signup)
 - [x] Patient registry (CRUD) with search
 - [x] Consultation notes (SOAP format) and vitals tracking
 - [x] Calendar-based appointments and walk-in queue
@@ -24,10 +24,13 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] **Labs & Imaging tab** - Messenger-style file upload/display (Feb 25, 2026)
 - [x] Patient deletion with cascade
 - [x] About page with developer credits
-- [x] Data isolation (owner_id on all collections)
+- [x] Data isolation (owner_id on all collections) - **VERIFIED Dec 2025**
 - [x] Performance: DB indexes and API pagination
 - [x] Dashboard with stats
 - [x] AI assist (SOAP convert, diagnosis suggest, patient instructions)
+- [x] **Private Receptionist Creation** - Doctors/Admins create receptionists from Settings (Dec 2025)
+- [x] **Receptionist Shared Access** - Can see all patients/appointments, blocked from SOAP notes/prescriptions (Dec 2025)
+- [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
 
 ## Key DB Schema
 - **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization}`
