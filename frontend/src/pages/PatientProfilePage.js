@@ -49,7 +49,12 @@ const PatientProfilePage = () => {
   const [labUploadData, setLabUploadData] = useState({ tag: 'lab', notes: '' });
   const [labUploading, setLabUploading] = useState(false);
   const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const labFileInputRef = useRef(null);
+  const viewerContainerRef = useRef(null);
 
   const handlePrintDoc = useReactToPrint({ contentRef: docPrintRef, documentTitle: 'Document' });
 
