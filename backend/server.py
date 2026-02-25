@@ -761,8 +761,9 @@ async def get_attachment(attachment_id: str, current_user: dict = Depends(get_cu
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
     
-    # Data isolation: verify patient ownership
-    if not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+    # Data isolation: verify patient ownership (receptionist uses doctor's owner_id)
+    owner_id = await get_owner_id_for_user(current_user)
+    if not await verify_patient_ownership(attachment["patient_id"], owner_id):
         raise HTTPException(status_code=404, detail="Attachment not found")
     
     return attachment
@@ -775,7 +776,8 @@ class AttachmentUpdate(BaseModel):
 @api_router.put("/attachments/{attachment_id}")
 async def update_attachment(attachment_id: str, updates: AttachmentUpdate, current_user: dict = Depends(get_current_user)):
     attachment = await db.attachments.find_one({"id": attachment_id})
-    if not attachment or not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+    owner_id = await get_owner_id_for_user(current_user)
+    if not attachment or not await verify_patient_ownership(attachment["patient_id"], owner_id):
         raise HTTPException(status_code=404, detail="Attachment not found")
     
     update_dict = {k: v for k, v in updates.model_dump().items() if v is not None}
@@ -791,7 +793,8 @@ async def update_attachment(attachment_id: str, updates: AttachmentUpdate, curre
 @api_router.delete("/attachments/{attachment_id}")
 async def delete_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
     attachment = await db.attachments.find_one({"id": attachment_id})
-    if not attachment or not await verify_patient_ownership(attachment["patient_id"], current_user["id"]):
+    owner_id = await get_owner_id_for_user(current_user)
+    if not attachment or not await verify_patient_ownership(attachment["patient_id"], owner_id):
         raise HTTPException(status_code=404, detail="Attachment not found")
     
     await db.attachments.delete_one({"id": attachment_id})
