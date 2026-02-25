@@ -633,7 +633,7 @@ const PatientProfilePage = () => {
                       data-testid={`visit-${visit.id}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-900">
                             {format(parseISO(visit.created_at), 'MMMM d, yyyy')} at {format(parseISO(visit.created_at), 'h:mm a')}
                           </p>
@@ -642,14 +642,24 @@ const PatientProfilePage = () => {
                             <p className="text-sm text-slate-700 mt-2 line-clamp-2">{visit.soap_assessment}</p>
                           )}
                         </div>
-                        {visit.vitals && (
-                          <div className="text-right text-sm text-slate-500">
-                            {visit.vitals.bp_systolic && visit.vitals.bp_diastolic && (
-                              <p>BP: {visit.vitals.bp_systolic}/{visit.vitals.bp_diastolic}</p>
-                            )}
-                            {visit.vitals.temperature && <p>Temp: {visit.vitals.temperature}°C</p>}
-                          </div>
-                        )}
+                        <div className="flex items-start gap-3 flex-shrink-0 ml-4">
+                          {visit.vitals && (
+                            <div className="text-right text-sm text-slate-500">
+                              {visit.vitals.bp_systolic && visit.vitals.bp_diastolic && (
+                                <p>BP: {visit.vitals.bp_systolic}/{visit.vitals.bp_diastolic}</p>
+                              )}
+                              {visit.vitals.temperature && <p>Temp: {visit.vitals.temperature}°C</p>}
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => handleDeleteVisit(visit.id, e)}
+                            className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            data-testid={`visit-delete-${visit.id}`}
+                            title="Delete visit"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
