@@ -843,7 +843,10 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
         settings = ClinicSettings(
             clinic_name=current_user.get("full_name", ""),
             email=current_user.get("email", ""),
-            license_no=current_user.get("license_no", ""),
+            license_no=current_user.get("license_no", "") or "",
+            ptr_no=current_user.get("ptr_no", "") or "",
+            prc_no=current_user.get("prc_no", "") or "",
+            specialization=current_user.get("specialization", "") or "",
         ).model_dump()
     return settings
 
