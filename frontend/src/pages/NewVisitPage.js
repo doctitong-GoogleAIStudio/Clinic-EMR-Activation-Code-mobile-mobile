@@ -435,132 +435,6 @@ const NewVisitPage = () => {
           </CardContent>
         </Card>
 
-        {/* Labs & Imaging */}
-        <Card className="bg-white border-slate-100 shadow-sm">
-          <CardHeader>
-            <CardTitle className="font-heading flex items-center gap-2">
-              <Microscope className="w-5 h-5 text-[#0F766E]" />
-              Labs & Imaging
-              {labAttachments.length > 0 && (
-                <Badge variant="outline" className="ml-1 font-mono text-xs">{labAttachments.length}</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col max-h-[400px]">
-              {/* File list (messenger bubbles) */}
-              <div className="flex-1 overflow-y-auto space-y-3 pb-3" data-testid="visit-labs-file-list">
-                {labAttachments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                    <Microscope className="w-10 h-10 mb-2 opacity-40" />
-                    <p className="text-sm text-slate-500">No lab results or imaging files</p>
-                    <p className="text-xs mt-0.5">Upload patient's labs below</p>
-                  </div>
-                ) : (
-                  labAttachments.map((att) => (
-                    <div key={att.id} className="flex justify-end" data-testid={`visit-lab-item-${att.id}`}>
-                      <div className="max-w-[80%] sm:max-w-[65%]">
-                        {editingLabId === att.id ? (
-                          <div className="rounded-2xl rounded-br-md bg-white border-2 border-[#0F766E] p-3 space-y-2" data-testid={`visit-lab-edit-form-${att.id}`}>
-                            <div className="space-y-1">
-                              <Label className="text-xs text-slate-500">Filename</Label>
-                              <Input value={editLabData.filename} onChange={(e) => setEditLabData({ ...editLabData, filename: e.target.value })} className="text-sm h-8" data-testid={`visit-lab-edit-filename-${att.id}`} />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs text-slate-500">Tag</Label>
-                              <Select value={editLabData.tag} onValueChange={(v) => setEditLabData({ ...editLabData, tag: v })}>
-                                <SelectTrigger className="h-8 text-sm" data-testid={`visit-lab-edit-tag-${att.id}`}><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="lab">Lab Result</SelectItem>
-                                  <SelectItem value="x-ray">X-Ray</SelectItem>
-                                  <SelectItem value="ultrasound">Ultrasound</SelectItem>
-                                  <SelectItem value="ecg">ECG</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs text-slate-500">Notes</Label>
-                              <Input value={editLabData.notes} onChange={(e) => setEditLabData({ ...editLabData, notes: e.target.value })} placeholder="Optional notes..." className="text-sm h-8" data-testid={`visit-lab-edit-notes-${att.id}`} />
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button type="button" variant="ghost" size="sm" onClick={cancelEditLab} className="h-7 text-xs"><X className="w-3 h-3 mr-1" />Cancel</Button>
-                              <Button type="button" size="sm" onClick={saveEditLab} className="h-7 text-xs bg-[#0F766E] hover:bg-[#115E59]" data-testid={`visit-lab-edit-save-${att.id}`}><Save className="w-3 h-3 mr-1" />Save</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
-                            onClick={() => handleViewAttachment(att.id)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                                {att.content_type?.startsWith('image/') ? <FileImage className="w-4 h-4 text-white" /> : <File className="w-4 h-4 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{att.filename}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
-                                  <span className="text-xs opacity-75">{att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to open'}</span>
-                                </div>
-                              </div>
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                {att.content_type?.startsWith('image/') ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                              </div>
-                            </div>
-                            {att.notes && <p className="text-xs text-white/80 mt-1.5 pl-12">{att.notes}</p>}
-                          </div>
-                        )}
-                        {editingLabId !== att.id && (
-                          <div className="flex items-center justify-end gap-2 mt-1 px-1">
-                            <span className="text-[11px] text-slate-400">{format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}</span>
-                            <button type="button" onClick={() => startEditLab(att)} className="text-slate-300 hover:text-[#0F766E] transition-colors" data-testid={`visit-lab-edit-${att.id}`}><Edit className="w-3.5 h-3.5" /></button>
-                            <button type="button" onClick={() => handleDeleteAttachment(att.id)} className="text-slate-300 hover:text-red-500 transition-colors" data-testid={`visit-lab-delete-${att.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Upload bar */}
-              <div className="border-t border-slate-200 pt-3 mt-auto">
-                <div className="flex items-end gap-2">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input type="file" ref={labFileInputRef} onChange={(e) => setLabFile(e.target.files[0])} accept="image/*,.pdf,.doc,.docx" className="text-sm" data-testid="visit-lab-file-input" />
-                      </div>
-                      <Select value={labUploadData.tag} onValueChange={(v) => setLabUploadData({ ...labUploadData, tag: v })}>
-                        <SelectTrigger className="w-[130px]" data-testid="visit-lab-tag-select"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="lab">Lab Result</SelectItem>
-                          <SelectItem value="x-ray">X-Ray</SelectItem>
-                          <SelectItem value="ultrasound">Ultrasound</SelectItem>
-                          <SelectItem value="ecg">ECG</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Input value={labUploadData.notes} onChange={(e) => setLabUploadData({ ...labUploadData, notes: e.target.value })} placeholder="Add a note (optional)..." className="text-sm" data-testid="visit-lab-notes-input" />
-                  </div>
-                  <Button type="button" onClick={handleLabUpload} disabled={!labFile || labUploading} className="bg-[#0F766E] hover:bg-[#115E59] h-11 px-4" data-testid="visit-lab-upload-btn">
-                    {labUploading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
-                  </Button>
-                </div>
-                {labFile && (
-                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
-                    <Paperclip className="w-3.5 h-3.5" />
-                    <span className="truncate flex-1">{labFile.name}</span>
-                    <button type="button" onClick={() => { setLabFile(null); if (labFileInputRef.current) labFileInputRef.current.value = ''; }} className="text-slate-400 hover:text-red-500">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* SOAP Notes */}
         <Card className="bg-white border-slate-100 shadow-sm">
           <CardHeader>
@@ -661,6 +535,132 @@ const NewVisitPage = () => {
                 className="max-w-xs"
                 data-testid="follow-up-date-input"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Labs & Imaging */}
+        <Card className="bg-white border-slate-100 shadow-sm">
+          <CardHeader>
+            <CardTitle className="font-heading flex items-center gap-2">
+              <Microscope className="w-5 h-5 text-[#0F766E]" />
+              Labs & Imaging
+              {labAttachments.length > 0 && (
+                <Badge variant="outline" className="ml-1 font-mono text-xs">{labAttachments.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col max-h-[400px]">
+              {/* File list (messenger bubbles) */}
+              <div className="flex-1 overflow-y-auto space-y-3 pb-3" data-testid="visit-labs-file-list">
+                {labAttachments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                    <Microscope className="w-10 h-10 mb-2 opacity-40" />
+                    <p className="text-sm text-slate-500">No lab results or imaging files</p>
+                    <p className="text-xs mt-0.5">Upload patient's labs below</p>
+                  </div>
+                ) : (
+                  labAttachments.map((att) => (
+                    <div key={att.id} className="flex justify-end" data-testid={`visit-lab-item-${att.id}`}>
+                      <div className="max-w-[80%] sm:max-w-[65%]">
+                        {editingLabId === att.id ? (
+                          <div className="rounded-2xl rounded-br-md bg-white border-2 border-[#0F766E] p-3 space-y-2" data-testid={`visit-lab-edit-form-${att.id}`}>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Filename</Label>
+                              <Input value={editLabData.filename} onChange={(e) => setEditLabData({ ...editLabData, filename: e.target.value })} className="text-sm h-8" data-testid={`visit-lab-edit-filename-${att.id}`} />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Tag</Label>
+                              <Select value={editLabData.tag} onValueChange={(v) => setEditLabData({ ...editLabData, tag: v })}>
+                                <SelectTrigger className="h-8 text-sm" data-testid={`visit-lab-edit-tag-${att.id}`}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="lab">Lab Result</SelectItem>
+                                  <SelectItem value="x-ray">X-Ray</SelectItem>
+                                  <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                                  <SelectItem value="ecg">ECG</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Notes</Label>
+                              <Input value={editLabData.notes} onChange={(e) => setEditLabData({ ...editLabData, notes: e.target.value })} placeholder="Optional notes..." className="text-sm h-8" data-testid={`visit-lab-edit-notes-${att.id}`} />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button type="button" variant="ghost" size="sm" onClick={cancelEditLab} className="h-7 text-xs"><X className="w-3 h-3 mr-1" />Cancel</Button>
+                              <Button type="button" size="sm" onClick={saveEditLab} className="h-7 text-xs bg-[#0F766E] hover:bg-[#115E59]" data-testid={`visit-lab-edit-save-${att.id}`}><Save className="w-3 h-3 mr-1" />Save</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
+                            onClick={() => handleViewAttachment(att.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? <FileImage className="w-4 h-4 text-white" /> : <File className="w-4 h-4 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{att.filename}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
+                                  <span className="text-xs opacity-75">{att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to open'}</span>
+                                </div>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                              </div>
+                            </div>
+                            {att.notes && <p className="text-xs text-white/80 mt-1.5 pl-12">{att.notes}</p>}
+                          </div>
+                        )}
+                        {editingLabId !== att.id && (
+                          <div className="flex items-center justify-end gap-3 mt-1 px-1">
+                            <span className="text-[11px] text-slate-400">{format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}</span>
+                            <button type="button" onClick={() => startEditLab(att)} className="text-slate-400 hover:text-[#0F766E] transition-colors" data-testid={`visit-lab-edit-${att.id}`} title="Edit"><Edit className="w-3.5 h-3.5" /></button>
+                            <button type="button" onClick={() => handleDeleteAttachment(att.id)} className="text-red-400 hover:text-red-600 transition-colors" data-testid={`visit-lab-delete-${att.id}`} title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Upload bar */}
+              <div className="border-t border-slate-200 pt-3 mt-auto">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input type="file" ref={labFileInputRef} onChange={(e) => setLabFile(e.target.files[0])} accept="image/*,.pdf,.doc,.docx" className="text-sm" data-testid="visit-lab-file-input" />
+                      </div>
+                      <Select value={labUploadData.tag} onValueChange={(v) => setLabUploadData({ ...labUploadData, tag: v })}>
+                        <SelectTrigger className="w-[130px]" data-testid="visit-lab-tag-select"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lab">Lab Result</SelectItem>
+                          <SelectItem value="x-ray">X-Ray</SelectItem>
+                          <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                          <SelectItem value="ecg">ECG</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Input value={labUploadData.notes} onChange={(e) => setLabUploadData({ ...labUploadData, notes: e.target.value })} placeholder="Add a note (optional)..." className="text-sm" data-testid="visit-lab-notes-input" />
+                  </div>
+                  <Button type="button" onClick={handleLabUpload} disabled={!labFile || labUploading} className="bg-[#0F766E] hover:bg-[#115E59] h-11 px-4" data-testid="visit-lab-upload-btn">
+                    {labUploading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
+                  </Button>
+                </div>
+                {labFile && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span className="truncate flex-1">{labFile.name}</span>
+                    <button type="button" onClick={() => { setLabFile(null); if (labFileInputRef.current) labFileInputRef.current.value = ''; }} className="text-slate-400 hover:text-red-500">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
