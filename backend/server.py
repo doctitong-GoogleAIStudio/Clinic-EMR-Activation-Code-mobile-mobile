@@ -526,6 +526,8 @@ async def get_visits(
 
 @api_router.get("/visits/{visit_id}", response_model=VisitResponse)
 async def get_visit(visit_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] == "receptionist":
+        raise HTTPException(status_code=403, detail="Receptionists cannot access visit records")
     visit = await db.visits.find_one({"id": visit_id}, {"_id": 0})
     if not visit:
         raise HTTPException(status_code=404, detail="Visit not found")
