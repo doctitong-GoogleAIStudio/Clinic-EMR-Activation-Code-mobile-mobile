@@ -176,6 +176,17 @@ const PatientProfilePage = () => {
     }
   };
 
+  const handleDeleteVisit = async (visitId, e) => {
+    e.stopPropagation();
+    try {
+      await visitAPI.delete(visitId);
+      toast.success('Visit deleted');
+      fetchPatientData();
+    } catch (error) {
+      toast.error('Failed to delete visit');
+    }
+  };
+
   const handleLabUpload = async () => {
     if (!labFile) return;
     setLabUploading(true);
