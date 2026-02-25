@@ -291,9 +291,64 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Users Management */}
+          {/* Create Receptionist - visible to doctors and admins */}
+          {(isDoctor || isAdmin) && (
+            <Card className="bg-white border-slate-100 shadow-sm mt-6">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-[#0F766E]" />
+                  Create Receptionist Account
+                </CardTitle>
+                <CardDescription>Add a receptionist who can register patients and manage appointments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Full Name</Label>
+                    <Input
+                      value={receptionistForm.full_name}
+                      onChange={(e) => setReceptionistForm({ ...receptionistForm, full_name: e.target.value })}
+                      placeholder="e.g. Maria Santos"
+                      data-testid="receptionist-name-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={receptionistForm.email}
+                      onChange={(e) => setReceptionistForm({ ...receptionistForm, email: e.target.value })}
+                      placeholder="receptionist@clinic.com"
+                      data-testid="receptionist-email-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Password</Label>
+                    <Input
+                      type="password"
+                      value={receptionistForm.password}
+                      onChange={(e) => setReceptionistForm({ ...receptionistForm, password: e.target.value })}
+                      placeholder="Set a password"
+                      data-testid="receptionist-password-input"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    onClick={handleCreateReceptionist}
+                    disabled={creatingReceptionist}
+                    className="bg-[#0F766E] hover:bg-[#115E59]"
+                    data-testid="create-receptionist-btn"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {creatingReceptionist ? 'Creating...' : 'Create Receptionist'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
         {isAdmin && (
           <TabsContent value="users">
             <Card className="bg-white border-slate-100 shadow-sm">
