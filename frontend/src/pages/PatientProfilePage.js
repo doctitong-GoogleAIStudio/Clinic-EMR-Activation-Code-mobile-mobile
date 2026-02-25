@@ -199,6 +199,27 @@ const PatientProfilePage = () => {
     }
   };
 
+  const startEditLab = (att) => {
+    setEditingLabId(att.id);
+    setEditLabData({ filename: att.filename, tag: att.tag, notes: att.notes || '' });
+  };
+
+  const cancelEditLab = () => {
+    setEditingLabId(null);
+    setEditLabData({ filename: '', tag: '', notes: '' });
+  };
+
+  const saveEditLab = async () => {
+    try {
+      await attachmentAPI.update(editingLabId, editLabData);
+      toast.success('File updated');
+      cancelEditLab();
+      fetchPatientData();
+    } catch (error) {
+      toast.error('Failed to update file');
+    }
+  };
+
   const handleViewAttachment = async (attachmentId) => {
     try {
       const res = await attachmentAPI.getOne(attachmentId);
