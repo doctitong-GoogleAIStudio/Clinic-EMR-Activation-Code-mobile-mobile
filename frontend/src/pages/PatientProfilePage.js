@@ -202,9 +202,18 @@ const PatientProfilePage = () => {
       const res = await attachmentAPI.getOne(attachmentId);
       const att = res.data;
       if (att.content_type?.startsWith('image/')) {
-        setViewingAttachment(att);
+        openAttachmentViewer(att);
+      } else if (att.content_type === 'application/pdf') {
+        // Open PDF in new tab
+        const byteChars = atob(att.file_data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
       } else {
-        // Download non-image files
+        // Download other files
         const byteChars = atob(att.file_data);
         const byteNumbers = new Array(byteChars.length);
         for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
