@@ -77,7 +77,7 @@ const Layout = ({ children }) => {
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-heading font-bold text-slate-900">Clinic EMR</h1>
+                <h1 className="font-heading font-bold text-slate-900">{clinicName}</h1>
                 <p className="text-xs text-slate-500">Private Practice</p>
               </div>
             </div>
