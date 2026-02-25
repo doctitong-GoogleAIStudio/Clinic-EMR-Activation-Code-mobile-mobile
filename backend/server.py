@@ -349,6 +349,29 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
     return users
 
+@api_router.post("/users/create-receptionist")
+async def create_receptionist(user: UserCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors or admins can create receptionist accounts")
+    
+    existing = await db.users.find_one({"email": user.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_dict = user.model_dump()
+    user_dict["id"] = str(uuid4())
+    user_dict["role"] = "receptionist"
+    user_dict["password"] = hash_password(user_dict["password"])
+    user_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    user_dict["created_by"] = current_user["id"]
+    
+    await db.users.insert_one(user_dict)
+    user_dict.pop("_id", None)
+    user_dict.pop("password", None)
+    await log_audit(current_user["id"], current_user["full_name"], "create", "receptionist", user_dict["id"], user_dict["full_name"])
+    
+    return {"message": "Receptionist account created", "id": user_dict["id"], "full_name": user_dict["full_name"]}
+
 @api_router.put("/users/{user_id}")
 async def update_user(user_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin" and current_user["id"] != user_id:
