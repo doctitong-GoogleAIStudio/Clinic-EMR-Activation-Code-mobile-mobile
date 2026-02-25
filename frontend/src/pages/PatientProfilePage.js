@@ -766,19 +766,19 @@ const PatientProfilePage = () => {
                               </span>
                               <button
                                 onClick={(e) => { e.stopPropagation(); startEditLab(att); }}
-                                className="text-slate-400 hover:text-[#0F766E] transition-colors"
+                                className="p-1 rounded text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors"
                                 data-testid={`lab-edit-${att.id}`}
                                 title="Edit"
                               >
-                                <Edit className="w-3.5 h-3.5" />
+                                <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteAttachment(att.id)}
-                                className="text-red-400 hover:text-red-600 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att.id); }}
+                                className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                 data-testid={`lab-delete-${att.id}`}
                                 title="Delete"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           )}
