@@ -501,6 +501,8 @@ async def get_visits(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
+    if current_user["role"] == "receptionist":
+        raise HTTPException(status_code=403, detail="Receptionists cannot access visit records")
     # Data isolation: only get visits for patients owned by current user
     owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
     owned_patient_ids = [p["id"] for p in owned_patients]
