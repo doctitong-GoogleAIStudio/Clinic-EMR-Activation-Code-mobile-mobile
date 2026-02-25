@@ -50,7 +50,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 ## Credentials
 - Admin: admin@clinic.com / admin123
 
-## P0 - Completed
+## Recent Changes
+- **Feb 25, 2026**: Enhanced Labs & Imaging file viewer with zoom controls (slider, +/- buttons, mouse wheel), drag-to-pan (up/down, side to side), reset/fit buttons, and download. PDFs open in new tab.
 - [x] Data isolation verified (backend + frontend testing passed)
 - [x] Labs & Imaging with messenger-style UI
 
