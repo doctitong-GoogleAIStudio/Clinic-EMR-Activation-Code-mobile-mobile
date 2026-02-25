@@ -71,6 +71,12 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class ReceptionistCreate(BaseModel):
+    """Model for creating receptionist accounts - role is auto-set"""
+    email: EmailStr
+    full_name: str
+    password: str
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
