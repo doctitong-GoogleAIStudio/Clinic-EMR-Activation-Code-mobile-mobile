@@ -94,7 +94,11 @@ const SettingsPage = () => {
       });
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create user');
+      const detail = error.response?.data?.detail;
+      const errorMsg = Array.isArray(detail) 
+        ? detail.map(e => e.msg || e.message).join(', ')
+        : (typeof detail === 'string' ? detail : 'Failed to create user');
+      toast.error(errorMsg);
     }
   };
 
