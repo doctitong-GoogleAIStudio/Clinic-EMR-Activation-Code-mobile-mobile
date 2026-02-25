@@ -614,11 +614,13 @@ const PatientProfilePage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {visits.map((visit) => {
-                    const visitDate = format(parseISO(visit.created_at), 'yyyy-MM-dd');
-                    const visitLabs = labImagingAttachments.filter(a => 
-                      format(parseISO(a.uploaded_at), 'yyyy-MM-dd') === visitDate
-                    );
+                  {visits.map((visit, idx) => {
+                    const visitTime = new Date(visit.created_at).getTime();
+                    const nextVisitTime = idx > 0 ? new Date(visits[idx - 1].created_at).getTime() : Infinity;
+                    const visitLabs = labImagingAttachments.filter(a => {
+                      const t = new Date(a.uploaded_at).getTime();
+                      return t >= visitTime && t < nextVisitTime;
+                    });
                     return (
                     <div 
                       key={visit.id}
