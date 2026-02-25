@@ -601,8 +601,17 @@ async def get_attachments(
     if visit_id:
         query["visit_id"] = visit_id
     
-    attachments = await db.attachments.find(query, {"_id": 0}).sort("uploaded_at", -1).to_list(100)
+    # Exclude file_data from list queries for performance
+    attachments = await db.attachments.find(query, {"_id": 0, "file_data": 0}).sort("uploaded_at", -1).to_list(100)
     return attachments
+
+@api_router.get("/attachments/{attachment_id}")
+async def get_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
+    """Get single attachment with file data for viewing/downloading"""
+    attachment = await db.attachments.find_one({"id": attachment_id}, {"_id": 0})
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    return attachment
 
 @api_router.delete("/attachments/{attachment_id}")
 async def delete_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
