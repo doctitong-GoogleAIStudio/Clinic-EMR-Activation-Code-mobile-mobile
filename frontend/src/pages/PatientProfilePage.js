@@ -24,7 +24,7 @@ import { format, parseISO } from 'date-fns';
 const PatientProfilePage = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { isDoctor, isAdmin, user } = useAuth();
+  const { isDoctor, isAdmin, isReceptionist, user } = useAuth();
   const fileInputRef = useRef(null);
   const docPrintRef = useRef(null);
   
