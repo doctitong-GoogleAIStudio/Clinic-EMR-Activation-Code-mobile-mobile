@@ -83,11 +83,22 @@ const VisitDetailPage = () => {
       const patientRes = await patientAPI.getOne(visitRes.data.patient_id);
       setPatient(patientRes.data);
       
-      // Fetch lab/imaging attachments for this patient
+      // Fetch lab/imaging attachments matching this visit's time window
       try {
-        const attRes = await attachmentAPI.getAll({ patient_id: visitRes.data.patient_id });
-        const labs = (attRes.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
-        setLabAttachments(labs);
+        const [attRes, visitsRes] = await Promise.all([
+          attachmentAPI.getAll({ patient_id: visitRes.data.patient_id }),
+          visitAPI.getAll({ patient_id: visitRes.data.patient_id })
+        ]);
+        const allLabs = (attRes.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
+        const allVisits = (visitsRes.data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const thisVisitTime = new Date(visitRes.data.created_at).getTime();
+        const thisIdx = allVisits.findIndex(v => v.id === visitId);
+        const nextVisitTime = thisIdx > 0 ? new Date(allVisits[thisIdx - 1].created_at).getTime() : Infinity;
+        const filteredLabs = allLabs.filter(a => {
+          const t = new Date(a.uploaded_at).getTime();
+          return t >= thisVisitTime && t < nextVisitTime;
+        });
+        setLabAttachments(filteredLabs);
       } catch (e) { /* silent */ }
     } catch (error) {
       toast.error('Failed to load visit');
