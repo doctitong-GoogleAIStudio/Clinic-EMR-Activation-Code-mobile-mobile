@@ -82,16 +82,6 @@ const NewVisitPage = () => {
     }
   };
 
-  const fetchLabAttachments = async () => {
-    try {
-      const res = await attachmentAPI.getAll({ patient_id: patientId });
-      const labs = (res.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
-      setLabAttachments(labs);
-    } catch (error) {
-      // Silent fail - labs section is supplementary
-    }
-  };
-
   const tagColors = {
     lab: 'bg-purple-100 text-purple-800',
     'x-ray': 'bg-blue-100 text-blue-800',
