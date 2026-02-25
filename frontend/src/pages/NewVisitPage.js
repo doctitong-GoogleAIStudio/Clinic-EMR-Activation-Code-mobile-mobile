@@ -153,7 +153,7 @@ const NewVisitPage = () => {
     try {
       await attachmentAPI.delete(id);
       toast.success('File deleted');
-      fetchLabAttachments();
+      setLabAttachments(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       toast.error('Failed to delete file');
     }
