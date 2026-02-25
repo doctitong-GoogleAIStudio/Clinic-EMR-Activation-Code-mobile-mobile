@@ -768,17 +768,24 @@ async def get_audit_logs(
 
 # ============== EXPORT ROUTES ==============
 @api_router.get("/export/patients")
-async def export_patients(current_user: dict = Depends(get_current_user)):
+async def export_patients(
+    limit: int = Query(default=1000, le=5000),
+    skip: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user)
+):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    patients = await db.patients.find({}, {"_id": 0}).to_list(10000)
-    return {"data": patients, "count": len(patients)}
+    total_count = await db.patients.count_documents({})
+    patients = await db.patients.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    return {"data": patients, "count": len(patients), "total": total_count, "skip": skip, "limit": limit}
 
 @api_router.get("/export/visits")
 async def export_visits(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    limit: int = Query(default=1000, le=5000),
+    skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] != "admin":
@@ -793,8 +800,9 @@ async def export_visits(
         else:
             query["created_at"] = {"$lte": date_to}
     
-    visits = await db.visits.find(query, {"_id": 0}).to_list(10000)
-    return {"data": visits, "count": len(visits)}
+    total_count = await db.visits.count_documents(query)
+    visits = await db.visits.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    return {"data": visits, "count": len(visits), "total": total_count, "skip": skip, "limit": limit}
 
 # ============== DASHBOARD STATS ==============
 @api_router.get("/dashboard/stats")
