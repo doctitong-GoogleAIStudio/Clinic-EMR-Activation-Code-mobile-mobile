@@ -834,17 +834,23 @@ async def get_certificates(
 # ============== CLINIC SETTINGS ==============
 @api_router.get("/settings")
 async def get_settings(current_user: dict = Depends(get_current_user)):
-    settings = await db.settings.find_one({}, {"_id": 0})
+    settings = await db.settings.find_one({"owner_id": current_user["id"]}, {"_id": 0})
     if not settings:
-        settings = ClinicSettings().model_dump()
+        # Pre-fill with the user's signup data
+        settings = ClinicSettings(
+            clinic_name=current_user.get("full_name", ""),
+            email=current_user.get("email", ""),
+            license_no=current_user.get("license_no", ""),
+        ).model_dump()
     return settings
 
 @api_router.put("/settings")
 async def update_settings(settings: ClinicSettings, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    await db.settings.update_one({}, {"$set": settings.model_dump()}, upsert=True)
+    await db.settings.update_one(
+        {"owner_id": current_user["id"]},
+        {"$set": {**settings.model_dump(), "owner_id": current_user["id"]}},
+        upsert=True
+    )
     await log_audit(current_user["id"], current_user["full_name"], "update", "settings", "clinic")
     return {"message": "Settings updated"}
 
