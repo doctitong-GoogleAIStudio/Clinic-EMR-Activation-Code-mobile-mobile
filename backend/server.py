@@ -548,6 +548,19 @@ async def update_visit(visit_id: str, updates: VisitUpdate, current_user: dict =
     visit = await db.visits.find_one({"id": visit_id}, {"_id": 0})
     return visit
 
+@api_router.delete("/visits/{visit_id}")
+async def delete_visit(visit_id: str, current_user: dict = Depends(get_current_user)):
+    visit = await db.visits.find_one({"id": visit_id})
+    if not visit or not await verify_patient_ownership(visit["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Visit not found")
+    
+    await db.visits.delete_one({"id": visit_id})
+    await db.prescriptions.delete_many({"visit_id": visit_id})
+    await db.certificates.delete_many({"visit_id": visit_id})
+    await log_audit(current_user["id"], current_user["full_name"], "delete", "visit", visit_id)
+    
+    return {"message": "Visit deleted"}
+
 # ============== APPOINTMENT ROUTES ==============
 @api_router.post("/appointments", response_model=AppointmentResponse)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
