@@ -424,6 +424,53 @@ const VisitDetailPage = () => {
             </CardContent>
           </Card>
 
+          {/* Labs & Imaging */}
+          {labAttachments.length > 0 && (
+            <Card className="bg-white border-slate-100 shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <Microscope className="w-5 h-5 text-[#0F766E]" />
+                  Labs & Imaging
+                  <Badge variant="outline" className="ml-1 font-mono text-xs">{labAttachments.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3" data-testid="visit-detail-labs-list">
+                  {labAttachments.map((att) => (
+                    <div key={att.id} className="flex justify-end" data-testid={`detail-lab-item-${att.id}`}>
+                      <div className="max-w-[80%] sm:max-w-[70%]">
+                        <div
+                          className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
+                          onClick={() => handleViewAttachment(att.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                              {att.content_type?.startsWith('image/') ? <FileImage className="w-4 h-4 text-white" /> : <File className="w-4 h-4 text-white" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{att.filename}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
+                                <span className="text-xs opacity-75">{att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to open'}</span>
+                              </div>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                              {att.content_type?.startsWith('image/') ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                            </div>
+                          </div>
+                          {att.notes && <p className="text-xs text-white/80 mt-1.5 pl-12">{att.notes}</p>}
+                        </div>
+                        <div className="flex items-center justify-end gap-2 mt-1 px-1">
+                          <span className="text-[11px] text-slate-400">{format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Patient Instructions */}
           {(visit.patient_instructions || visit.warning_signs) && (
             <Card className="bg-white border-slate-100 shadow-sm">
