@@ -305,6 +305,17 @@ async def log_audit(user_id: str, user_name: str, action: str, entity_type: str,
     }
     await db.audit_logs.insert_one(log)
 
+async def get_owner_id_for_user(current_user: dict) -> str:
+    """
+    Returns the owner_id to use for data queries.
+    - For receptionist: returns the ID of the doctor who created them (created_by)
+    - For others: returns their own ID
+    """
+    if current_user["role"] == "receptionist":
+        # Receptionist sees data of the doctor who invited them
+        return current_user.get("created_by", current_user["id"])
+    return current_user["id"]
+
 # ============== AUTH ROUTES ==============
 @api_router.post("/auth/register", response_model=UserResponse)
 async def register_user(user: UserCreate):
