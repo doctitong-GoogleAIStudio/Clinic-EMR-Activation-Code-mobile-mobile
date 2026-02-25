@@ -201,6 +201,66 @@ const VisitDetailPage = () => {
     return names[type] || type;
   };
 
+  const tagColors = {
+    lab: 'bg-purple-100 text-purple-800',
+    'x-ray': 'bg-blue-100 text-blue-800',
+    ultrasound: 'bg-cyan-100 text-cyan-800',
+    ecg: 'bg-rose-100 text-rose-800',
+  };
+
+  const handleViewAttachment = async (attachmentId) => {
+    try {
+      const res = await attachmentAPI.getOne(attachmentId);
+      const att = res.data;
+      if (att.content_type?.startsWith('image/')) {
+        setZoom(1); setPan({ x: 0, y: 0 });
+        setViewingAttachment(att);
+      } else if (att.content_type === 'application/pdf') {
+        const byteChars = atob(att.file_data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+        window.open(URL.createObjectURL(blob), '_blank');
+      } else {
+        const byteChars = atob(att.file_data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      toast.error('Failed to load file');
+    }
+  };
+
+  const downloadFile = (att) => {
+    const byteChars = atob(att.file_data);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const resetViewer = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    setZoom(z => Math.min(5, Math.max(0.25, z + (e.deltaY > 0 ? -0.15 : 0.15))));
+  }, []);
+  const handlePointerDown = useCallback((e) => {
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [pan]);
+  const handlePointerMove = useCallback((e) => {
+    if (!isPanning) return;
+    setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  }, [isPanning, panStart]);
+  const handlePointerUp = useCallback(() => { setIsPanning(false); }, []);
+
   if (loading || !visit || !patient) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
