@@ -83,7 +83,7 @@ const VisitDetailPage = () => {
       const patientRes = await patientAPI.getOne(visitRes.data.patient_id);
       setPatient(patientRes.data);
       
-      // Fetch lab/imaging attachments uploaded on same date, after this visit's time
+      // Fetch lab/imaging attachments uploaded BEFORE this visit but AFTER the previous visit
       try {
         const [attRes, visitsRes] = await Promise.all([
           attachmentAPI.getAll({ patient_id: visitRes.data.patient_id }),
@@ -91,16 +91,12 @@ const VisitDetailPage = () => {
         ]);
         const allLabs = (attRes.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
         const allVisits = (visitsRes.data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        const visitDate = new Date(visitRes.data.created_at);
-        const visitDateStr = visitDate.toISOString().slice(0, 10);
-        const thisVisitTime = visitDate.getTime();
+        const thisVisitTime = new Date(visitRes.data.created_at).getTime();
         const thisIdx = allVisits.findIndex(v => v.id === visitId);
-        const nextVisitTime = thisIdx > 0 ? new Date(allVisits[thisIdx - 1].created_at).getTime() : Infinity;
+        const prevVisitTime = thisIdx < allVisits.length - 1 ? new Date(allVisits[thisIdx + 1].created_at).getTime() : 0;
         const filteredLabs = allLabs.filter(a => {
-          const uploadDate = new Date(a.uploaded_at);
-          const uploadDateStr = uploadDate.toISOString().slice(0, 10);
-          const t = uploadDate.getTime();
-          return uploadDateStr === visitDateStr && t >= thisVisitTime && t < nextVisitTime;
+          const t = new Date(a.uploaded_at).getTime();
+          return t > prevVisitTime && t <= thisVisitTime;
         });
         setLabAttachments(filteredLabs);
       } catch (e) { /* silent */ }
