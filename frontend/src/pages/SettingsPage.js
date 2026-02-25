@@ -109,7 +109,12 @@ const SettingsPage = () => {
       toast.success('Receptionist account created');
       setReceptionistForm({ full_name: '', email: '', password: '' });
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create receptionist');
+      const detail = error.response?.data?.detail;
+      // Handle Pydantic validation errors (array) vs string errors
+      const errorMsg = Array.isArray(detail) 
+        ? detail.map(e => e.msg || e.message).join(', ')
+        : (typeof detail === 'string' ? detail : 'Failed to create receptionist');
+      toast.error(errorMsg);
     } finally {
       setCreatingReceptionist(false);
     }
