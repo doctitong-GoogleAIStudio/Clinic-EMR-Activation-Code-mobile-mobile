@@ -608,8 +608,10 @@ async def get_appointments(
 @api_router.get("/appointments/today", response_model=List[AppointmentResponse])
 async def get_today_appointments(current_user: dict = Depends(get_current_user)):
     today = date.today().isoformat()
-    # Data isolation: only show own appointments
-    appointments = await db.appointments.find({"date": today, "owner_id": current_user["id"]}, {"_id": 0}).sort("time", 1).to_list(100)
+    if current_user["role"] == "receptionist":
+        appointments = await db.appointments.find({"date": today}, {"_id": 0}).sort("time", 1).to_list(100)
+    else:
+        appointments = await db.appointments.find({"date": today, "owner_id": current_user["id"]}, {"_id": 0}).sort("time", 1).to_list(100)
     return appointments
 
 @api_router.get("/queue/today", response_model=List[AppointmentResponse])
