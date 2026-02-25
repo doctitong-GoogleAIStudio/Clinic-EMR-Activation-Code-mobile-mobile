@@ -188,19 +188,22 @@ const PatientProfilePage = () => {
   };
 
   const handleLabUpload = async () => {
-    if (!labFile) return;
+    if (!labFile || labUploading) return;
+    const fileToUpload = labFile;
+    const tagToUpload = labUploadData.tag;
+    const notesToUpload = labUploadData.notes;
+    setLabFile(null);
+    setLabUploadData({ tag: 'lab', notes: '' });
+    if (labFileInputRef.current) labFileInputRef.current.value = '';
     setLabUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', labFile);
+      formData.append('file', fileToUpload);
       formData.append('patient_id', patientId);
-      formData.append('tag', labUploadData.tag);
-      formData.append('notes', labUploadData.notes);
+      formData.append('tag', tagToUpload);
+      formData.append('notes', notesToUpload);
       await attachmentAPI.upload(formData);
       toast.success('File uploaded');
-      setLabFile(null);
-      setLabUploadData({ tag: 'lab', notes: '' });
-      if (labFileInputRef.current) labFileInputRef.current.value = '';
       fetchPatientData();
     } catch (error) {
       toast.error('Failed to upload file');
