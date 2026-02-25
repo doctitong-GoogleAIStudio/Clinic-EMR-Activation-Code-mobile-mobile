@@ -1,100 +1,67 @@
 # Private Clinic EMR - Product Requirements Document
 
 ## Original Problem Statement
-Build a secure Private Clinic EMR web app (mobile-responsive, printable) for Internal Medicine but generic for all medical specialties.
+Build a fast, simple, and profitable **Private Clinic EMR** web application.
 
-## User Personas
-1. **Doctor** - Full access to all features including SOAP notes, prescriptions, certificates, AI assistance
-2. **Receptionist** - Patient registration, scheduling, queue management, printing forms (cannot edit doctor notes)
-3. **Admin** - User management, clinic settings, data exports, audit logs
+## Users & Roles
+- **Doctor**: Manage patients, document visits, print forms, AI-assisted notes
+- **Receptionist**: Register patients, manage appointments
+- **Admin**: Manage users, clinic settings
 
-## Core Requirements
-- Login + role-based access control
-- Patient registry with search (name, mobile, patient ID)
-- Visit/consultation with SOAP notes and vitals
-- Prescription, Medical Certificate, Fit-to-Work, Referral printing
-- Calendar-based appointments + walk-in queue
-- AI features (SOAP conversion, diagnosis suggestions, patient instructions)
-- File attachments with tagging (Lab, X-ray, Ultrasound, ECG, Other)
+## Tech Stack
+- **Frontend**: React, Tailwind CSS, shadcn/ui, Recharts, react-to-print, lucide-react
+- **Backend**: FastAPI, Pydantic, Motor (async MongoDB), JWT auth
+- **Database**: MongoDB
+- **AI**: Emergent LLM Key (GPT-5.2 via emergentintegrations)
 
-## What's Been Implemented (Feb 24, 2026)
+## Core Features - Implemented
+- [x] Login & public Sign Up
+- [x] Patient registry (CRUD) with search
+- [x] Consultation notes (SOAP format) and vitals tracking
+- [x] Calendar-based appointments and walk-in queue
+- [x] Printing of Prescriptions (Rx), Medical Certificates, Fit-to-Work, Referral forms
+- [x] File uploads for patient attachments with tagging (Lab, X-ray, Ultrasound, ECG)
+- [x] **Labs & Imaging tab** - Messenger-style file upload/display (Feb 25, 2026)
+- [x] Patient deletion with cascade
+- [x] About page with developer credits
+- [x] Data isolation (owner_id on all collections)
+- [x] Performance: DB indexes and API pagination
+- [x] Dashboard with stats
+- [x] AI assist (SOAP convert, diagnosis suggest, patient instructions)
 
-### Backend (FastAPI + MongoDB)
-- ✅ User authentication with JWT tokens
-- ✅ Role-based access control (Admin, Doctor, Receptionist)
-- ✅ Patient CRUD with auto-generated patient IDs
-- ✅ Visit/consultation management with SOAP notes
-- ✅ Vitals capture with auto BMI calculation
-- ✅ Appointment scheduling and queue management
-- ✅ File attachments with base64 encoding
-- ✅ Prescription and certificate storage
-- ✅ Clinic settings management
-- ✅ AI integration with OpenAI GPT-5.2 via Emergent LLM Key
-- ✅ Audit logging for important actions
-- ✅ Data export functionality (patients, visits)
+## Key DB Schema
+- **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization}`
+- **patients**: `{id, patient_id, full_name, birthdate, sex, ..., owner_id}`
+- **visits**: `{id, patient_id, vitals, soap_*, ..., created_by, owner_id}`
+- **appointments**: `{id, patient_id, date, time, status, ..., owner_id}`
+- **attachments**: `{id, patient_id, visit_id, filename, file_data, content_type, tag, notes, uploaded_by}`
+- **prescriptions**: `{id, patient_id, visit_id, medications, notes, created_by}`
+- **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
 
-### Frontend (React + Shadcn UI + Tailwind CSS)
-- ✅ Login page with demo credentials display
-- ✅ Dashboard with bento grid layout (queue, stats, appointments)
-- ✅ Patient list with search functionality
-- ✅ Patient profile with tabs (Info, Visits, Attachments)
-- ✅ New patient registration form
-- ✅ Visit form with vitals and SOAP notes
-- ✅ AI assistance buttons (SOAP convert, diagnosis suggest, patient instructions)
-- ✅ Visit detail page with print forms
-- ✅ Prescription form with multiple medications
-- ✅ Medical Certificate, Fit-to-Work, Referral forms
-- ✅ Print templates with clinic header and doctor signature
-- ✅ Appointments calendar with status management
-- ✅ Settings page (Clinic, Users, Exports, Audit)
-- ✅ Responsive sidebar navigation
-- ✅ Mobile-first design
+## Key API Endpoints
+- `POST /api/auth/register` | `POST /api/auth/login`
+- `GET/POST /api/patients` | `GET/PUT/DELETE /api/patients/{id}`
+- `GET/POST /api/visits` | `GET/PUT /api/visits/{id}`
+- `GET/POST /api/appointments` | `PUT/DELETE /api/appointments/{id}`
+- `GET/POST /api/attachments` | `GET/DELETE /api/attachments/{id}`
+- `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
+- `GET/PUT /api/settings` | `POST /api/ai/assist`
 
-### Design System
-- Theme: Organic & Earthy (Teal #0F766E + Orange accent #F97316)
-- Typography: Manrope (headings), Public Sans (body), Merriweather (print)
-- Components: Shadcn UI with custom styling
+## Credentials
+- Admin: admin@clinic.com / admin123
 
-## Prioritized Backlog
+## P0 - Completed
+- [x] Data isolation verified (backend + frontend testing passed)
+- [x] Labs & Imaging with messenger-style UI
 
-### P0 - Critical (Completed)
-- ✅ Authentication and authorization
-- ✅ Patient management
-- ✅ Visit/SOAP notes
-- ✅ Queue management
-- ✅ Print forms (Rx, MedCert)
+## P1 - Upcoming Tasks
+- [ ] Admin approval for new sign-ups
+- [ ] Attachment tagging improvements
 
-### P1 - High Priority (Future)
-- [ ] Lab/Radiology request forms
-- [ ] Referral tracking
-- [ ] SMS/Email appointment reminders
-- [ ] Report generation (daily/weekly/monthly)
-- [ ] Doctor schedule management
-
-### P2 - Medium Priority (Future)
-- [ ] Simple billing/invoicing
-- [ ] Inventory management for medications
-- [ ] Multi-clinic support
-- [ ] Patient portal (view own records)
-- [ ] ICD-10 code lookup integration
-
-### P3 - Nice to Have (Future)
-- [ ] Offline mode (PWA)
-- [ ] Voice-to-text for SOAP notes
-- [ ] Drug interaction checker
-- [ ] HL7/FHIR integration
-- [ ] Telemedicine video calls
-
-## Next Action Items
-1. Add doctor user with proper credentials (License, PTR, PRC numbers)
-2. Configure clinic settings (name, address, logo for print forms)
-3. Test AI features for SOAP note conversion
-4. Set up regular database backups
-5. Add more users based on clinic staff
-
-## Technical Notes
-- Backend: FastAPI on port 8001
-- Frontend: React on port 3000
-- Database: MongoDB
-- AI: OpenAI GPT-5.2 via Emergent LLM Key
-- Default admin: admin@clinic.com / admin123
+## P2 - Future/Backlog
+- [ ] Lab/Rad request forms
+- [ ] Simple inventory management
+- [ ] Billing/OR and receipt printing
+- [ ] Email/SMS appointment reminders
+- [ ] Differentiate print forms for Fit-to-Work vs Referral letters
+- [ ] Refactor: Extract print template logic into reusable components
