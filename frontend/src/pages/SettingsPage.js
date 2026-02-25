@@ -18,7 +18,9 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 const SettingsPage = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isDoctor } = useAuth();
+  const [receptionistForm, setReceptionistForm] = useState({ full_name: '', email: '', password: '' });
+  const [creatingReceptionist, setCreatingReceptionist] = useState(false);
   const [settings, setSettings] = useState({
     clinic_name: '',
     address: '',
