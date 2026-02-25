@@ -46,6 +46,7 @@ export const appointmentAPI = {
 // Attachment APIs
 export const attachmentAPI = {
   getAll: (params) => axios.get(`${API}/attachments`, { params }),
+  getOne: (id) => axios.get(`${API}/attachments/${id}`),
   upload: (formData) => axios.post(`${API}/attachments`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
