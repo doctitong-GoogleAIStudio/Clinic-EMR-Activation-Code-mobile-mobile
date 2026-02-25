@@ -489,8 +489,14 @@ async def get_visits(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    query = {}
+    # Data isolation: only get visits for patients owned by current user
+    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+    owned_patient_ids = [p["id"] for p in owned_patients]
+    
+    query = {"patient_id": {"$in": owned_patient_ids}}
     if patient_id:
+        if patient_id not in owned_patient_ids:
+            return []
         query["patient_id"] = patient_id
     
     if date_from or date_to:
@@ -509,12 +515,22 @@ async def get_visit(visit_id: str, current_user: dict = Depends(get_current_user
     visit = await db.visits.find_one({"id": visit_id}, {"_id": 0})
     if not visit:
         raise HTTPException(status_code=404, detail="Visit not found")
+    
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(visit["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Visit not found")
+    
     return visit
 
 @api_router.put("/visits/{visit_id}", response_model=VisitResponse)
 async def update_visit(visit_id: str, updates: VisitUpdate, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Only doctors can update visits")
+    
+    # Data isolation: verify ownership
+    visit = await db.visits.find_one({"id": visit_id})
+    if not visit or not await verify_patient_ownership(visit["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Visit not found")
     
     update_dict = {k: v for k, v in updates.model_dump().items() if v is not None}
     update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -535,9 +551,14 @@ async def update_visit(visit_id: str, updates: VisitUpdate, current_user: dict =
 # ============== APPOINTMENT ROUTES ==============
 @api_router.post("/appointments", response_model=AppointmentResponse)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(appointment.patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
     apt_dict = appointment.model_dump()
     apt_dict["id"] = str(uuid.uuid4())
     apt_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    apt_dict["owner_id"] = current_user["id"]
     
     await db.appointments.insert_one(apt_dict)
     apt_dict.pop("_id", None)
