@@ -149,6 +149,13 @@ const LoginPage = () => {
                   </span>
                 )}
               </Button>
+
+              <p className="text-center text-sm text-slate-600">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-[#0F766E] font-medium hover:underline">
+                  Sign Up
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>
