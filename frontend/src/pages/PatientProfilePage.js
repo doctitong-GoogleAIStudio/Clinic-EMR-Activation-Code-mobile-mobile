@@ -367,6 +367,7 @@ const PatientProfilePage = () => {
         <TabsList className="bg-slate-100">
           <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
           <TabsTrigger value="visits" data-testid="tab-visits">Visits ({visits.length})</TabsTrigger>
+          <TabsTrigger value="labs" data-testid="tab-labs">Labs & Imaging ({labImagingAttachments.length})</TabsTrigger>
           <TabsTrigger value="documents" data-testid="tab-documents">Documents ({prescriptions.length + certificates.length})</TabsTrigger>
           <TabsTrigger value="attachments" data-testid="tab-attachments">Attachments ({attachments.length})</TabsTrigger>
         </TabsList>
