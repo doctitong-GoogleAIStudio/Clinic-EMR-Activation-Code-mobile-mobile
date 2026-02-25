@@ -761,13 +761,13 @@ const PatientProfilePage = () => {
                           )}
                           {/* Timestamp + edit + delete */}
                           {editingLabId !== att.id && (
-                            <div className="flex items-center justify-end gap-2 mt-1 px-1">
+                            <div className="flex items-center justify-end gap-3 mt-1 px-1">
                               <span className="text-[11px] text-slate-400">
                                 {format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}
                               </span>
                               <button
                                 onClick={(e) => { e.stopPropagation(); startEditLab(att); }}
-                                className="text-slate-300 hover:text-[#0F766E] transition-colors"
+                                className="text-slate-400 hover:text-[#0F766E] transition-colors"
                                 data-testid={`lab-edit-${att.id}`}
                                 title="Edit"
                               >
@@ -775,7 +775,7 @@ const PatientProfilePage = () => {
                               </button>
                               <button
                                 onClick={() => handleDeleteAttachment(att.id)}
-                                className="text-slate-300 hover:text-red-500 transition-colors"
+                                className="text-red-400 hover:text-red-600 transition-colors"
                                 data-testid={`lab-delete-${att.id}`}
                                 title="Delete"
                               >
