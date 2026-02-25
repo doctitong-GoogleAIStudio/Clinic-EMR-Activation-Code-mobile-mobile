@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   User, Phone, Mail, MapPin, Calendar, Heart, AlertTriangle, 
   Edit, Save, Plus, FileText, Image, Upload, Trash2, 
-  Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer, AlertCircle
+  Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer, AlertCircle,
+  Microscope, Download, Eye, FileImage, File
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
