@@ -35,6 +35,14 @@ const VisitDetailPage = () => {
   const [showViewRx, setShowViewRx] = useState(false);
   const [showViewCert, setShowViewCert] = useState(false);
   
+  // Labs & Imaging state
+  const [labAttachments, setLabAttachments] = useState([]);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  
   // Print refs
   const prescriptionRef = useRef();
   const medCertRef = useRef();
