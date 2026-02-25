@@ -376,6 +376,8 @@ async def create_patient(patient: PatientCreate, current_user: dict = Depends(ge
 @api_router.get("/patients", response_model=List[PatientResponse])
 async def get_patients(
     search: Optional[str] = None,
+    limit: int = Query(default=100, le=500),
+    skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
     query = {}
@@ -388,7 +390,7 @@ async def get_patients(
             ]
         }
     
-    patients = await db.patients.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    patients = await db.patients.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     # Recalculate ages
     for p in patients:
         p["age"] = calculate_age(p.get("birthdate", ""))
