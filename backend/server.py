@@ -366,6 +366,7 @@ async def create_patient(patient: PatientCreate, current_user: dict = Depends(ge
     patient_dict["age"] = calculate_age(patient.birthdate)
     patient_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     patient_dict["updated_at"] = patient_dict["created_at"]
+    patient_dict["owner_id"] = current_user["id"]  # Data isolation: track owner
     
     await db.patients.insert_one(patient_dict)
     await log_audit(current_user["id"], current_user["full_name"], "create", "patient", patient_dict["id"], patient.full_name)
@@ -380,15 +381,14 @@ async def get_patients(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    query = {}
+    # Data isolation: only show patients owned by current user
+    query = {"owner_id": current_user["id"]}
     if search:
-        query = {
-            "$or": [
-                {"full_name": {"$regex": search, "$options": "i"}},
-                {"mobile": {"$regex": search, "$options": "i"}},
-                {"patient_id": {"$regex": search, "$options": "i"}}
-            ]
-        }
+        query["$or"] = [
+            {"full_name": {"$regex": search, "$options": "i"}},
+            {"mobile": {"$regex": search, "$options": "i"}},
+            {"patient_id": {"$regex": search, "$options": "i"}}
+        ]
     
     patients = await db.patients.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     # Recalculate ages
