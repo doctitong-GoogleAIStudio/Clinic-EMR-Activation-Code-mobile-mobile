@@ -144,7 +144,6 @@ const SignUpPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="doctor">Doctor</SelectItem>
-                      <SelectItem value="receptionist">Receptionist</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
