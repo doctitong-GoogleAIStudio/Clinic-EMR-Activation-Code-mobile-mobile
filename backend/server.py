@@ -356,7 +356,7 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     return users
 
 @api_router.post("/users/create-receptionist")
-async def create_receptionist(user: UserCreate, current_user: dict = Depends(get_current_user)):
+async def create_receptionist(user: ReceptionistCreate, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Only doctors or admins can create receptionist accounts")
     
@@ -370,6 +370,7 @@ async def create_receptionist(user: UserCreate, current_user: dict = Depends(get
     user_dict["password"] = hash_password(user_dict["password"])
     user_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     user_dict["created_by"] = current_user["id"]
+    user_dict["is_active"] = True
     
     await db.users.insert_one(user_dict)
     user_dict.pop("_id", None)
