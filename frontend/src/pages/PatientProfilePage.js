@@ -614,71 +614,34 @@ const PatientProfilePage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {visits.map((visit, idx) => {
-                    const visitLabs = idx === 0 ? labImagingAttachments : [];
-                    return (
+                  {visits.map((visit) => (
                     <div 
                       key={visit.id}
-                      className="rounded-xl border border-slate-200 hover:border-[#0F766E]/30 hover:shadow-sm transition-all overflow-hidden"
+                      className="p-4 rounded-xl border border-slate-200 hover:border-[#0F766E]/30 hover:shadow-sm transition-all cursor-pointer"
+                      onClick={() => navigate(`/visits/${visit.id}`)}
                       data-testid={`visit-${visit.id}`}
                     >
-                      <div 
-                        className="p-4 cursor-pointer"
-                        onClick={() => navigate(`/visits/${visit.id}`)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-slate-900">
-                              {format(parseISO(visit.created_at), 'MMMM d, yyyy')} at {format(parseISO(visit.created_at), 'h:mm a')}
-                            </p>
-                            <p className="text-sm text-slate-500">Dr. {visit.created_by_name}</p>
-                            {visit.soap_assessment && (
-                              <p className="text-sm text-slate-700 mt-2 line-clamp-2">{visit.soap_assessment}</p>
-                            )}
-                          </div>
-                          {visit.vitals && (
-                            <div className="text-right text-sm text-slate-500">
-                              {visit.vitals.bp_systolic && visit.vitals.bp_diastolic && (
-                                <p>BP: {visit.vitals.bp_systolic}/{visit.vitals.bp_diastolic}</p>
-                              )}
-                              {visit.vitals.temperature && <p>Temp: {visit.vitals.temperature}°C</p>}
-                            </div>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-slate-900">
+                            {format(parseISO(visit.created_at), 'MMMM d, yyyy')} at {format(parseISO(visit.created_at), 'h:mm a')}
+                          </p>
+                          <p className="text-sm text-slate-500">Dr. {visit.created_by_name}</p>
+                          {visit.soap_assessment && (
+                            <p className="text-sm text-slate-700 mt-2 line-clamp-2">{visit.soap_assessment}</p>
                           )}
                         </div>
-                      </div>
-                      {visitLabs.length > 0 && (
-                        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-3">
-                          <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5 mb-2">
-                            <Microscope className="w-3.5 h-3.5 text-[#0F766E]" />
-                            Labs & Imaging ({visitLabs.length})
-                          </p>
-                          <div className="space-y-2">
-                            {visitLabs.map((att) => (
-                              <div 
-                                key={att.id}
-                                className="flex items-center gap-3 p-2 rounded-lg bg-white border border-slate-200 hover:border-[#0F766E]/40 cursor-pointer transition-colors"
-                                onClick={(e) => { e.stopPropagation(); handleViewAttachment(att.id); }}
-                                data-testid={`visit-lab-file-${att.id}`}
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-[#0F766E] flex items-center justify-center flex-shrink-0">
-                                  {att.content_type?.startsWith('image/') ? <FileImage className="w-4 h-4 text-white" /> : <File className="w-4 h-4 text-white" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-800 truncate">{att.filename}</p>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] uppercase tracking-wider text-[#0F766E] font-semibold">{att.tag}</span>
-                                    {att.notes && <span className="text-xs text-slate-400 truncate">{att.notes}</span>}
-                                  </div>
-                                </div>
-                                <span className="text-[10px] text-slate-400 flex-shrink-0">{format(parseISO(att.uploaded_at), 'h:mm a')}</span>
-                              </div>
-                            ))}
+                        {visit.vitals && (
+                          <div className="text-right text-sm text-slate-500">
+                            {visit.vitals.bp_systolic && visit.vitals.bp_diastolic && (
+                              <p>BP: {visit.vitals.bp_systolic}/{visit.vitals.bp_diastolic}</p>
+                            )}
+                            {visit.vitals.temperature && <p>Temp: {visit.vitals.temperature}°C</p>}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                    );
-                  })}
+                  ))}
                 </div>
               )}
             </CardContent>
