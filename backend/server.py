@@ -883,11 +883,10 @@ async def export_patients(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    total_count = await db.patients.count_documents({})
-    patients = await db.patients.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    # Data isolation: only export own patients
+    query = {"owner_id": current_user["id"]}
+    total_count = await db.patients.count_documents(query)
+    patients = await db.patients.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return {"data": patients, "count": len(patients), "total": total_count, "skip": skip, "limit": limit}
 
 @api_router.get("/export/visits")
@@ -898,10 +897,11 @@ async def export_visits(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+    # Data isolation: only export visits for own patients
+    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+    owned_patient_ids = [p["id"] for p in owned_patients]
     
-    query = {}
+    query = {"patient_id": {"$in": owned_patient_ids}}
     if date_from:
         query["created_at"] = {"$gte": date_from}
     if date_to:
