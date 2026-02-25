@@ -50,6 +50,7 @@ export const attachmentAPI = {
   upload: (formData) => axios.post(`${API}/attachments`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  update: (id, data) => axios.put(`${API}/attachments/${id}`, data),
   delete: (id) => axios.delete(`${API}/attachments/${id}`),
 };
 
