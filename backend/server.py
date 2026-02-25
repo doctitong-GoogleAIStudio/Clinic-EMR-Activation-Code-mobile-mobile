@@ -966,8 +966,10 @@ async def startup():
     # Create indexes
     await db.users.create_index("email", unique=True)
     await db.patients.create_index("patient_id", unique=True)
+    await db.patients.create_index("owner_id")  # Index for data isolation
     await db.patients.create_index([("full_name", "text"), ("mobile", "text")])
     await db.appointments.create_index([("date", 1), ("time", 1)])
+    await db.appointments.create_index("owner_id")  # Index for data isolation
     await db.visits.create_index([("patient_id", 1), ("created_at", -1)])
     
     # Create default admin if not exists
