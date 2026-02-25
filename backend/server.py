@@ -730,11 +730,21 @@ async def get_prescriptions(
     visit_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
+    # Data isolation: verify patient ownership if patient_id provided
+    if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
+        return []
+    
     query = {}
     if patient_id:
         query["patient_id"] = patient_id
     if visit_id:
         query["visit_id"] = visit_id
+    
+    # If no patient_id specified, only return prescriptions for owned patients
+    if not patient_id:
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patient_ids = [p["id"] for p in owned_patients]
+        query["patient_id"] = {"$in": owned_patient_ids}
     
     prescriptions = await db.prescriptions.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return prescriptions
@@ -744,6 +754,10 @@ async def get_prescriptions(
 async def create_certificate(certificate: CertificateCreate, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Only doctors can create certificates")
+    
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(certificate.patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
     
     cert_dict = certificate.model_dump()
     cert_dict["id"] = str(uuid.uuid4())
@@ -761,6 +775,10 @@ async def get_certificates(
     certificate_type: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
+    # Data isolation: verify patient ownership if patient_id provided
+    if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
+        return []
+    
     query = {}
     if patient_id:
         query["patient_id"] = patient_id
@@ -769,7 +787,14 @@ async def get_certificates(
     if certificate_type:
         query["certificate_type"] = certificate_type
     
+    # If no patient_id specified, only return certificates for owned patients
+    if not patient_id:
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patient_ids = [p["id"] for p in owned_patients]
+        query["patient_id"] = {"$in": owned_patient_ids}
+    
     certificates = await db.certificates.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return certificates
     return certificates
 
 # ============== CLINIC SETTINGS ==============
