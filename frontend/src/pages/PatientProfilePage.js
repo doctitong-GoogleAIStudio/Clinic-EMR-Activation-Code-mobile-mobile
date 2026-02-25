@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { patientAPI, visitAPI, attachmentAPI, appointmentAPI, prescriptionAPI, certificateAPI, settingsAPI } from '../lib/api';
