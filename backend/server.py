@@ -404,13 +404,17 @@ async def update_user(user_id: str, updates: dict, current_user: dict = Depends(
 # ============== PATIENT ROUTES ==============
 @api_router.post("/patients", response_model=PatientResponse)
 async def create_patient(patient: PatientCreate, current_user: dict = Depends(get_current_user)):
+    # Receptionist creates patient under their doctor's ownership
+    owner_id = await get_owner_id_for_user(current_user)
+    
     patient_dict = patient.model_dump()
     patient_dict["id"] = str(uuid.uuid4())
     patient_dict["patient_id"] = generate_patient_id()
     patient_dict["age"] = calculate_age(patient.birthdate)
     patient_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     patient_dict["updated_at"] = patient_dict["created_at"]
-    patient_dict["owner_id"] = current_user["id"]  # Data isolation: track owner
+    patient_dict["owner_id"] = owner_id  # Data isolation: track owner (doctor)
+    patient_dict["created_by"] = current_user["id"]  # Track who actually created
     
     await db.patients.insert_one(patient_dict)
     await log_audit(current_user["id"], current_user["full_name"], "create", "patient", patient_dict["id"], patient.full_name)
