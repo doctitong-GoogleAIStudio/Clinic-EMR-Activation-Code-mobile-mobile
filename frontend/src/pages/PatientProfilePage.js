@@ -772,48 +772,119 @@ const PatientProfilePage = () => {
           </Card>
 
           {/* Image Viewer Modal */}
-          <Dialog open={!!viewingAttachment} onOpenChange={() => setViewingAttachment(null)}>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
+          <Dialog open={!!viewingAttachment} onOpenChange={(open) => { if (!open) { setViewingAttachment(null); resetViewer(); } }}>
+            <DialogContent className="max-w-4xl p-0 overflow-hidden">
+              <DialogHeader className="px-5 pt-5 pb-3">
                 <DialogTitle className="flex items-center gap-2">
                   <FileImage className="w-5 h-5 text-[#0F766E]" />
                   {viewingAttachment?.filename}
                 </DialogTitle>
               </DialogHeader>
               {viewingAttachment && (
-                <div className="mt-2">
-                  <img
-                    src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
-                    alt={viewingAttachment.filename}
-                    className="w-full rounded-lg border border-slate-200"
-                    data-testid="lab-image-viewer"
-                  />
-                  <div className="flex items-center justify-between mt-3">
-                    <div>
-                      <Badge className={`${tagColors[viewingAttachment.tag]} text-xs`}>{viewingAttachment.tag}</Badge>
-                      {viewingAttachment.notes && <span className="text-sm text-slate-500 ml-3">{viewingAttachment.notes}</span>}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const byteChars = atob(viewingAttachment.file_data);
-                        const byteNumbers = new Array(byteChars.length);
-                        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-                        const byteArray = new Uint8Array(byteNumbers);
-                        const blob = new Blob([byteArray], { type: viewingAttachment.content_type });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = viewingAttachment.filename;
-                        a.click();
-                        URL.revokeObjectURL(url);
+                <div className="flex flex-col">
+                  {/* Zoom/pan image area */}
+                  <div
+                    ref={viewerContainerRef}
+                    className="relative bg-slate-950 overflow-hidden select-none"
+                    style={{ height: '60vh', cursor: isPanning ? 'grabbing' : 'grab' }}
+                    onWheel={handleWheel}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerLeave={handlePointerUp}
+                    data-testid="lab-image-viewer-area"
+                  >
+                    <img
+                      src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
+                      alt={viewingAttachment.filename}
+                      draggable={false}
+                      className="absolute top-1/2 left-1/2 max-w-none"
+                      style={{
+                        transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
+                        transformOrigin: 'center center',
+                        transition: isPanning ? 'none' : 'transform 0.15s ease-out',
                       }}
-                      data-testid="lab-download-btn"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
+                      data-testid="lab-image-viewer"
+                    />
+                  </div>
+
+                  {/* Controls bar */}
+                  <div className="px-5 py-3 bg-white border-t border-slate-200">
+                    <div className="flex items-center justify-between gap-4">
+                      {/* Tag + notes */}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge className={`${tagColors[viewingAttachment.tag]} text-xs flex-shrink-0`}>{viewingAttachment.tag}</Badge>
+                        {viewingAttachment.notes && <span className="text-sm text-slate-500 truncate">{viewingAttachment.notes}</span>}
+                      </div>
+
+                      {/* Zoom controls */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => setZoom(z => Math.max(0.25, z - 0.25))}
+                          disabled={zoom <= 0.25}
+                          data-testid="zoom-out-btn"
+                        >
+                          <ZoomOut className="w-4 h-4" />
+                        </Button>
+                        <input
+                          type="range"
+                          min="25" max="500" step="5"
+                          value={Math.round(zoom * 100)}
+                          onChange={(e) => setZoom(Number(e.target.value) / 100)}
+                          className="w-28 h-1.5 accent-[#0F766E] cursor-pointer"
+                          data-testid="zoom-slider"
+                        />
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => setZoom(z => Math.min(5, z + 0.25))}
+                          disabled={zoom >= 5}
+                          data-testid="zoom-in-btn"
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </Button>
+                        <span className="text-xs text-slate-500 w-12 text-center font-mono" data-testid="zoom-level">{Math.round(zoom * 100)}%</span>
+                        <div className="w-px h-5 bg-slate-200 mx-1" />
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={resetViewer}
+                          title="Reset view"
+                          data-testid="zoom-reset-btn"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                          title="Fit to screen"
+                          data-testid="zoom-fit-btn"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </Button>
+                        <div className="w-px h-5 bg-slate-200 mx-1" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const byteChars = atob(viewingAttachment.file_data);
+                            const byteNumbers = new Array(byteChars.length);
+                            for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], { type: viewingAttachment.content_type });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = viewingAttachment.filename;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          data-testid="lab-download-btn"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
