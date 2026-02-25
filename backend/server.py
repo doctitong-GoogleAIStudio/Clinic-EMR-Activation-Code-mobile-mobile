@@ -398,7 +398,8 @@ async def get_patients(
 
 @api_router.get("/patients/{patient_id}", response_model=PatientResponse)
 async def get_patient(patient_id: str, current_user: dict = Depends(get_current_user)):
-    patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    # Data isolation: only allow access to own patients
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]}, {"_id": 0})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     patient["age"] = calculate_age(patient.get("birthdate", ""))
@@ -406,13 +407,18 @@ async def get_patient(patient_id: str, current_user: dict = Depends(get_current_
 
 @api_router.put("/patients/{patient_id}", response_model=PatientResponse)
 async def update_patient(patient_id: str, updates: PatientUpdate, current_user: dict = Depends(get_current_user)):
+    # Data isolation: verify ownership
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
     update_dict = {k: v for k, v in updates.model_dump().items() if v is not None}
     update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     if "birthdate" in update_dict:
         update_dict["age"] = calculate_age(update_dict["birthdate"])
     
-    await db.patients.update_one({"id": patient_id}, {"$set": update_dict})
+    await db.patients.update_one({"id": patient_id, "owner_id": current_user["id"]}, {"$set": update_dict})
     await log_audit(current_user["id"], current_user["full_name"], "update", "patient", patient_id)
     
     patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
@@ -424,15 +430,35 @@ async def delete_patient(patient_id: str, current_user: dict = Depends(get_curre
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Unauthorized")
     
-    await db.patients.delete_one({"id": patient_id})
+    # Data isolation: only delete own patients
+    result = await db.patients.delete_one({"id": patient_id, "owner_id": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Also delete related data
+    await db.visits.delete_many({"patient_id": patient_id})
+    await db.appointments.delete_many({"patient_id": patient_id})
+    await db.prescriptions.delete_many({"patient_id": patient_id})
+    await db.certificates.delete_many({"patient_id": patient_id})
+    await db.attachments.delete_many({"patient_id": patient_id})
+    
     await log_audit(current_user["id"], current_user["full_name"], "delete", "patient", patient_id)
     return {"message": "Patient deleted"}
+
+# Helper function to verify patient ownership
+async def verify_patient_ownership(patient_id: str, user_id: str) -> bool:
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": user_id})
+    return patient is not None
 
 # ============== VISIT ROUTES ==============
 @api_router.post("/visits", response_model=VisitResponse)
 async def create_visit(visit: VisitCreate, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "doctor"]:
         raise HTTPException(status_code=403, detail="Only doctors can create visits")
+    
+    # Data isolation: verify patient belongs to current user
+    if not await verify_patient_ownership(visit.patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
     
     visit_dict = visit.model_dump()
     visit_dict["id"] = str(uuid.uuid4())
