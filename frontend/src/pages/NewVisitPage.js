@@ -616,8 +616,8 @@ const NewVisitPage = () => {
                         {editingLabId !== att.id && (
                           <div className="flex items-center justify-end gap-3 mt-1 px-1">
                             <span className="text-[11px] text-slate-400">{format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}</span>
-                            <button type="button" onClick={() => startEditLab(att)} className="text-slate-400 hover:text-[#0F766E] transition-colors" data-testid={`visit-lab-edit-${att.id}`} title="Edit"><Edit className="w-3.5 h-3.5" /></button>
-                            <button type="button" onClick={() => handleDeleteAttachment(att.id)} className="text-red-400 hover:text-red-600 transition-colors" data-testid={`visit-lab-delete-${att.id}`} title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); startEditLab(att); }} className="p-1 rounded text-slate-400 hover:text-[#0F766E] hover:bg-slate-100 transition-colors" data-testid={`visit-lab-edit-${att.id}`} title="Edit"><Edit className="w-4 h-4" /></button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att.id); }} className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" data-testid={`visit-lab-delete-${att.id}`} title="Delete"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         )}
                       </div>
