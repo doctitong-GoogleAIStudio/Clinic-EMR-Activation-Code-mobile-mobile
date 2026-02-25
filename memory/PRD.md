@@ -29,7 +29,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] Dashboard with stats
 - [x] AI assist (SOAP convert, diagnosis suggest, patient instructions)
 - [x] **Private Receptionist Creation** - Doctors/Admins create receptionists from Settings (Dec 2025)
-- [x] **Receptionist Shared Access** - Can see all patients/appointments, blocked from SOAP notes/prescriptions (Dec 2025)
+- [x] **Receptionist-Doctor Binding** - Receptionist tied to specific doctor who created them. Sees only their doctor's patients/appointments (Dec 2025)
 - [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
 
 ## Key DB Schema
