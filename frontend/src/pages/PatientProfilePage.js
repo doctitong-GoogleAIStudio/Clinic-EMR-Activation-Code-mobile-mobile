@@ -587,6 +587,202 @@ const PatientProfilePage = () => {
           </Card>
         </TabsContent>
 
+        {/* Labs & Imaging Tab */}
+        <TabsContent value="labs">
+          <Card className="bg-white border-slate-100 shadow-sm">
+            <CardHeader>
+              <CardTitle className="font-heading flex items-center gap-2">
+                <Microscope className="w-5 h-5 text-[#0F766E]" />
+                Labs & Imaging
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Messenger-style file list */}
+              <div className="flex flex-col min-h-[300px] max-h-[520px]">
+                <div className="flex-1 overflow-y-auto space-y-3 pb-4" data-testid="labs-file-list">
+                  {labImagingAttachments.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Microscope className="w-14 h-14 mb-3 opacity-40" />
+                      <p className="font-medium text-slate-500">No lab results or imaging files yet</p>
+                      <p className="text-sm mt-1">Upload files below to get started</p>
+                    </div>
+                  ) : (
+                    labImagingAttachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="flex justify-end"
+                        data-testid={`lab-item-${att.id}`}
+                      >
+                        <div className="max-w-[80%] sm:max-w-[65%]">
+                          {/* Chat bubble */}
+                          <div
+                            className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
+                            onClick={() => handleViewAttachment(att.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? (
+                                  <FileImage className="w-5 h-5 text-white" />
+                                ) : (
+                                  <File className="w-5 h-5 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{att.filename}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
+                                  <span className="text-xs opacity-75">
+                                    {att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to download'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? (
+                                  <Eye className="w-4 h-4" />
+                                ) : (
+                                  <Download className="w-4 h-4" />
+                                )}
+                              </div>
+                            </div>
+                            {att.notes && (
+                              <p className="text-xs text-white/80 mt-2 pl-[52px]">{att.notes}</p>
+                            )}
+                          </div>
+                          {/* Timestamp + delete */}
+                          <div className="flex items-center justify-end gap-2 mt-1 px-1">
+                            <span className="text-[11px] text-slate-400">
+                              {format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteAttachment(att.id)}
+                              className="text-slate-300 hover:text-red-500 transition-colors"
+                              data-testid={`lab-delete-${att.id}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Upload bar (messenger-style input) */}
+                <div className="border-t border-slate-200 pt-4 mt-auto">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            ref={labFileInputRef}
+                            onChange={(e) => setLabFile(e.target.files[0])}
+                            accept="image/*,.pdf,.doc,.docx"
+                            className="text-sm"
+                            data-testid="lab-file-input"
+                          />
+                        </div>
+                        <Select value={labUploadData.tag} onValueChange={(v) => setLabUploadData({ ...labUploadData, tag: v })}>
+                          <SelectTrigger className="w-[130px]" data-testid="lab-tag-select">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="lab">Lab Result</SelectItem>
+                            <SelectItem value="x-ray">X-Ray</SelectItem>
+                            <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                            <SelectItem value="ecg">ECG</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Input
+                        value={labUploadData.notes}
+                        onChange={(e) => setLabUploadData({ ...labUploadData, notes: e.target.value })}
+                        placeholder="Add a note (optional)..."
+                        className="text-sm"
+                        data-testid="lab-notes-input"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleLabUpload}
+                      disabled={!labFile || labUploading}
+                      className="bg-[#0F766E] hover:bg-[#115E59] h-11 px-4"
+                      data-testid="lab-upload-btn"
+                    >
+                      {labUploading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </Button>
+                  </div>
+                  {labFile && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
+                      <Paperclip className="w-3.5 h-3.5" />
+                      <span className="truncate flex-1">{labFile.name}</span>
+                      <button
+                        onClick={() => { setLabFile(null); if (labFileInputRef.current) labFileInputRef.current.value = ''; }}
+                        className="text-slate-400 hover:text-red-500"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Image Viewer Modal */}
+          <Dialog open={!!viewingAttachment} onOpenChange={() => setViewingAttachment(null)}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileImage className="w-5 h-5 text-[#0F766E]" />
+                  {viewingAttachment?.filename}
+                </DialogTitle>
+              </DialogHeader>
+              {viewingAttachment && (
+                <div className="mt-2">
+                  <img
+                    src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
+                    alt={viewingAttachment.filename}
+                    className="w-full rounded-lg border border-slate-200"
+                    data-testid="lab-image-viewer"
+                  />
+                  <div className="flex items-center justify-between mt-3">
+                    <div>
+                      <Badge className={`${tagColors[viewingAttachment.tag]} text-xs`}>{viewingAttachment.tag}</Badge>
+                      {viewingAttachment.notes && <span className="text-sm text-slate-500 ml-3">{viewingAttachment.notes}</span>}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const byteChars = atob(viewingAttachment.file_data);
+                        const byteNumbers = new Array(byteChars.length);
+                        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: viewingAttachment.content_type });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = viewingAttachment.filename;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      data-testid="lab-download-btn"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+
         {/* Documents Tab */}
         <TabsContent value="documents">
           <Card className="bg-white border-slate-100 shadow-sm">
