@@ -69,7 +69,6 @@ const NewVisitPage = () => {
   useEffect(() => {
     if (patientId) {
       fetchPatient();
-      fetchLabAttachments();
     }
   }, [patientId]);
 
