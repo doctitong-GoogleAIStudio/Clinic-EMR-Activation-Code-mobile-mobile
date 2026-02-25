@@ -151,7 +151,6 @@ const NewVisitPage = () => {
   };
 
   const handleDeleteAttachment = async (id) => {
-    if (!window.confirm('Delete this file?')) return;
     try {
       await attachmentAPI.delete(id);
       toast.success('File deleted');

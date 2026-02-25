@@ -137,7 +137,6 @@ const PatientProfilePage = () => {
   };
 
   const handleDeleteAttachment = async (attachmentId) => {
-    if (!window.confirm('Delete this attachment?')) return;
     try {
       await attachmentAPI.delete(attachmentId);
       toast.success('Attachment deleted');
