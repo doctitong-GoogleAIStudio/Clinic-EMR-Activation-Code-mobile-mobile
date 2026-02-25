@@ -168,10 +168,10 @@ const NewVisitPage = () => {
 
   const saveEditLab = async () => {
     try {
-      await attachmentAPI.update(editingLabId, editLabData);
+      const res = await attachmentAPI.update(editingLabId, editLabData);
       toast.success('File updated');
+      setLabAttachments(prev => prev.map(a => a.id === editingLabId ? { ...a, ...res.data } : a));
       setEditingLabId(null);
-      fetchLabAttachments();
     } catch (error) {
       toast.error('Failed to update file');
     }
