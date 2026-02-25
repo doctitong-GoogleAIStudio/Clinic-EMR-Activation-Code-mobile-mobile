@@ -692,8 +692,8 @@ async def get_attachments(
     visit_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: verify patient ownership if patient_id provided
-    if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
+    # Data isolation: receptionist can access all; others only their own
+    if patient_id and current_user["role"] != "receptionist" and not await verify_patient_ownership(patient_id, current_user["id"]):
         return []
     
     query = {}
@@ -702,11 +702,14 @@ async def get_attachments(
     if visit_id:
         query["visit_id"] = visit_id
     
-    # If no patient_id specified, only return attachments for owned patients
+    # If no patient_id specified, scope to accessible patients
     if not patient_id:
-        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
-        owned_patient_ids = [p["id"] for p in owned_patients]
-        query["patient_id"] = {"$in": owned_patient_ids}
+        if current_user["role"] == "receptionist":
+            pass  # No filter - see all
+        else:
+            owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+            owned_patient_ids = [p["id"] for p in owned_patients]
+            query["patient_id"] = {"$in": owned_patient_ids}
     
     # Exclude file_data from list queries for performance
     attachments = await db.attachments.find(query, {"_id": 0, "file_data": 0}).sort("uploaded_at", -1).to_list(100)
