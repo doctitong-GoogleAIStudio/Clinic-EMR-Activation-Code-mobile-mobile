@@ -425,8 +425,9 @@ async def get_patients(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    # Receptionist sees all patients; others only their own
-    query = {} if current_user["role"] == "receptionist" else {"owner_id": current_user["id"]}
+    # Receptionist sees patients of their doctor; others only their own
+    owner_id = await get_owner_id_for_user(current_user)
+    query = {"owner_id": owner_id}
     if search:
         query["$or"] = [
             {"full_name": {"$regex": search, "$options": "i"}},
@@ -442,10 +443,8 @@ async def get_patients(
 
 @api_router.get("/patients/{patient_id}", response_model=PatientResponse)
 async def get_patient(patient_id: str, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] == "receptionist":
-        patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
-    else:
-        patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]}, {"_id": 0})
+    owner_id = await get_owner_id_for_user(current_user)
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": owner_id}, {"_id": 0})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     patient["age"] = calculate_age(patient.get("birthdate", ""))
@@ -453,8 +452,9 @@ async def get_patient(patient_id: str, current_user: dict = Depends(get_current_
 
 @api_router.put("/patients/{patient_id}", response_model=PatientResponse)
 async def update_patient(patient_id: str, updates: PatientUpdate, current_user: dict = Depends(get_current_user)):
-    # Data isolation: verify ownership
-    patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]})
+    # Data isolation: verify ownership (receptionist can update their doctor's patients)
+    owner_id = await get_owner_id_for_user(current_user)
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": owner_id})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     
@@ -464,7 +464,7 @@ async def update_patient(patient_id: str, updates: PatientUpdate, current_user: 
     if "birthdate" in update_dict:
         update_dict["age"] = calculate_age(update_dict["birthdate"])
     
-    await db.patients.update_one({"id": patient_id, "owner_id": current_user["id"]}, {"$set": update_dict})
+    await db.patients.update_one({"id": patient_id, "owner_id": owner_id}, {"$set": update_dict})
     await log_audit(current_user["id"], current_user["full_name"], "update", "patient", patient_id)
     
     patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
