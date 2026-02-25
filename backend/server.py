@@ -384,8 +384,8 @@ async def get_patients(
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: only show patients owned by current user
-    query = {"owner_id": current_user["id"]}
+    # Receptionist sees all patients; others only their own
+    query = {} if current_user["role"] == "receptionist" else {"owner_id": current_user["id"]}
     if search:
         query["$or"] = [
             {"full_name": {"$regex": search, "$options": "i"}},
