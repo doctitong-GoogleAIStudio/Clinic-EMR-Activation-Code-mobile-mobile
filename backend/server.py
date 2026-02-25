@@ -459,6 +459,8 @@ async def get_visits(
     patient_id: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    limit: int = Query(default=100, le=500),
+    skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
     query = {}
@@ -473,7 +475,7 @@ async def get_visits(
             date_query["$lte"] = date_to
         query["created_at"] = date_query
     
-    visits = await db.visits.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    visits = await db.visits.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return visits
 
 @api_router.get("/visits/{visit_id}", response_model=VisitResponse)
