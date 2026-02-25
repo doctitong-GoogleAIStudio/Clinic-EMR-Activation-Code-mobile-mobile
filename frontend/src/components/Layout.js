@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { settingsAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { 
   LayoutDashboard, Users, Calendar, Settings, LogOut, 
@@ -12,6 +13,13 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [clinicName, setClinicName] = useState('Clinic EMR');
+
+  useEffect(() => {
+    settingsAPI.get().then(res => {
+      if (res.data?.clinic_name) setClinicName(res.data.clinic_name);
+    }).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
