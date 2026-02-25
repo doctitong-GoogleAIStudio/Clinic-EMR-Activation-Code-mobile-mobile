@@ -595,8 +595,8 @@ async def get_appointments(
     limit: int = Query(default=100, le=500),
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: only show own appointments
-    query = {"owner_id": current_user["id"]}
+    # Receptionist sees all appointments; others only their own
+    query = {} if current_user["role"] == "receptionist" else {"owner_id": current_user["id"]}
     if date:
         query["date"] = date
     if status:
