@@ -55,6 +55,10 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Dec 2025**: Fixed React error - Pydantic validation error objects now properly extracted for toast messages
+- **Dec 2025**: Create Receptionist flow verified end-to-end (Doctor/Admin creates, receptionist logs in, limited access confirmed)
+- **Dec 2025**: Data isolation between doctors verified (Doctor A cannot see Doctor B's patients)
+- **Dec 2025**: Fixed uuid4 bug and created ReceptionistCreate model for cleaner API
 - **Feb 25, 2026**: Added Labs & Imaging section to New Visit page — doctors can upload/view/edit/analyze patient's lab results and imaging files during visit documentation. Same messenger-style UI with zoom/pan viewer.
 - **Feb 25, 2026**: Added edit/rename for Labs & Imaging files — inline edit form with filename, tag, and notes fields. Backend PUT /api/attachments/{id} with data isolation.
 - **Feb 25, 2026**: Enhanced Labs & Imaging file viewer with zoom controls (slider, +/- buttons, mouse wheel), drag-to-pan (up/down, side to side), reset/fit buttons, and download. PDFs open in new tab.
