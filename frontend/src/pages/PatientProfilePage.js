@@ -45,6 +45,11 @@ const PatientProfilePage = () => {
   const [appointmentData, setAppointmentData] = useState({ date: '', time: '', reason: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [labFile, setLabFile] = useState(null);
+  const [labUploadData, setLabUploadData] = useState({ tag: 'lab', notes: '' });
+  const [labUploading, setLabUploading] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const labFileInputRef = useRef(null);
 
   const handlePrintDoc = useReactToPrint({ contentRef: docPrintRef, documentTitle: 'Document' });
 
