@@ -236,6 +236,33 @@ const SettingsPage = () => {
                     data-testid="clinic-license-input"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>PTR No.</Label>
+                  <Input
+                    value={settings.ptr_no}
+                    onChange={(e) => setSettings({ ...settings, ptr_no: e.target.value })}
+                    placeholder="PTR No."
+                    data-testid="clinic-ptr-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>PRC No.</Label>
+                  <Input
+                    value={settings.prc_no}
+                    onChange={(e) => setSettings({ ...settings, prc_no: e.target.value })}
+                    placeholder="PRC No."
+                    data-testid="clinic-prc-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Specialization</Label>
+                  <Input
+                    value={settings.specialization}
+                    onChange={(e) => setSettings({ ...settings, specialization: e.target.value })}
+                    placeholder="e.g. General Practice, Internal Medicine"
+                    data-testid="clinic-specialization-input"
+                  />
+                </div>
               </div>
               <div className="pt-4 border-t">
                 <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-settings-btn">
