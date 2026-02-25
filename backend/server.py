@@ -401,8 +401,10 @@ async def get_patients(
 
 @api_router.get("/patients/{patient_id}", response_model=PatientResponse)
 async def get_patient(patient_id: str, current_user: dict = Depends(get_current_user)):
-    # Data isolation: only allow access to own patients
-    patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]}, {"_id": 0})
+    if current_user["role"] == "receptionist":
+        patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    else:
+        patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]}, {"_id": 0})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     patient["age"] = calculate_age(patient.get("birthdate", ""))
