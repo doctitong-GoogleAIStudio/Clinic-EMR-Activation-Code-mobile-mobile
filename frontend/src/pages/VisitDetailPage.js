@@ -82,6 +82,13 @@ const VisitDetailPage = () => {
       
       const patientRes = await patientAPI.getOne(visitRes.data.patient_id);
       setPatient(patientRes.data);
+      
+      // Fetch lab/imaging attachments for this patient
+      try {
+        const attRes = await attachmentAPI.getAll({ patient_id: visitRes.data.patient_id });
+        const labs = (attRes.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
+        setLabAttachments(labs);
+      } catch (e) { /* silent */ }
     } catch (error) {
       toast.error('Failed to load visit');
       navigate('/dashboard');
