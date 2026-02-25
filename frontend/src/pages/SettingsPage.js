@@ -24,7 +24,10 @@ const SettingsPage = () => {
     address: '',
     phone: '',
     email: '',
-    license_no: ''
+    license_no: '',
+    ptr_no: '',
+    prc_no: '',
+    specialization: ''
   });
   const [users, setUsers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
