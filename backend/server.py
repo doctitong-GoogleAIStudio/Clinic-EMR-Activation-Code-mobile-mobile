@@ -227,6 +227,9 @@ class ClinicSettings(BaseModel):
     phone: str = ""
     email: str = ""
     license_no: str = ""
+    ptr_no: str = ""
+    prc_no: str = ""
+    specialization: str = ""
     logo_data: Optional[str] = None
 
 class AIRequest(BaseModel):
