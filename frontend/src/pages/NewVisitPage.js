@@ -109,12 +109,12 @@ const NewVisitPage = () => {
       formData.append('patient_id', patientId);
       formData.append('tag', labUploadData.tag);
       formData.append('notes', labUploadData.notes);
-      await attachmentAPI.upload(formData);
+      const res = await attachmentAPI.upload(formData);
       toast.success('File uploaded');
+      setLabAttachments(prev => [res.data, ...prev]);
       setLabFile(null);
       setLabUploadData({ tag: 'lab', notes: '' });
       if (labFileInputRef.current) labFileInputRef.current.value = '';
-      fetchLabAttachments();
     } catch (error) {
       toast.error('Failed to upload file');
     } finally {
