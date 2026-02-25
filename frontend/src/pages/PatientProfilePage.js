@@ -976,12 +976,8 @@ const PatientProfilePage = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           {attachment.content_type?.startsWith('image/') ? (
-                            <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-                              <img 
-                                src={`data:${attachment.content_type};base64,${attachment.file_data}`} 
-                                alt="" 
-                                className="w-full h-full object-cover"
-                              />
+                            <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                              <FileImage className="w-6 h-6 text-slate-500" />
                             </div>
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
