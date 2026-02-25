@@ -226,6 +226,31 @@ const PatientProfilePage = () => {
     ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag)
   );
 
+  const resetViewer = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
+
+  const openAttachmentViewer = (att) => {
+    resetViewer();
+    setViewingAttachment(att);
+  };
+
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    setZoom(z => Math.min(5, Math.max(0.25, z + (e.deltaY > 0 ? -0.15 : 0.15))));
+  }, []);
+
+  const handlePointerDown = useCallback((e) => {
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [pan]);
+
+  const handlePointerMove = useCallback((e) => {
+    if (!isPanning) return;
+    setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  }, [isPanning, panStart]);
+
+  const handlePointerUp = useCallback(() => { setIsPanning(false); }, []);
+
   const tagColors = {
     lab: 'bg-purple-100 text-purple-800',
     'x-ray': 'bg-blue-100 text-blue-800',
