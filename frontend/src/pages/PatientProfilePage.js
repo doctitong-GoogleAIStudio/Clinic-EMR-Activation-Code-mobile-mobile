@@ -49,6 +49,8 @@ const PatientProfilePage = () => {
   const [labUploadData, setLabUploadData] = useState({ tag: 'lab', notes: '' });
   const [labUploading, setLabUploading] = useState(false);
   const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [editingLabId, setEditingLabId] = useState(null);
+  const [editLabData, setEditLabData] = useState({ filename: '', tag: '', notes: '' });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
