@@ -98,6 +98,23 @@ const SettingsPage = () => {
     }
   };
 
+  const handleCreateReceptionist = async () => {
+    if (!receptionistForm.full_name || !receptionistForm.email || !receptionistForm.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    setCreatingReceptionist(true);
+    try {
+      await userAPI.createReceptionist(receptionistForm);
+      toast.success('Receptionist account created');
+      setReceptionistForm({ full_name: '', email: '', password: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create receptionist');
+    } finally {
+      setCreatingReceptionist(false);
+    }
+  };
+
   const handleExportPatients = async () => {
     try {
       const response = await exportAPI.patients();
