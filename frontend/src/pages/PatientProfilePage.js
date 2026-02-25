@@ -676,53 +676,113 @@ const PatientProfilePage = () => {
                         data-testid={`lab-item-${att.id}`}
                       >
                         <div className="max-w-[80%] sm:max-w-[65%]">
-                          {/* Chat bubble */}
-                          <div
-                            className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
-                            onClick={() => handleViewAttachment(att.id)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                                {att.content_type?.startsWith('image/') ? (
-                                  <FileImage className="w-5 h-5 text-white" />
-                                ) : (
-                                  <File className="w-5 h-5 text-white" />
-                                )}
+                          {editingLabId === att.id ? (
+                            /* Edit mode */
+                            <div className="rounded-2xl rounded-br-md bg-white border-2 border-[#0F766E] p-4 space-y-3" data-testid={`lab-edit-form-${att.id}`}>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-slate-500">Filename</Label>
+                                <Input
+                                  value={editLabData.filename}
+                                  onChange={(e) => setEditLabData({ ...editLabData, filename: e.target.value })}
+                                  className="text-sm h-9"
+                                  data-testid={`lab-edit-filename-${att.id}`}
+                                />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{att.filename}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
-                                  <span className="text-xs opacity-75">
-                                    {att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to download'}
-                                  </span>
-                                </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-slate-500">Tag</Label>
+                                <Select value={editLabData.tag} onValueChange={(v) => setEditLabData({ ...editLabData, tag: v })}>
+                                  <SelectTrigger className="h-9 text-sm" data-testid={`lab-edit-tag-${att.id}`}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="lab">Lab Result</SelectItem>
+                                    <SelectItem value="x-ray">X-Ray</SelectItem>
+                                    <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                                    <SelectItem value="ecg">ECG</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                {att.content_type?.startsWith('image/') ? (
-                                  <Eye className="w-4 h-4" />
-                                ) : (
-                                  <Download className="w-4 h-4" />
-                                )}
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-slate-500">Notes</Label>
+                                <Input
+                                  value={editLabData.notes}
+                                  onChange={(e) => setEditLabData({ ...editLabData, notes: e.target.value })}
+                                  placeholder="Optional notes..."
+                                  className="text-sm h-9"
+                                  data-testid={`lab-edit-notes-${att.id}`}
+                                />
+                              </div>
+                              <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" size="sm" onClick={cancelEditLab} className="h-8 text-xs">
+                                  <X className="w-3.5 h-3.5 mr-1" />
+                                  Cancel
+                                </Button>
+                                <Button size="sm" onClick={saveEditLab} className="h-8 text-xs bg-[#0F766E] hover:bg-[#115E59]" data-testid={`lab-edit-save-${att.id}`}>
+                                  <Save className="w-3.5 h-3.5 mr-1" />
+                                  Save
+                                </Button>
                               </div>
                             </div>
-                            {att.notes && (
-                              <p className="text-xs text-white/80 mt-2 pl-[52px]">{att.notes}</p>
-                            )}
-                          </div>
-                          {/* Timestamp + delete */}
-                          <div className="flex items-center justify-end gap-2 mt-1 px-1">
-                            <span className="text-[11px] text-slate-400">
-                              {format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteAttachment(att.id)}
-                              className="text-slate-300 hover:text-red-500 transition-colors"
-                              data-testid={`lab-delete-${att.id}`}
+                          ) : (
+                            /* Normal bubble */
+                            <div
+                              className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
+                              onClick={() => handleViewAttachment(att.id)}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                  {att.content_type?.startsWith('image/') ? (
+                                    <FileImage className="w-5 h-5 text-white" />
+                                  ) : (
+                                    <File className="w-5 h-5 text-white" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{att.filename}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
+                                    <span className="text-xs opacity-75">
+                                      {att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to download'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                  {att.content_type?.startsWith('image/') ? (
+                                    <Eye className="w-4 h-4" />
+                                  ) : (
+                                    <Download className="w-4 h-4" />
+                                  )}
+                                </div>
+                              </div>
+                              {att.notes && (
+                                <p className="text-xs text-white/80 mt-2 pl-[52px]">{att.notes}</p>
+                              )}
+                            </div>
+                          )}
+                          {/* Timestamp + edit + delete */}
+                          {editingLabId !== att.id && (
+                            <div className="flex items-center justify-end gap-2 mt-1 px-1">
+                              <span className="text-[11px] text-slate-400">
+                                {format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}
+                              </span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); startEditLab(att); }}
+                                className="text-slate-300 hover:text-[#0F766E] transition-colors"
+                                data-testid={`lab-edit-${att.id}`}
+                                title="Edit"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAttachment(att.id)}
+                                className="text-slate-300 hover:text-red-500 transition-colors"
+                                data-testid={`lab-delete-${att.id}`}
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
