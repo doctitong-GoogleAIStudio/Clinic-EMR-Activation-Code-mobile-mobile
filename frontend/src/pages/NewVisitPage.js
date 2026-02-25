@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { patientAPI, visitAPI, appointmentAPI, aiAPI } from '../lib/api';
+import { patientAPI, visitAPI, appointmentAPI, aiAPI, attachmentAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { 
   ArrowLeft, Save, Activity, Stethoscope, Sparkles, 
-  Thermometer, Heart, Loader2
+  Thermometer, Heart, Loader2, Microscope, Upload, Send,
+  FileImage, File, Eye, Download, Trash2, Edit, X,
+  ZoomIn, ZoomOut, Maximize2, RotateCcw, Paperclip
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 const NewVisitPage = () => {
   const navigate = useNavigate();
@@ -24,6 +30,20 @@ const NewVisitPage = () => {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(null);
   
+  // Labs & Imaging state
+  const [labAttachments, setLabAttachments] = useState([]);
+  const [labFile, setLabFile] = useState(null);
+  const [labUploadData, setLabUploadData] = useState({ tag: 'lab', notes: '' });
+  const [labUploading, setLabUploading] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [editingLabId, setEditingLabId] = useState(null);
+  const [editLabData, setEditLabData] = useState({ filename: '', tag: '', notes: '' });
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const labFileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     patient_id: patientId,
     vitals: {
@@ -49,6 +69,7 @@ const NewVisitPage = () => {
   useEffect(() => {
     if (patientId) {
       fetchPatient();
+      fetchLabAttachments();
     }
   }, [patientId]);
 
@@ -62,12 +83,134 @@ const NewVisitPage = () => {
     }
   };
 
+  const fetchLabAttachments = async () => {
+    try {
+      const res = await attachmentAPI.getAll({ patient_id: patientId });
+      const labs = (res.data || []).filter(a => ['lab', 'x-ray', 'ultrasound', 'ecg'].includes(a.tag));
+      setLabAttachments(labs);
+    } catch (error) {
+      // Silent fail - labs section is supplementary
+    }
+  };
+
+  const tagColors = {
+    lab: 'bg-purple-100 text-purple-800',
+    'x-ray': 'bg-blue-100 text-blue-800',
+    ultrasound: 'bg-cyan-100 text-cyan-800',
+    ecg: 'bg-rose-100 text-rose-800',
+  };
+
+  // Labs handlers
+  const handleLabUpload = async () => {
+    if (!labFile) return;
+    setLabUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', labFile);
+      formData.append('patient_id', patientId);
+      formData.append('tag', labUploadData.tag);
+      formData.append('notes', labUploadData.notes);
+      await attachmentAPI.upload(formData);
+      toast.success('File uploaded');
+      setLabFile(null);
+      setLabUploadData({ tag: 'lab', notes: '' });
+      if (labFileInputRef.current) labFileInputRef.current.value = '';
+      fetchLabAttachments();
+    } catch (error) {
+      toast.error('Failed to upload file');
+    } finally {
+      setLabUploading(false);
+    }
+  };
+
+  const handleViewAttachment = async (attachmentId) => {
+    try {
+      const res = await attachmentAPI.getOne(attachmentId);
+      const att = res.data;
+      if (att.content_type?.startsWith('image/')) {
+        setZoom(1); setPan({ x: 0, y: 0 });
+        setViewingAttachment(att);
+      } else if (att.content_type === 'application/pdf') {
+        const byteChars = atob(att.file_data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+        window.open(URL.createObjectURL(blob), '_blank');
+      } else {
+        const byteChars = atob(att.file_data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      toast.error('Failed to load file');
+    }
+  };
+
+  const handleDeleteAttachment = async (id) => {
+    if (!window.confirm('Delete this file?')) return;
+    try {
+      await attachmentAPI.delete(id);
+      toast.success('File deleted');
+      fetchLabAttachments();
+    } catch (error) {
+      toast.error('Failed to delete file');
+    }
+  };
+
+  const startEditLab = (att) => {
+    setEditingLabId(att.id);
+    setEditLabData({ filename: att.filename, tag: att.tag, notes: att.notes || '' });
+  };
+
+  const cancelEditLab = () => { setEditingLabId(null); };
+
+  const saveEditLab = async () => {
+    try {
+      await attachmentAPI.update(editingLabId, editLabData);
+      toast.success('File updated');
+      setEditingLabId(null);
+      fetchLabAttachments();
+    } catch (error) {
+      toast.error('Failed to update file');
+    }
+  };
+
+  // Viewer pan/zoom
+  const resetViewer = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    setZoom(z => Math.min(5, Math.max(0.25, z + (e.deltaY > 0 ? -0.15 : 0.15))));
+  }, []);
+  const handlePointerDown = useCallback((e) => {
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [pan]);
+  const handlePointerMove = useCallback((e) => {
+    if (!isPanning) return;
+    setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  }, [isPanning, panStart]);
+  const handlePointerUp = useCallback(() => { setIsPanning(false); }, []);
+
+  const downloadFile = (att) => {
+    const byteChars = atob(att.file_data);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const calculateBMI = () => {
     const { weight, height } = formData.vitals;
     if (weight && height) {
       const heightM = parseFloat(height) / 100;
-      const bmi = (parseFloat(weight) / (heightM * heightM)).toFixed(1);
-      return bmi;
+      return (parseFloat(weight) / (heightM * heightM)).toFixed(1);
     }
     return null;
   };
@@ -87,10 +230,8 @@ const NewVisitPage = () => {
       const response = await aiAPI.assist({ text, request_type: type });
       
       if (type === 'soap_convert') {
-        // Parse SOAP sections from response
         const result = response.data.result;
         toast.success('AI generated SOAP notes');
-        // You could parse and fill in the SOAP fields here
         setFormData(prev => ({
           ...prev,
           soap_subjective: result.includes('S:') ? result : prev.soap_subjective
@@ -114,7 +255,6 @@ const NewVisitPage = () => {
     setLoading(true);
 
     try {
-      // Clean up vitals - convert strings to numbers where needed
       const vitals = {};
       Object.entries(formData.vitals).forEach(([key, value]) => {
         if (value !== '' && value !== null) {
@@ -131,7 +271,6 @@ const NewVisitPage = () => {
 
       const response = await visitAPI.create(visitData);
       
-      // Update appointment status if came from queue
       if (appointmentId) {
         await appointmentAPI.update(appointmentId, { status: 'done' });
       }
@@ -291,6 +430,132 @@ const NewVisitPage = () => {
                   className="bg-slate-50"
                   data-testid="bmi-display"
                 />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Labs & Imaging */}
+        <Card className="bg-white border-slate-100 shadow-sm">
+          <CardHeader>
+            <CardTitle className="font-heading flex items-center gap-2">
+              <Microscope className="w-5 h-5 text-[#0F766E]" />
+              Labs & Imaging
+              {labAttachments.length > 0 && (
+                <Badge variant="outline" className="ml-1 font-mono text-xs">{labAttachments.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col max-h-[400px]">
+              {/* File list (messenger bubbles) */}
+              <div className="flex-1 overflow-y-auto space-y-3 pb-3" data-testid="visit-labs-file-list">
+                {labAttachments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                    <Microscope className="w-10 h-10 mb-2 opacity-40" />
+                    <p className="text-sm text-slate-500">No lab results or imaging files</p>
+                    <p className="text-xs mt-0.5">Upload patient's labs below</p>
+                  </div>
+                ) : (
+                  labAttachments.map((att) => (
+                    <div key={att.id} className="flex justify-end" data-testid={`visit-lab-item-${att.id}`}>
+                      <div className="max-w-[80%] sm:max-w-[65%]">
+                        {editingLabId === att.id ? (
+                          <div className="rounded-2xl rounded-br-md bg-white border-2 border-[#0F766E] p-3 space-y-2" data-testid={`visit-lab-edit-form-${att.id}`}>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Filename</Label>
+                              <Input value={editLabData.filename} onChange={(e) => setEditLabData({ ...editLabData, filename: e.target.value })} className="text-sm h-8" data-testid={`visit-lab-edit-filename-${att.id}`} />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Tag</Label>
+                              <Select value={editLabData.tag} onValueChange={(v) => setEditLabData({ ...editLabData, tag: v })}>
+                                <SelectTrigger className="h-8 text-sm" data-testid={`visit-lab-edit-tag-${att.id}`}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="lab">Lab Result</SelectItem>
+                                  <SelectItem value="x-ray">X-Ray</SelectItem>
+                                  <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                                  <SelectItem value="ecg">ECG</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Notes</Label>
+                              <Input value={editLabData.notes} onChange={(e) => setEditLabData({ ...editLabData, notes: e.target.value })} placeholder="Optional notes..." className="text-sm h-8" data-testid={`visit-lab-edit-notes-${att.id}`} />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button type="button" variant="ghost" size="sm" onClick={cancelEditLab} className="h-7 text-xs"><X className="w-3 h-3 mr-1" />Cancel</Button>
+                              <Button type="button" size="sm" onClick={saveEditLab} className="h-7 text-xs bg-[#0F766E] hover:bg-[#115E59]" data-testid={`visit-lab-edit-save-${att.id}`}><Save className="w-3 h-3 mr-1" />Save</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="rounded-2xl rounded-br-md bg-[#0F766E] text-white p-3 cursor-pointer hover:bg-[#115E59] transition-colors group"
+                            onClick={() => handleViewAttachment(att.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? <FileImage className="w-4 h-4 text-white" /> : <File className="w-4 h-4 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{att.filename}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] uppercase tracking-wider bg-white/20 rounded-full px-2 py-0.5">{att.tag}</span>
+                                  <span className="text-xs opacity-75">{att.content_type?.startsWith('image/') ? 'Tap to view' : 'Tap to open'}</span>
+                                </div>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                {att.content_type?.startsWith('image/') ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                              </div>
+                            </div>
+                            {att.notes && <p className="text-xs text-white/80 mt-1.5 pl-12">{att.notes}</p>}
+                          </div>
+                        )}
+                        {editingLabId !== att.id && (
+                          <div className="flex items-center justify-end gap-2 mt-1 px-1">
+                            <span className="text-[11px] text-slate-400">{format(parseISO(att.uploaded_at), 'MMM d, yyyy h:mm a')}</span>
+                            <button type="button" onClick={() => startEditLab(att)} className="text-slate-300 hover:text-[#0F766E] transition-colors" data-testid={`visit-lab-edit-${att.id}`}><Edit className="w-3.5 h-3.5" /></button>
+                            <button type="button" onClick={() => handleDeleteAttachment(att.id)} className="text-slate-300 hover:text-red-500 transition-colors" data-testid={`visit-lab-delete-${att.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Upload bar */}
+              <div className="border-t border-slate-200 pt-3 mt-auto">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input type="file" ref={labFileInputRef} onChange={(e) => setLabFile(e.target.files[0])} accept="image/*,.pdf,.doc,.docx" className="text-sm" data-testid="visit-lab-file-input" />
+                      </div>
+                      <Select value={labUploadData.tag} onValueChange={(v) => setLabUploadData({ ...labUploadData, tag: v })}>
+                        <SelectTrigger className="w-[130px]" data-testid="visit-lab-tag-select"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lab">Lab Result</SelectItem>
+                          <SelectItem value="x-ray">X-Ray</SelectItem>
+                          <SelectItem value="ultrasound">Ultrasound</SelectItem>
+                          <SelectItem value="ecg">ECG</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Input value={labUploadData.notes} onChange={(e) => setLabUploadData({ ...labUploadData, notes: e.target.value })} placeholder="Add a note (optional)..." className="text-sm" data-testid="visit-lab-notes-input" />
+                  </div>
+                  <Button type="button" onClick={handleLabUpload} disabled={!labFile || labUploading} className="bg-[#0F766E] hover:bg-[#115E59] h-11 px-4" data-testid="visit-lab-upload-btn">
+                    {labUploading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
+                  </Button>
+                </div>
+                {labFile && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span className="truncate flex-1">{labFile.name}</span>
+                    <button type="button" onClick={() => { setLabFile(null); if (labFileInputRef.current) labFileInputRef.current.value = ''; }} className="text-slate-400 hover:text-red-500">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -472,6 +737,64 @@ const NewVisitPage = () => {
           </Button>
         </div>
       </form>
+
+      {/* Image Viewer Modal */}
+      <Dialog open={!!viewingAttachment} onOpenChange={(open) => { if (!open) { setViewingAttachment(null); resetViewer(); } }}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3">
+            <DialogTitle className="flex items-center gap-2">
+              <FileImage className="w-5 h-5 text-[#0F766E]" />
+              {viewingAttachment?.filename}
+            </DialogTitle>
+          </DialogHeader>
+          {viewingAttachment && (
+            <div className="flex flex-col">
+              <div
+                className="relative bg-slate-950 overflow-hidden select-none"
+                style={{ height: '55vh', cursor: isPanning ? 'grabbing' : 'grab' }}
+                onWheel={handleWheel}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                data-testid="visit-lab-image-viewer-area"
+              >
+                <img
+                  src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
+                  alt={viewingAttachment.filename}
+                  draggable={false}
+                  className="absolute top-1/2 left-1/2 max-w-none"
+                  style={{
+                    transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
+                    transformOrigin: 'center center',
+                    transition: isPanning ? 'none' : 'transform 0.15s ease-out',
+                  }}
+                  data-testid="visit-lab-image-viewer"
+                />
+              </div>
+              <div className="px-5 py-3 bg-white border-t border-slate-200">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge className={`${tagColors[viewingAttachment.tag]} text-xs flex-shrink-0`}>{viewingAttachment.tag}</Badge>
+                    {viewingAttachment.notes && <span className="text-sm text-slate-500 truncate">{viewingAttachment.notes}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} disabled={zoom <= 0.25} data-testid="visit-zoom-out-btn"><ZoomOut className="w-4 h-4" /></Button>
+                    <input type="range" min="25" max="500" step="5" value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} className="w-24 h-1.5 accent-[#0F766E] cursor-pointer" data-testid="visit-zoom-slider" />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setZoom(z => Math.min(5, z + 0.25))} disabled={zoom >= 5} data-testid="visit-zoom-in-btn"><ZoomIn className="w-4 h-4" /></Button>
+                    <span className="text-xs text-slate-500 w-12 text-center font-mono">{Math.round(zoom * 100)}%</span>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <Button type="button" variant="ghost" size="sm" onClick={resetViewer} title="Reset"><RotateCcw className="w-4 h-4" /></Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="Fit"><Maximize2 className="w-4 h-4" /></Button>
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => downloadFile(viewingAttachment)} data-testid="visit-lab-download-btn"><Download className="w-4 h-4 mr-1" />Download</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
