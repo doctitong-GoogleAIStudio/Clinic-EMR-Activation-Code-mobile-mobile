@@ -30,10 +30,13 @@ const VisitDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [savedPrescriptions, setSavedPrescriptions] = useState([]);
   const [savedCertificates, setSavedCertificates] = useState([]);
+  const [savedLabRequests, setSavedLabRequests] = useState([]);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
+  const [selectedLabRequest, setSelectedLabRequest] = useState(null);
   const [showViewRx, setShowViewRx] = useState(false);
   const [showViewCert, setShowViewCert] = useState(false);
+  const [showViewLabReq, setShowViewLabReq] = useState(false);
   
   // Labs & Imaging state
   const [labAttachments, setLabAttachments] = useState([]);
@@ -51,17 +54,26 @@ const VisitDetailPage = () => {
   const soapRef = useRef();
   const savedRxRef = useRef();
   const savedCertRef = useRef();
+  const labRequestRef = useRef();
+  const savedLabReqRef = useRef();
   
   // Form states
   const [showRx, setShowRx] = useState(false);
   const [showMedCert, setShowMedCert] = useState(false);
   const [showFitToWork, setShowFitToWork] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
+  const [showLabRequest, setShowLabRequest] = useState(false);
   
   const [rxData, setRxData] = useState({ medications: [{ name: '', dosage: '', frequency: '', duration: '' }], notes: '' });
   const [medCertData, setMedCertData] = useState({ diagnosis: '', start_date: '', end_date: '', remarks: '' });
   const [fitToWorkData, setFitToWorkData] = useState({ examined_date: '', fit_date: '', restrictions: '' });
   const [referralData, setReferralData] = useState({ to_doctor: '', to_specialty: '', reason: '', findings: '' });
+  const [labRequestData, setLabRequestData] = useState({ 
+    request_type: 'lab', 
+    tests: [{ name: '', instructions: '' }], 
+    clinical_info: '', 
+    urgency: 'routine' 
+  });
 
   useEffect(() => {
     fetchData();
