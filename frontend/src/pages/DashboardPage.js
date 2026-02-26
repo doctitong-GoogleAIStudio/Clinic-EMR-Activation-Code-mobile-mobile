@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { getErrorMessage } from '../lib/utils';
 
 const DashboardPage = () => {
   const { user, isDoctor } = useAuth();
