@@ -226,6 +226,62 @@ const VisitDetailPage = () => {
     return names[type] || type;
   };
 
+  // Lab Request handlers
+  const handlePrintLabRequest = useReactToPrint({ contentRef: labRequestRef });
+  const handlePrintSavedLabReq = useReactToPrint({ contentRef: savedLabReqRef });
+
+  const addTest = () => {
+    setLabRequestData(prev => ({
+      ...prev,
+      tests: [...prev.tests, { name: '', instructions: '' }]
+    }));
+  };
+
+  const removeTest = (index) => {
+    setLabRequestData(prev => ({
+      ...prev,
+      tests: prev.tests.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateTest = (index, field, value) => {
+    setLabRequestData(prev => ({
+      ...prev,
+      tests: prev.tests.map((t, i) => i === index ? { ...t, [field]: value } : t)
+    }));
+  };
+
+  const saveLabRequest = async () => {
+    try {
+      await labRequestAPI.create({
+        visit_id: visitId,
+        patient_id: patient.id,
+        request_type: labRequestData.request_type,
+        tests: labRequestData.tests.filter(t => t.name.trim()),
+        clinical_info: labRequestData.clinical_info,
+        urgency: labRequestData.urgency
+      });
+      toast.success('Lab/Imaging request saved');
+      setShowLabRequest(false);
+      setTimeout(() => {
+        handlePrintLabRequest();
+        fetchData();
+      }, 300);
+    } catch (error) {
+      toast.error('Failed to save request');
+    }
+  };
+
+  const reprintLabRequest = (req) => {
+    setSelectedLabRequest(req);
+    setTimeout(() => handlePrintSavedLabReq(), 100);
+  };
+
+  const viewLabRequest = (req) => {
+    setSelectedLabRequest(req);
+    setShowViewLabReq(true);
+  };
+
   const tagColors = {
     lab: 'bg-purple-100 text-purple-800',
     'x-ray': 'bg-blue-100 text-blue-800',
