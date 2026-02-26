@@ -1068,6 +1068,62 @@ const VisitDetailPage = () => {
                 )}
               </DialogContent>
             </Dialog>
+
+            {/* View Lab Request Modal */}
+            <Dialog open={showViewLabReq} onOpenChange={setShowViewLabReq}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Microscope className="w-5 h-5 text-[#0F766E]" />
+                    {selectedLabRequest?.request_type === 'lab' ? 'Laboratory' : 'Imaging'} Request Details
+                  </DialogTitle>
+                </DialogHeader>
+                {selectedLabRequest && (
+                  <div className="space-y-4 mt-4">
+                    <div className="p-3 rounded-lg bg-slate-50 space-y-1">
+                      <p className="text-sm"><strong>Patient:</strong> {patient?.full_name}</p>
+                      <p className="text-sm"><strong>Date:</strong> {format(parseISO(selectedLabRequest.created_at), 'MMMM d, yyyy h:mm a')}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm"><strong>Urgency:</strong></span>
+                        <Badge className={
+                          selectedLabRequest.urgency === 'stat' ? 'bg-red-100 text-red-800' :
+                          selectedLabRequest.urgency === 'urgent' ? 'bg-amber-100 text-amber-800' :
+                          'bg-green-100 text-green-800'
+                        }>
+                          {selectedLabRequest.urgency.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </div>
+                    {selectedLabRequest.clinical_info && (
+                      <div className="p-3 rounded-lg border border-slate-200">
+                        <p className="text-xs text-slate-500 mb-1">Clinical Information</p>
+                        <p className="text-slate-900">{selectedLabRequest.clinical_info}</p>
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-2">Tests Requested</h4>
+                      <div className="space-y-2">
+                        {selectedLabRequest.tests?.map((test, i) => (
+                          <div key={i} className="p-3 rounded-lg border border-slate-200">
+                            <p className="font-medium text-slate-900">{i + 1}. {test.name}</p>
+                            {test.instructions && (
+                              <p className="text-sm text-slate-600 mt-1">Instructions: {test.instructions}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => { setShowViewLabReq(false); reprintLabRequest(selectedLabRequest); }}
+                      className="w-full bg-[#0F766E] hover:bg-[#115E59]"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Request
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </div>
