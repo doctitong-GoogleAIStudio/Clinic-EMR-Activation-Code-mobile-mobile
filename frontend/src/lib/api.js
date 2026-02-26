@@ -68,6 +68,12 @@ export const certificateAPI = {
   create: (data) => axios.post(`${API}/certificates`, data),
 };
 
+// Lab Request APIs
+export const labRequestAPI = {
+  getAll: (params) => axios.get(`${API}/lab-requests`, { params }),
+  create: (data) => axios.post(`${API}/lab-requests`, data),
+};
+
 // Settings APIs
 export const settingsAPI = {
   get: () => axios.get(`${API}/settings`),
