@@ -32,7 +32,16 @@ const NewPatientPage = () => {
     setLoading(true);
 
     try {
-      const response = await patientAPI.create(formData);
+      // Clean up form data - convert empty strings to null for optional fields
+      const cleanData = {
+        ...formData,
+        email: formData.email?.trim() || null,
+        address: formData.address?.trim() || null,
+        mobile: formData.mobile?.trim() || null,
+        emergency_contact_name: formData.emergency_contact_name?.trim() || null,
+        emergency_contact_phone: formData.emergency_contact_phone?.trim() || null,
+      };
+      const response = await patientAPI.create(cleanData);
       toast.success(`Patient ${response.data.full_name} registered successfully`);
       navigate(`/patients/${response.data.id}`);
     } catch (error) {
