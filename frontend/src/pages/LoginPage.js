@@ -7,6 +7,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Stethoscope, LogIn, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '../lib/utils';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
