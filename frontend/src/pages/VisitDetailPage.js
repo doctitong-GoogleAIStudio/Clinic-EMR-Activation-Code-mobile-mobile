@@ -1397,6 +1397,42 @@ const VisitDetailPage = () => {
             <DoctorSignature />
           </div>
         )}
+
+        {/* Saved Lab Request Reprint */}
+        {selectedLabRequest && (
+          <div ref={savedLabReqRef} className="p-8 bg-white print-container">
+            <PrintHeader />
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold">{selectedLabRequest.request_type === 'lab' ? 'LABORATORY' : 'IMAGING'} REQUEST</h2>
+              {selectedLabRequest.urgency !== 'routine' && (
+                <span className="inline-block mt-1 px-3 py-1 bg-red-100 text-red-800 font-bold rounded">
+                  {selectedLabRequest.urgency.toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="mb-6">
+              <p><strong>Patient:</strong> {patient.full_name}</p>
+              <p><strong>Age/Sex:</strong> {patient.age} years / {patient.sex}</p>
+              <p><strong>Date:</strong> {format(parseISO(selectedLabRequest.created_at), 'MMMM d, yyyy')}</p>
+            </div>
+            {selectedLabRequest.clinical_info && (
+              <div className="mb-4 p-3 border rounded">
+                <p className="font-bold text-sm">Clinical Information:</p>
+                <p>{selectedLabRequest.clinical_info}</p>
+              </div>
+            )}
+            <div className="mb-8">
+              <p className="font-bold mb-2">Tests/Procedures Requested:</p>
+              {selectedLabRequest.tests?.map((test, i) => (
+                <div key={i} className="mb-2 pl-4">
+                  <p>☐ {test.name}</p>
+                  {test.instructions && <p className="pl-4 text-sm text-slate-600">({test.instructions})</p>}
+                </div>
+              ))}
+            </div>
+            <DoctorSignature />
+          </div>
+        )}
       </div>
     </div>
   );
