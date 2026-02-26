@@ -175,7 +175,7 @@ const PatientProfilePage = () => {
       toast.success('Patient deleted successfully');
       navigate('/patients');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to delete patient');
+      toast.error(getErrorMessage(error, 'Failed to delete patient'));
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
