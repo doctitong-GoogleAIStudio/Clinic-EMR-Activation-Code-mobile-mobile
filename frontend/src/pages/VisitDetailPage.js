@@ -828,7 +828,7 @@ const VisitDetailPage = () => {
             </Card>
 
             {/* Saved Forms Section */}
-            {(savedPrescriptions.length > 0 || savedCertificates.length > 0) && (
+            {(savedPrescriptions.length > 0 || savedCertificates.length > 0 || savedLabRequests.length > 0) && (
               <Card className="bg-white border-slate-100 shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-heading text-lg flex items-center gap-2">
@@ -888,6 +888,37 @@ const VisitDetailPage = () => {
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
                         {format(parseISO(cert.created_at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  ))}
+                  {savedLabRequests.map((req) => (
+                    <div 
+                      key={req.id} 
+                      className="p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 hover:bg-slate-50 transition-colors cursor-pointer"
+                      onClick={() => viewLabRequest(req)}
+                      data-testid={`saved-labreq-${req.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Microscope className="w-4 h-4 text-[#0F766E]" />
+                          <span className="font-medium text-sm">{req.request_type === 'lab' ? 'Laboratory' : 'Imaging'} Request</span>
+                          {req.urgency !== 'routine' && (
+                            <Badge className={req.urgency === 'stat' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}>
+                              {req.urgency.toUpperCase()}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={(e) => { e.stopPropagation(); reprintLabRequest(req); }}
+                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {req.tests?.length || 0} test(s) • {format(parseISO(req.created_at), 'MMM d, h:mm a')}
                       </p>
                     </div>
                   ))}
