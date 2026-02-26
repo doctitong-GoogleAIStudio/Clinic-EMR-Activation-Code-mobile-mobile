@@ -49,7 +49,8 @@ const SignUpPage = () => {
       toast.success('Account created successfully! Please login.');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Email may already be in use.');
+      const errorMsg = getErrorMessage(err, 'Registration failed. Email may already be in use.');
+      setError(errorMsg);
       toast.error('Registration failed');
     } finally {
       setLoading(false);
