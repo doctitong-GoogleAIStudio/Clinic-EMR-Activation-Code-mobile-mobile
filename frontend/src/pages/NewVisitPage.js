@@ -270,7 +270,7 @@ const NewVisitPage = () => {
       toast.success('Visit recorded successfully');
       navigate(`/visits/${response.data.id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to save visit');
+      toast.error(getErrorMessage(error, 'Failed to save visit'));
     } finally {
       setLoading(false);
     }
