@@ -917,7 +917,54 @@ async def get_certificates(
     
     certificates = await db.certificates.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return certificates
-    return certificates
+
+# ============== LAB REQUEST ROUTES ==============
+@api_router.post("/lab-requests", response_model=LabRequestResponse)
+async def create_lab_request(request: LabRequestCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can create lab requests")
+    
+    # Data isolation: verify patient ownership
+    if not await verify_patient_ownership(request.patient_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    req_dict = request.model_dump()
+    req_dict["id"] = str(uuid.uuid4())
+    req_dict["created_by"] = current_user["id"]
+    req_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.lab_requests.insert_one(req_dict)
+    req_dict.pop("_id", None)
+    return req_dict
+
+@api_router.get("/lab-requests")
+async def get_lab_requests(
+    patient_id: Optional[str] = None,
+    visit_id: Optional[str] = None,
+    request_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "receptionist":
+        return []
+    if patient_id and not await verify_patient_ownership(patient_id, current_user["id"]):
+        return []
+    
+    query = {}
+    if patient_id:
+        query["patient_id"] = patient_id
+    if visit_id:
+        query["visit_id"] = visit_id
+    if request_type:
+        query["request_type"] = request_type
+    
+    # If no patient_id specified, only return requests for owned patients
+    if not patient_id:
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patient_ids = [p["id"] for p in owned_patients]
+        query["patient_id"] = {"$in": owned_patient_ids}
+    
+    lab_requests = await db.lab_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return lab_requests
 
 # ============== CLINIC SETTINGS ==============
 @api_router.get("/settings")
