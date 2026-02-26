@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
+import { getErrorMessage } from '../lib/utils';
 
 const NewVisitPage = () => {
   const navigate = useNavigate();
