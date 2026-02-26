@@ -81,16 +81,18 @@ const VisitDetailPage = () => {
 
   const fetchData = async () => {
     try {
-      const [visitRes, settingsRes, rxRes, certRes] = await Promise.all([
+      const [visitRes, settingsRes, rxRes, certRes, labReqRes] = await Promise.all([
         visitAPI.getOne(visitId),
         settingsAPI.get(),
         prescriptionAPI.getAll({ visit_id: visitId }),
-        certificateAPI.getAll({ visit_id: visitId })
+        certificateAPI.getAll({ visit_id: visitId }),
+        labRequestAPI.getAll({ visit_id: visitId })
       ]);
       setVisit(visitRes.data);
       setSettings(settingsRes.data);
       setSavedPrescriptions(rxRes.data);
       setSavedCertificates(certRes.data);
+      setSavedLabRequests(labReqRes.data);
       
       const patientRes = await patientAPI.getOne(visitRes.data.patient_id);
       setPatient(patientRes.data);
