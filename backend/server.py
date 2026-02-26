@@ -227,6 +227,22 @@ class CertificateResponse(CertificateBase):
     created_by: str
     created_at: str
 
+class LabRequestBase(BaseModel):
+    visit_id: str
+    patient_id: str
+    request_type: str  # lab, imaging
+    tests: List[Dict[str, Any]]  # [{name, instructions}]
+    clinical_info: Optional[str] = None
+    urgency: str = "routine"  # routine, urgent, stat
+
+class LabRequestCreate(LabRequestBase):
+    pass
+
+class LabRequestResponse(LabRequestBase):
+    id: str
+    created_by: str
+    created_at: str
+
 class ClinicSettings(BaseModel):
     clinic_name: str = "Private Clinic EMR"
     address: str = ""
