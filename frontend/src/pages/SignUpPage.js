@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Stethoscope, UserPlus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '../lib/utils';
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
