@@ -22,6 +22,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] Printing of Prescriptions (Rx), Medical Certificates, Fit-to-Work, Referral forms
 - [x] File uploads for patient attachments with tagging (Lab, X-ray, Ultrasound, ECG)
 - [x] **Labs & Imaging tab** - Messenger-style file upload/display (Feb 25, 2026)
+- [x] **Lab/Imaging Request Forms** - Printable lab & imaging request forms with tests, urgency, clinical info (Feb 26, 2026)
 - [x] Patient deletion with cascade
 - [x] About page with developer credits
 - [x] Data isolation (owner_id on all collections) - **VERIFIED Dec 2025**
@@ -40,6 +41,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **attachments**: `{id, patient_id, visit_id, filename, file_data, content_type, tag, notes, uploaded_by}`
 - **prescriptions**: `{id, patient_id, visit_id, medications, notes, created_by}`
 - **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
+- **lab_requests**: `{id, patient_id, visit_id, request_type, tests, clinical_info, urgency, created_by, created_at}`
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login`
