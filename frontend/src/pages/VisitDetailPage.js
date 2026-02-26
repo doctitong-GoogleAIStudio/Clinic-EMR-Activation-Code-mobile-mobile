@@ -1263,6 +1263,40 @@ const VisitDetailPage = () => {
           <DoctorSignature />
         </div>
 
+        {/* Lab Request Print */}
+        <div ref={labRequestRef} className="p-8 bg-white print-container">
+          <PrintHeader />
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold">{labRequestData.request_type === 'lab' ? 'LABORATORY' : 'IMAGING'} REQUEST</h2>
+            {labRequestData.urgency !== 'routine' && (
+              <span className="inline-block mt-1 px-3 py-1 bg-red-100 text-red-800 font-bold rounded">
+                {labRequestData.urgency.toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="mb-6">
+            <p><strong>Patient:</strong> {patient.full_name}</p>
+            <p><strong>Age/Sex:</strong> {patient.age} years / {patient.sex}</p>
+            <p><strong>Date:</strong> {format(new Date(), 'MMMM d, yyyy')}</p>
+          </div>
+          {labRequestData.clinical_info && (
+            <div className="mb-4 p-3 border rounded">
+              <p className="font-bold text-sm">Clinical Information:</p>
+              <p>{labRequestData.clinical_info}</p>
+            </div>
+          )}
+          <div className="mb-8">
+            <p className="font-bold mb-2">Tests/Procedures Requested:</p>
+            {labRequestData.tests.filter(t => t.name.trim()).map((test, i) => (
+              <div key={i} className="mb-2 pl-4">
+                <p>☐ {test.name}</p>
+                {test.instructions && <p className="pl-4 text-sm text-slate-600">({test.instructions})</p>}
+              </div>
+            ))}
+          </div>
+          <DoctorSignature />
+        </div>
+
         {/* SOAP Print */}
         <div ref={soapRef} className="p-8 bg-white print-container">
           <PrintHeader />
