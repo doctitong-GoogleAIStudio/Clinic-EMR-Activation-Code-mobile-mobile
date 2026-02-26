@@ -36,7 +36,7 @@ const NewPatientPage = () => {
       toast.success(`Patient ${response.data.full_name} registered successfully`);
       navigate(`/patients/${response.data.id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to register patient');
+      toast.error(getErrorMessage(error, 'Failed to register patient'));
     } finally {
       setLoading(false);
     }
