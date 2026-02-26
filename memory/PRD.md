@@ -50,6 +50,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - `GET/POST /api/visits` | `GET/PUT/DELETE /api/visits/{id}`
 - `GET/POST /api/appointments` | `PUT/DELETE /api/appointments/{id}`
 - `GET/POST /api/attachments` | `GET/PUT/DELETE /api/attachments/{id}`
+- `GET/POST /api/lab-requests` - Lab/Imaging request forms (NEW)
 - `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
 - `GET/PUT /api/settings` (per-user) | `POST /api/ai/assist`
 
