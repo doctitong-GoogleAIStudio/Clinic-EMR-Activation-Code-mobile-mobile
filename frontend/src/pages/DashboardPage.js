@@ -67,13 +67,18 @@ const DashboardPage = () => {
   const handleQuickRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await patientAPI.create(newPatient);
+      // Clean up empty strings to null
+      const cleanData = {
+        ...newPatient,
+        mobile: newPatient.mobile?.trim() || null,
+      };
+      const response = await patientAPI.create(cleanData);
       toast.success(`Patient ${response.data.full_name} registered`);
       setShowQuickAdd(false);
       setNewPatient({ full_name: '', birthdate: '', sex: 'male', mobile: '' });
       navigate(`/patients/${response.data.id}`);
     } catch (error) {
-      toast.error('Failed to register patient');
+      toast.error(getErrorMessage(error, 'Failed to register patient'));
     }
   };
 
