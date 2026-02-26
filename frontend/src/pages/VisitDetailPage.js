@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '../context/AuthContext';
-import { visitAPI, patientAPI, prescriptionAPI, certificateAPI, settingsAPI, attachmentAPI } from '../lib/api';
+import { visitAPI, patientAPI, prescriptionAPI, certificateAPI, settingsAPI, attachmentAPI, labRequestAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
