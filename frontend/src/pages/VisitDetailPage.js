@@ -739,6 +739,91 @@ const VisitDetailPage = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
+
+                {/* Lab/Imaging Request */}
+                <Dialog open={showLabRequest} onOpenChange={setShowLabRequest}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start" data-testid="create-labreq-btn">
+                      <Microscope className="w-4 h-4 mr-2 text-[#0F766E]" />
+                      Lab/Imaging Request
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Lab/Imaging Request</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Request Type</Label>
+                          <Select value={labRequestData.request_type} onValueChange={(v) => setLabRequestData({ ...labRequestData, request_type: v })}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lab">Laboratory</SelectItem>
+                              <SelectItem value="imaging">Imaging/Radiology</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Urgency</Label>
+                          <Select value={labRequestData.urgency} onValueChange={(v) => setLabRequestData({ ...labRequestData, urgency: v })}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="routine">Routine</SelectItem>
+                              <SelectItem value="urgent">Urgent</SelectItem>
+                              <SelectItem value="stat">STAT</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Clinical Information</Label>
+                        <Textarea 
+                          value={labRequestData.clinical_info} 
+                          onChange={(e) => setLabRequestData({ ...labRequestData, clinical_info: e.target.value })} 
+                          placeholder="Relevant clinical history, symptoms, diagnosis..."
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Tests/Procedures Requested</Label>
+                        {labRequestData.tests.map((test, index) => (
+                          <div key={index} className="p-3 border rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Test #{index + 1}</span>
+                              {labRequestData.tests.length > 1 && (
+                                <Button variant="ghost" size="sm" onClick={() => removeTest(index)} className="text-red-500 h-6 px-2">
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                            <Input 
+                              placeholder="Test name (e.g., CBC, Chest X-Ray, ECG)" 
+                              value={test.name} 
+                              onChange={(e) => updateTest(index, 'name', e.target.value)} 
+                            />
+                            <Input 
+                              placeholder="Special instructions (optional)" 
+                              value={test.instructions} 
+                              onChange={(e) => updateTest(index, 'instructions', e.target.value)} 
+                            />
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" onClick={addTest} className="w-full">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Test
+                        </Button>
+                      </div>
+                      <Button onClick={saveLabRequest} className="w-full bg-[#0F766E] hover:bg-[#115E59]" data-testid="print-labreq-btn">
+                        <Printer className="w-4 h-4 mr-2" />
+                        Save & Print
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
 
