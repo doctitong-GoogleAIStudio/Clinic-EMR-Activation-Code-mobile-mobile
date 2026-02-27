@@ -64,6 +64,7 @@ const VisitDetailPage = () => {
   const [showFitToWork, setShowFitToWork] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
   const [showLabRequest, setShowLabRequest] = useState(false);
+  const [showEditSoap, setShowEditSoap] = useState(false);
   
   const [rxData, setRxData] = useState({ medications: [{ name: '', dosage: '', frequency: '', duration: '' }], notes: '' });
   const [medCertData, setMedCertData] = useState({ diagnosis: '', start_date: '', end_date: '', remarks: '' });
@@ -74,6 +75,13 @@ const VisitDetailPage = () => {
     tests: [{ name: '', instructions: '' }], 
     clinical_info: '', 
     urgency: 'routine' 
+  });
+  const [soapEditData, setSoapEditData] = useState({
+    soap_subjective: '',
+    soap_objective: '',
+    soap_assessment: '',
+    soap_plan: '',
+    follow_up_date: ''
   });
 
   useEffect(() => {
