@@ -17,6 +17,8 @@ import aiofiles
 from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
+UPLOADS_DIR = ROOT_DIR / 'uploads'
+UPLOADS_DIR.mkdir(exist_ok=True)
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
