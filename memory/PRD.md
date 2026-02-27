@@ -23,6 +23,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] File uploads for patient attachments with tagging (Lab, X-ray, Ultrasound, ECG)
 - [x] **Labs & Imaging tab** - Messenger-style file upload/display (Feb 25, 2026)
 - [x] **Lab/Imaging Request Forms** - Printable lab & imaging request forms with tests, urgency, clinical info (Feb 26, 2026)
+- [x] **Edit SOAP Notes** - Edit button to modify SOAP notes after visit creation (Feb 27, 2026)
+- [x] **Local File Storage** - Files saved to disk instead of MongoDB for better performance (Feb 27, 2026)
+- [x] **PWA Support** - Progressive Web App with offline caching, install prompt, app icons (Feb 27, 2026)
 - [x] Patient deletion with cascade
 - [x] About page with developer credits
 - [x] Data isolation (owner_id on all collections) - **VERIFIED Dec 2025**
