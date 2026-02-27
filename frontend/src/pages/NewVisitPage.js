@@ -184,13 +184,9 @@ const NewVisitPage = () => {
   const handlePointerUp = useCallback(() => { setIsPanning(false); }, []);
 
   const downloadFile = (att) => {
-    const byteChars = atob(att.file_data);
-    const byteNumbers = new Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-    const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
-    URL.revokeObjectURL(url);
+    if (att.fileUrl) {
+      const a = document.createElement('a'); a.href = att.fileUrl; a.download = att.filename; a.click();
+    }
   };
 
   const calculateBMI = () => {
