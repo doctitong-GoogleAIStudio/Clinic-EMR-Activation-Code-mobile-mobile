@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
-  Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus
+  Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
+  Sparkles, Microscope, Calendar, Upload, Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
