@@ -869,6 +869,13 @@ async def delete_attachment(attachment_id: str, current_user: dict = Depends(get
     if not attachment or not await verify_patient_ownership(attachment["patient_id"], owner_id):
         raise HTTPException(status_code=404, detail="Attachment not found")
     
+    # Delete file from disk if it exists
+    stored_filename = attachment.get("stored_filename")
+    if stored_filename:
+        file_path = UPLOADS_DIR / stored_filename
+        if file_path.exists():
+            file_path.unlink()
+    
     await db.attachments.delete_one({"id": attachment_id})
     await log_audit(current_user["id"], current_user["full_name"], "delete", "attachment", attachment_id)
     return {"message": "Attachment deleted"}
