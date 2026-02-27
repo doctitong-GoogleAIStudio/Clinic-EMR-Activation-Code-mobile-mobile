@@ -241,32 +241,26 @@ const PatientProfilePage = () => {
 
   const handleViewAttachment = async (attachmentId) => {
     try {
-      const res = await attachmentAPI.getOne(attachmentId);
-      const att = res.data;
+      // First get metadata
+      const metaRes = await attachmentAPI.getOne(attachmentId);
+      const att = metaRes.data;
+      
+      // Then fetch the file
+      const fileRes = await attachmentAPI.getFile(attachmentId, token);
+      const blob = fileRes.data;
+      const fileUrl = URL.createObjectURL(blob);
+      
       if (att.content_type?.startsWith('image/')) {
-        openAttachmentViewer(att);
+        openAttachmentViewer({ ...att, fileUrl });
       } else if (att.content_type === 'application/pdf') {
-        // Open PDF in new tab
-        const byteChars = atob(att.file_data);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        window.open(fileUrl, '_blank');
       } else {
         // Download other files
-        const byteChars = atob(att.file_data);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: att.content_type });
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = fileUrl;
         a.download = att.filename;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(fileUrl);
       }
     } catch (error) {
       toast.error('Failed to load file');
