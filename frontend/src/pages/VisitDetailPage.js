@@ -323,25 +323,20 @@ const VisitDetailPage = () => {
 
   const handleViewAttachment = async (attachmentId) => {
     try {
-      const res = await attachmentAPI.getOne(attachmentId);
-      const att = res.data;
+      const metaRes = await attachmentAPI.getOne(attachmentId);
+      const att = metaRes.data;
+      
+      const fileRes = await attachmentAPI.getFile(attachmentId, token);
+      const blob = fileRes.data;
+      const fileUrl = URL.createObjectURL(blob);
+      
       if (att.content_type?.startsWith('image/')) {
         setZoom(1); setPan({ x: 0, y: 0 });
-        setViewingAttachment(att);
+        setViewingAttachment({ ...att, fileUrl });
       } else if (att.content_type === 'application/pdf') {
-        const byteChars = atob(att.file_data);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
-        window.open(URL.createObjectURL(blob), '_blank');
+        window.open(fileUrl, '_blank');
       } else {
-        const byteChars = atob(att.file_data);
-        const byteNumbers = new Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
-        URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = fileUrl; a.download = att.filename; a.click();
       }
     } catch (error) {
       toast.error('Failed to load file');
@@ -349,13 +344,9 @@ const VisitDetailPage = () => {
   };
 
   const downloadFile = (att) => {
-    const byteChars = atob(att.file_data);
-    const byteNumbers = new Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-    const blob = new Blob([new Uint8Array(byteNumbers)], { type: att.content_type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = att.filename; a.click();
-    URL.revokeObjectURL(url);
+    if (att.fileUrl) {
+      const a = document.createElement('a'); a.href = att.fileUrl; a.download = att.filename; a.click();
+    }
   };
 
   const resetViewer = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
