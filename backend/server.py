@@ -786,13 +786,12 @@ async def get_attachments(
         owned_patient_ids = [p["id"] for p in owned_patients]
         query["patient_id"] = {"$in": owned_patient_ids}
     
-    # Exclude file_data from list queries for performance
-    attachments = await db.attachments.find(query, {"_id": 0, "file_data": 0}).sort("uploaded_at", -1).to_list(100)
+    attachments = await db.attachments.find(query, {"_id": 0}).sort("uploaded_at", -1).to_list(100)
     return attachments
 
 @api_router.get("/attachments/{attachment_id}")
 async def get_attachment(attachment_id: str, current_user: dict = Depends(get_current_user)):
-    """Get single attachment with file data for viewing/downloading"""
+    """Get attachment metadata"""
     attachment = await db.attachments.find_one({"id": attachment_id}, {"_id": 0})
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
@@ -803,6 +802,43 @@ async def get_attachment(attachment_id: str, current_user: dict = Depends(get_cu
         raise HTTPException(status_code=404, detail="Attachment not found")
     
     return attachment
+
+@api_router.get("/attachments/{attachment_id}/file")
+async def get_attachment_file(attachment_id: str, current_user: dict = Depends(get_current_user)):
+    """Download/view the actual file"""
+    attachment = await db.attachments.find_one({"id": attachment_id})
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
+    # Data isolation: verify patient ownership
+    owner_id = await get_owner_id_for_user(current_user)
+    if not await verify_patient_ownership(attachment["patient_id"], owner_id):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
+    # Check for local file (new system)
+    stored_filename = attachment.get("stored_filename")
+    if stored_filename:
+        file_path = UPLOADS_DIR / stored_filename
+        if file_path.exists():
+            return FileResponse(
+                path=file_path,
+                filename=attachment.get("filename", stored_filename),
+                media_type=attachment.get("content_type", "application/octet-stream")
+            )
+    
+    # Fallback for old base64 data (legacy support)
+    file_data = attachment.get("file_data")
+    if file_data:
+        import io
+        from starlette.responses import StreamingResponse
+        content = base64.b64decode(file_data)
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=attachment.get("content_type", "application/octet-stream"),
+            headers={"Content-Disposition": f"inline; filename={attachment.get('filename', 'file')}"}
+        )
+    
+    raise HTTPException(status_code=404, detail="File not found")
 
 class AttachmentUpdate(BaseModel):
     filename: Optional[str] = None
