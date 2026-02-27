@@ -498,11 +498,23 @@ const VisitDetailPage = () => {
 
           {/* SOAP Notes */}
           <Card className="bg-white border-slate-100 shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#0F766E]" />
                 SOAP Notes
               </CardTitle>
+              {isDoctor && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={openEditSoap}
+                  className="text-[#0F766E] hover:bg-[#0F766E]/10"
+                  data-testid="edit-soap-btn"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               {visit.soap_subjective && (
