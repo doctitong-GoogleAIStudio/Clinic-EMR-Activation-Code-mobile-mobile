@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   ArrowLeft, Printer, Activity, FileText, Plus, Trash2,
   Pill, Award, Briefcase, Send, Microscope, FileImage, File,
-  Eye, Download, ZoomIn, ZoomOut, Maximize2, RotateCcw
+  Eye, Download, ZoomIn, ZoomOut, Maximize2, RotateCcw, Edit
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
