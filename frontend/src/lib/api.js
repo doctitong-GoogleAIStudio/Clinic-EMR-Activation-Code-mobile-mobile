@@ -54,6 +54,11 @@ export const attachmentAPI = {
   }),
   update: (id, data) => axios.put(`${API}/attachments/${id}`, data),
   delete: (id) => axios.delete(`${API}/attachments/${id}`),
+  getFileUrl: (id) => `${API}/attachments/${id}/file`,
+  getFile: (id, token) => axios.get(`${API}/attachments/${id}/file`, {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: 'blob'
+  }),
 };
 
 // Prescription APIs
