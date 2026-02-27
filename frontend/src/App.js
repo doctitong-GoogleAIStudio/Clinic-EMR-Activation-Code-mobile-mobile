@@ -84,6 +84,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <OfflineIndicator />
         <AppRoutes />
         <Toaster position="top-right" richColors closeButton />
         <PWAInstallPrompt />
