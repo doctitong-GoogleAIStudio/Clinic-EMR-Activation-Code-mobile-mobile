@@ -583,6 +583,7 @@ const SettingsPage = () => {
               </div>
               <CardTitle className="font-heading text-2xl">Private Clinic EMR</CardTitle>
               <CardDescription className="text-base">Electronic Medical Records System</CardDescription>
+              <Badge className="mt-2 bg-[#0F766E]/10 text-[#0F766E] hover:bg-[#0F766E]/20">PWA Enabled</Badge>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center py-4">
@@ -607,27 +608,130 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-4 text-center">
-                <div className="p-4 rounded-xl bg-slate-50">
-                  <Stethoscope className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
-                  <p className="font-medium text-slate-900">SOAP Notes</p>
-                  <p className="text-xs text-slate-500">Structured documentation</p>
+              {/* Features Grid */}
+              <div>
+                <h3 className="font-heading font-semibold text-slate-900 mb-3 text-center">Key Features</h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Stethoscope className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">SOAP Notes</p>
+                    <p className="text-xs text-slate-500">Structured documentation</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <FileText className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Print Forms</p>
+                    <p className="text-xs text-slate-500">Rx, MedCert, Referrals</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Users className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Multi-User</p>
+                    <p className="text-xs text-slate-500">Role-based access</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Sparkles className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">AI Assist</p>
+                    <p className="text-xs text-slate-500">Smart suggestions</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Microscope className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Lab Requests</p>
+                    <p className="text-xs text-slate-500">Lab & imaging forms</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Calendar className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Appointments</p>
+                    <p className="text-xs text-slate-500">Queue & scheduling</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Upload className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">File Uploads</p>
+                    <p className="text-xs text-slate-500">Labs & imaging files</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Smartphone className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">PWA</p>
+                    <p className="text-xs text-slate-500">Install on device</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50">
-                  <FileText className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
-                  <p className="font-medium text-slate-900">Print Forms</p>
-                  <p className="text-xs text-slate-500">Rx, MedCert, Referrals</p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-50">
-                  <Users className="w-6 h-6 text-[#0F766E] mx-auto mb-2" />
-                  <p className="font-medium text-slate-900">Multi-User</p>
-                  <p className="text-xs text-slate-500">Role-based access</p>
+              </div>
+
+              {/* Changelog */}
+              <div className="border-t pt-6">
+                <h3 className="font-heading font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#0F766E]" />
+                  What's New
+                </h3>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <div className="flex gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">PWA Support</p>
+                      <p className="text-xs text-slate-600">Install app on mobile/desktop, offline caching, app-like experience</p>
+                      <p className="text-xs text-slate-400 mt-1">Feb 27, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Local File Storage</p>
+                      <p className="text-xs text-slate-600">Files now stored locally for better performance</p>
+                      <p className="text-xs text-slate-400 mt-1">Feb 27, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Edit SOAP Notes</p>
+                      <p className="text-xs text-slate-600">Edit SOAP notes after visit creation</p>
+                      <p className="text-xs text-slate-400 mt-1">Feb 27, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Lab/Imaging Request Forms</p>
+                      <p className="text-xs text-slate-600">Create and print lab & imaging request forms with urgency levels</p>
+                      <p className="text-xs text-slate-400 mt-1">Feb 26, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Labs & Imaging Module</p>
+                      <p className="text-xs text-slate-600">Messenger-style file upload with zoom/pan viewer</p>
+                      <p className="text-xs text-slate-400 mt-1">Feb 25, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Receptionist-Doctor Binding</p>
+                      <p className="text-xs text-slate-600">Receptionists now tied to specific doctor who created them</p>
+                      <p className="text-xs text-slate-400 mt-1">Dec 2025</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Private Receptionist Creation</p>
+                      <p className="text-xs text-slate-600">Doctors/Admins can create receptionist accounts from Settings</p>
+                      <p className="text-xs text-slate-400 mt-1">Dec 2025</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-slate-50">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-[#0F766E]"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">AI-Powered Features</p>
+                      <p className="text-xs text-slate-600">SOAP conversion, diagnosis suggestions, patient instructions</p>
+                      <p className="text-xs text-slate-400 mt-1">Dec 2025</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="text-center pt-4 border-t">
                 <p className="text-xs text-slate-400">
-                  Version 1.0.0 • Built with React & FastAPI
+                  Version 2.0.0 • Built with React & FastAPI
                 </p>
                 <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
                   Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> for healthcare professionals
