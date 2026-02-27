@@ -972,17 +972,10 @@ const PatientProfilePage = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const byteChars = atob(viewingAttachment.file_data);
-                            const byteNumbers = new Array(byteChars.length);
-                            for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
-                            const byteArray = new Uint8Array(byteNumbers);
-                            const blob = new Blob([byteArray], { type: viewingAttachment.content_type });
-                            const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
-                            a.href = url;
+                            a.href = viewingAttachment.fileUrl;
                             a.download = viewingAttachment.filename;
                             a.click();
-                            URL.revokeObjectURL(url);
                           }}
                           data-testid="lab-download-btn"
                         >
