@@ -1262,7 +1262,7 @@ const VisitDetailPage = () => {
                 data-testid="detail-lab-image-viewer-area"
               >
                 <img
-                  src={`data:${viewingAttachment.content_type};base64,${viewingAttachment.file_data}`}
+                  src={viewingAttachment.fileUrl}
                   alt={viewingAttachment.filename}
                   draggable={false}
                   className="absolute top-1/2 left-1/2 max-w-none"
