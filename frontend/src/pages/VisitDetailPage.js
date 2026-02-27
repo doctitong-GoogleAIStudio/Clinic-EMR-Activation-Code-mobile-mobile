@@ -291,6 +291,29 @@ const VisitDetailPage = () => {
     setShowViewLabReq(true);
   };
 
+  // SOAP Edit handlers
+  const openEditSoap = () => {
+    setSoapEditData({
+      soap_subjective: visit.soap_subjective || '',
+      soap_objective: visit.soap_objective || '',
+      soap_assessment: visit.soap_assessment || '',
+      soap_plan: visit.soap_plan || '',
+      follow_up_date: visit.follow_up_date || ''
+    });
+    setShowEditSoap(true);
+  };
+
+  const saveSoapEdit = async () => {
+    try {
+      await visitAPI.update(visitId, soapEditData);
+      toast.success('SOAP notes updated');
+      setShowEditSoap(false);
+      fetchData(); // Refresh data
+    } catch (error) {
+      toast.error('Failed to update SOAP notes');
+    }
+  };
+
   const tagColors = {
     lab: 'bg-purple-100 text-purple-800',
     'x-ray': 'bg-blue-100 text-blue-800',
