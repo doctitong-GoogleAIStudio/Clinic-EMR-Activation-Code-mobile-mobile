@@ -23,7 +23,7 @@ import { format, parseISO } from 'date-fns';
 const VisitDetailPage = () => {
   const { visitId } = useParams();
   const navigate = useNavigate();
-  const { user, isDoctor } = useAuth();
+  const { user, isDoctor, token } = useAuth();
   
   const [visit, setVisit] = useState(null);
   const [patient, setPatient] = useState(null);
