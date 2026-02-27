@@ -1168,6 +1168,83 @@ const VisitDetailPage = () => {
                 )}
               </DialogContent>
             </Dialog>
+
+            {/* Edit SOAP Notes Modal */}
+            <Dialog open={showEditSoap} onOpenChange={setShowEditSoap}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Edit className="w-5 h-5 text-[#0F766E]" />
+                    Edit SOAP Notes
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Badge className="bg-blue-100 text-blue-800">S</Badge>
+                      Subjective
+                    </Label>
+                    <Textarea 
+                      value={soapEditData.soap_subjective}
+                      onChange={(e) => setSoapEditData({ ...soapEditData, soap_subjective: e.target.value })}
+                      placeholder="Chief complaint, HPI, ROS..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800">O</Badge>
+                      Objective
+                    </Label>
+                    <Textarea 
+                      value={soapEditData.soap_objective}
+                      onChange={(e) => setSoapEditData({ ...soapEditData, soap_objective: e.target.value })}
+                      placeholder="Physical examination findings..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Badge className="bg-amber-100 text-amber-800">A</Badge>
+                      Assessment
+                    </Label>
+                    <Textarea 
+                      value={soapEditData.soap_assessment}
+                      onChange={(e) => setSoapEditData({ ...soapEditData, soap_assessment: e.target.value })}
+                      placeholder="Diagnosis / Differential diagnoses..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Badge className="bg-purple-100 text-purple-800">P</Badge>
+                      Plan
+                    </Label>
+                    <Textarea 
+                      value={soapEditData.soap_plan}
+                      onChange={(e) => setSoapEditData({ ...soapEditData, soap_plan: e.target.value })}
+                      placeholder="Treatment plan, medications, follow-up..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Follow-up Date</Label>
+                    <Input 
+                      type="date"
+                      value={soapEditData.follow_up_date}
+                      onChange={(e) => setSoapEditData({ ...soapEditData, follow_up_date: e.target.value })}
+                    />
+                  </div>
+                  <Button 
+                    onClick={saveSoapEdit}
+                    className="w-full bg-[#0F766E] hover:bg-[#115E59]"
+                    data-testid="save-soap-edit-btn"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </div>
