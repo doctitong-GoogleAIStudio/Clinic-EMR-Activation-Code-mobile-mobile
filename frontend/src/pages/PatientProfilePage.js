@@ -25,7 +25,7 @@ import { getErrorMessage } from '../lib/utils';
 const PatientProfilePage = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { isDoctor, isAdmin, isReceptionist, user } = useAuth();
+  const { isDoctor, isAdmin, isReceptionist, user, token } = useAuth();
   const fileInputRef = useRef(null);
   const docPrintRef = useRef(null);
   
