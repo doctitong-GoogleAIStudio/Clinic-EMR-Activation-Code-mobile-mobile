@@ -23,7 +23,7 @@ import { getErrorMessage } from '../lib/utils';
 const NewVisitPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const patientId = searchParams.get('patient');
   const appointmentId = searchParams.get('appointment');
 
