@@ -732,16 +732,25 @@ async def upload_attachment(
     if not await verify_patient_ownership(patient_id, current_user["id"]):
         raise HTTPException(status_code=404, detail="Patient not found")
     
+    # Generate unique filename and save to disk
+    attachment_id = str(uuid.uuid4())
+    file_ext = Path(file.filename).suffix if file.filename else ''
+    stored_filename = f"{attachment_id}{file_ext}"
+    file_path = UPLOADS_DIR / stored_filename
+    
+    # Save file to disk
     content = await file.read()
-    file_data = base64.b64encode(content).decode('utf-8')
+    async with aiofiles.open(file_path, 'wb') as f:
+        await f.write(content)
     
     attachment = {
-        "id": str(uuid.uuid4()),
+        "id": attachment_id,
         "patient_id": patient_id,
         "visit_id": visit_id,
         "filename": file.filename,
-        "file_data": file_data,
+        "stored_filename": stored_filename,  # Local file name
         "content_type": file.content_type,
+        "file_size": len(content),
         "tag": tag,
         "notes": notes,
         "uploaded_by": current_user["id"],
