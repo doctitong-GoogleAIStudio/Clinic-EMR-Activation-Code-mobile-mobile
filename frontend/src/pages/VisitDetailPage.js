@@ -129,6 +129,10 @@ const VisitDetailPage = () => {
           return t > prevVisitTime && t <= thisVisitTime;
         });
         setLabAttachments(filteredLabs);
+        
+        // Fetch SOAP attachments for this visit
+        const soapFiles = (attRes.data || []).filter(a => a.tag === 'soap' && a.visit_id === visitId);
+        setSoapAttachments(soapFiles);
       } catch (e) { /* silent */ }
     } catch (error) {
       toast.error('Failed to load visit');
