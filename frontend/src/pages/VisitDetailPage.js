@@ -47,6 +47,13 @@ const VisitDetailPage = () => {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   
+  // SOAP Attachments state
+  const [soapAttachments, setSoapAttachments] = useState([]);
+  const [editingSoapAttachment, setEditingSoapAttachment] = useState(null);
+  const [soapAttachmentForm, setSoapAttachmentForm] = useState({ filename: '', notes: '' });
+  const [isUploadingSoap, setIsUploadingSoap] = useState(false);
+  const soapFileInputRef = useRef();
+  
   // Print refs
   const prescriptionRef = useRef();
   const medCertRef = useRef();
