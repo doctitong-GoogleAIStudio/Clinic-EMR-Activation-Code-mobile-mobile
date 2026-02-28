@@ -330,6 +330,60 @@ const VisitDetailPage = () => {
     'x-ray': 'bg-blue-100 text-blue-800',
     ultrasound: 'bg-cyan-100 text-cyan-800',
     ecg: 'bg-rose-100 text-rose-800',
+    soap: 'bg-teal-100 text-teal-800',
+  };
+
+  // SOAP Attachment handlers
+  const handleSoapFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || isUploadingSoap) return;
+    
+    setIsUploadingSoap(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('patient_id', patient.id);
+      formData.append('visit_id', visitId);
+      formData.append('tag', 'soap');
+      formData.append('notes', '');
+      
+      await attachmentAPI.upload(formData);
+      toast.success('SOAP file uploaded');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to upload file');
+    } finally {
+      setIsUploadingSoap(false);
+      if (soapFileInputRef.current) soapFileInputRef.current.value = '';
+    }
+  };
+
+  const handleEditSoapAttachment = (att) => {
+    setEditingSoapAttachment(att);
+    setSoapAttachmentForm({ filename: att.filename, notes: att.notes || '' });
+  };
+
+  const saveSoapAttachmentEdit = async () => {
+    if (!editingSoapAttachment) return;
+    try {
+      await attachmentAPI.update(editingSoapAttachment.id, soapAttachmentForm);
+      toast.success('File updated');
+      setEditingSoapAttachment(null);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update file');
+    }
+  };
+
+  const handleDeleteSoapAttachment = async (attId) => {
+    if (!confirm('Delete this SOAP file?')) return;
+    try {
+      await attachmentAPI.delete(attId);
+      toast.success('File deleted');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to delete file');
+    }
   };
 
   const handleViewAttachment = async (attachmentId) => {
