@@ -136,7 +136,7 @@ const NewVisitPage = () => {
         const a = document.createElement('a'); a.href = fileUrl; a.download = att.filename; a.click();
       }
     } catch (error) {
-      toast.error('Failed to load file');
+      toast.error(getErrorMessage(error, 'Failed to load file'));
     }
   };
 
@@ -146,7 +146,7 @@ const NewVisitPage = () => {
       toast.success('File deleted');
       setLabAttachments(prev => prev.filter(a => a.id !== id));
     } catch (error) {
-      toast.error('Failed to delete file');
+      toast.error(getErrorMessage(error, 'Failed to delete file'));
     }
   };
 
@@ -164,7 +164,7 @@ const NewVisitPage = () => {
       setLabAttachments(prev => prev.map(a => a.id === editingLabId ? { ...a, ...res.data } : a));
       setEditingLabId(null);
     } catch (error) {
-      toast.error('Failed to update file');
+      toast.error(getErrorMessage(error, 'Failed to update file'));
     }
   };
 
@@ -229,7 +229,7 @@ const NewVisitPage = () => {
         toast.success('AI generated patient instructions');
       }
     } catch (error) {
-      toast.error('AI assist failed. Please try again.');
+      toast.error(getErrorMessage(error, 'AI assist failed. Please try again.'));
     } finally {
       setAiLoading(null);
     }
