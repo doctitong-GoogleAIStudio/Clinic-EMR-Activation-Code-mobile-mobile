@@ -200,6 +200,84 @@ const NewVisitPage = () => {
     }
   };
 
+  // SOAP Attachments handlers
+  const handleSoapFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || soapUploading) return;
+    
+    setSoapUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('patient_id', patientId);
+      formDataUpload.append('tag', 'soap');
+      formDataUpload.append('notes', '');
+      
+      const res = await attachmentAPI.upload(formDataUpload);
+      toast.success('SOAP file uploaded');
+      setSoapAttachments(prev => [res.data, ...prev]);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to upload file'));
+    } finally {
+      setSoapUploading(false);
+      if (soapFileInputRef.current) soapFileInputRef.current.value = '';
+    }
+  };
+
+  const handleViewSoapAttachment = async (attachmentId) => {
+    try {
+      const metaRes = await attachmentAPI.getOne(attachmentId);
+      const att = metaRes.data;
+      
+      const fileRes = await attachmentAPI.getFile(attachmentId, token);
+      const blob = fileRes.data;
+      const fileUrl = URL.createObjectURL(blob);
+      
+      if (att.content_type?.startsWith('image/')) {
+        setZoom(1); setPan({ x: 0, y: 0 });
+        setViewingAttachment({ ...att, fileUrl, type: 'image' });
+      } else if (att.content_type === 'application/pdf') {
+        window.open(fileUrl, '_blank');
+      } else {
+        setViewingAttachment({ ...att, fileUrl, type: 'other' });
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load file'));
+    }
+  };
+
+  const startEditSoap = (att) => {
+    setEditingSoapId(att.id);
+    setEditSoapData({ filename: att.filename, notes: att.notes || '' });
+  };
+
+  const cancelEditSoap = () => {
+    setEditingSoapId(null);
+    setEditSoapData({ filename: '', notes: '' });
+  };
+
+  const saveEditSoap = async () => {
+    try {
+      const res = await attachmentAPI.update(editingSoapId, editSoapData);
+      toast.success('File updated');
+      setSoapAttachments(prev => prev.map(a => a.id === editingSoapId ? { ...a, ...res.data } : a));
+      setEditingSoapId(null);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update file'));
+    }
+  };
+
+  const handleDeleteSoapAttachment = async (attId) => {
+    if (!confirm('Delete this SOAP file?')) return;
+    try {
+      await attachmentAPI.delete(attId);
+      toast.success('File deleted');
+      setSoapAttachments(prev => prev.filter(a => a.id !== attId));
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete file'));
+    }
+  };
+
   const calculateBMI = () => {
     const { weight, height } = formData.vitals;
     if (weight && height) {
