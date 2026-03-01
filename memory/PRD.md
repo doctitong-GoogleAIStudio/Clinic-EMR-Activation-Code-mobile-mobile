@@ -36,8 +36,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] **Receptionist-Doctor Binding** - Receptionist tied to specific doctor who created them. Sees only their doctor's patients/appointments (Dec 2025)
 - [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
 - [x] **AI-Assisted Consultation** - Full AI consultation with SOAP generation, diagnosis suggestions, ICD-10 codes, medication recommendations, and red flag alerts (Mar 1, 2026)
-- [x] **Save Draft Feature** - Save and load AI consultation drafts per patient, with timestamps and diagnosis preview. Stored in localStorage (Mar 1, 2026)
+- [x] **Save Draft Feature** - Save and load AI consultation drafts per patient, with timestamps and diagnosis preview. Now persisted in MongoDB (Mar 1, 2026)
 - [x] **Compare Drafts Feature** - Side-by-side comparison of saved AI consultations showing clinical notes, SOAP notes, diagnoses, and medications with ability to apply either draft (Mar 1, 2026)
+- [x] **Draft History (Database Persistence)** - AI consultation drafts now stored in MongoDB instead of localStorage. Persists across sessions, shows creator name, max 10 drafts per patient (Mar 1, 2026)
 - [x] **Error Handling Fix** - All API error handlers now use getErrorMessage utility to prevent React crashes on Pydantic validation errors (Mar 1, 2026)
 
 ## Key DB Schema
@@ -59,14 +60,18 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - `GET/POST /api/attachments` | `GET/PUT/DELETE /api/attachments/{id}`
 - `GET/POST /api/lab-requests` - Lab/Imaging request forms
 - `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
+- `GET/POST /api/ai/drafts` - AI consultation drafts
+- `DELETE /api/ai/drafts/{draft_id}` - Delete specific draft
+- `DELETE /api/ai/drafts/patient/{patient_id}` - Clear all drafts for a patient
 - `GET/PUT /api/settings` (per-user) | `POST /api/ai/assist`
 
 ## Credentials
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 1, 2026**: Added "Draft History" feature - AI consultation drafts now stored in MongoDB instead of localStorage. Drafts persist across browser sessions, show creator name, and are limited to 10 per patient. New API endpoints: POST/GET/DELETE /api/ai/drafts
 - **Mar 1, 2026**: Added "Compare Drafts" feature - doctors can select 2 saved AI consultations and view them side-by-side in a comparison dialog showing clinical notes, SOAP notes, diagnoses, and medications with color-coded sections
-- **Mar 1, 2026**: Added "Save Draft" feature for AI consultations - doctors can save AI-generated suggestions to localStorage and load them later before applying to visit record. Shows diagnosis preview and timestamp.
+- **Mar 1, 2026**: Added "Save Draft" feature for AI consultations - doctors can save AI-generated suggestions and load them later before applying to visit record. Shows diagnosis preview and timestamp.
 - **Mar 1, 2026**: Fixed recurring React crash - Added getErrorMessage utility to ALL API error handlers across 8 files (AppointmentsPage, PatientsPage, SettingsPage, PatientProfilePage, VisitDetailPage, DashboardPage, NewVisitPage, AIConsultation)
 - **Mar 1, 2026**: AI-Assisted Consultation feature now fully functional on New Visit page with SOAP generation, diagnosis/ICD-10 suggestions, medication recommendations, and red flag alerts
 - **Dec 2025**: Fixed React error - Pydantic validation error objects now properly extracted for toast messages
