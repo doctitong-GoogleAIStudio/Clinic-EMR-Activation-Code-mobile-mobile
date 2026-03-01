@@ -212,7 +212,7 @@ const PatientProfilePage = () => {
       toast.success('File uploaded');
       fetchPatientData();
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error(getErrorMessage(error, 'Failed to upload file'));
     } finally {
       setLabUploading(false);
     }
@@ -235,7 +235,7 @@ const PatientProfilePage = () => {
       cancelEditLab();
       fetchPatientData();
     } catch (error) {
-      toast.error('Failed to update file');
+      toast.error(getErrorMessage(error, 'Failed to update file'));
     }
   };
 
@@ -263,7 +263,7 @@ const PatientProfilePage = () => {
         URL.revokeObjectURL(fileUrl);
       }
     } catch (error) {
-      toast.error('Failed to load file');
+      toast.error(getErrorMessage(error, 'Failed to load file'));
     }
   };
 
