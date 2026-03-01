@@ -250,6 +250,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           <Button
+            type="button"
             onClick={runFullConsultation}
             disabled={isLoading || !clinicalNotes.trim()}
             className="bg-[#0F766E] hover:bg-[#115E59]"
@@ -270,6 +271,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
           
           {vitals && (
             <Button
+              type="button"
               variant="outline"
               onClick={checkForRedFlags}
               disabled={checkingRedFlags}
