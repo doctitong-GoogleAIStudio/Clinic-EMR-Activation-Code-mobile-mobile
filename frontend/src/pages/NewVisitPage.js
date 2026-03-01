@@ -457,6 +457,14 @@ const NewVisitPage = () => {
           </CardContent>
         </Card>
 
+        {/* AI-Assisted Consultation */}
+        <AIConsultation 
+          patient={patient}
+          vitals={getCurrentVitals()}
+          onApplySOAP={handleApplySOAP}
+          onApplyMedications={handleApplyMedications}
+        />
+
         {/* SOAP Notes */}
         <Card className="bg-white border-slate-100 shadow-sm">
           <CardHeader>
