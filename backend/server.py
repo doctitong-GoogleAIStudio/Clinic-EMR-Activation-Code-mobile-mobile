@@ -259,7 +259,10 @@ class ClinicSettings(BaseModel):
 
 class AIRequest(BaseModel):
     text: str
-    request_type: str  # soap_convert, diagnosis_suggest, patient_instructions
+    request_type: str  # soap_convert, diagnosis_suggest, patient_instructions, full_consultation, icd10_code, drug_calculator, red_flag_check
+    patient_context: Optional[Dict[str, Any]] = None  # For context-aware suggestions
+    medications: Optional[List[str]] = None  # For drug interaction checks
+    vitals: Optional[Dict[str, Any]] = None  # For red flag detection
 
 class AuditLog(BaseModel):
     id: str
