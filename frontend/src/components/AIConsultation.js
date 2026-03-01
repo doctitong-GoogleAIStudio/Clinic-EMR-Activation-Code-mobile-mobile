@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Textarea } from './ui/textarea';
@@ -8,7 +8,8 @@ import { Label } from './ui/label';
 import { 
   Sparkles, Brain, Pill, AlertTriangle, FileText, 
   Loader2, ChevronDown, ChevronUp, Copy, Check, 
-  Stethoscope, ClipboardList, AlertCircle, Zap
+  Stethoscope, ClipboardList, AlertCircle, Zap,
+  Save, FolderOpen, Trash2, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { aiAPI } from '../lib/api';
@@ -22,6 +23,93 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
   const [copied, setCopied] = useState(null);
   const [redFlags, setRedFlags] = useState([]);
   const [checkingRedFlags, setCheckingRedFlags] = useState(false);
+  const [savedDrafts, setSavedDrafts] = useState([]);
+  const [showDrafts, setShowDrafts] = useState(false);
+
+  // Load saved drafts on mount
+  useEffect(() => {
+    if (patient?.id) {
+      loadDrafts();
+    }
+  }, [patient?.id]);
+
+  const getDraftStorageKey = () => `ai_consultation_drafts_${patient?.id}`;
+
+  const loadDrafts = () => {
+    try {
+      const stored = localStorage.getItem(getDraftStorageKey());
+      if (stored) {
+        const drafts = JSON.parse(stored);
+        setSavedDrafts(drafts);
+      }
+    } catch (e) {
+      console.error('Failed to load drafts:', e);
+    }
+  };
+
+  const saveDraft = () => {
+    if (!aiResult) {
+      toast.error('No AI consultation to save');
+      return;
+    }
+
+    try {
+      const draft = {
+        id: Date.now(),
+        clinicalNotes,
+        aiResult,
+        redFlags,
+        savedAt: new Date().toISOString(),
+        patientName: patient?.full_name
+      };
+
+      const existingDrafts = [...savedDrafts];
+      // Keep max 5 drafts per patient
+      if (existingDrafts.length >= 5) {
+        existingDrafts.shift(); // Remove oldest
+      }
+      existingDrafts.push(draft);
+
+      localStorage.setItem(getDraftStorageKey(), JSON.stringify(existingDrafts));
+      setSavedDrafts(existingDrafts);
+      toast.success('Draft saved successfully');
+    } catch (e) {
+      toast.error('Failed to save draft');
+      console.error(e);
+    }
+  };
+
+  const loadDraft = (draft) => {
+    setClinicalNotes(draft.clinicalNotes);
+    setAiResult(draft.aiResult);
+    setRedFlags(draft.redFlags || []);
+    setShowDrafts(false);
+    toast.success('Draft loaded');
+  };
+
+  const deleteDraft = (draftId) => {
+    const updatedDrafts = savedDrafts.filter(d => d.id !== draftId);
+    localStorage.setItem(getDraftStorageKey(), JSON.stringify(updatedDrafts));
+    setSavedDrafts(updatedDrafts);
+    toast.success('Draft deleted');
+  };
+
+  const clearAllDrafts = () => {
+    localStorage.removeItem(getDraftStorageKey());
+    setSavedDrafts([]);
+    setShowDrafts(false);
+    toast.success('All drafts cleared');
+  };
+
+  const formatDraftDate = (isoDate) => {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   const runFullConsultation = async () => {
     if (!clinicalNotes.trim()) {
