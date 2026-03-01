@@ -48,6 +48,14 @@ const NewVisitPage = () => {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const labFileInputRef = useRef(null);
 
+  // SOAP Attachments state
+  const [soapAttachments, setSoapAttachments] = useState([]);
+  const [soapFile, setSoapFile] = useState(null);
+  const [soapUploading, setSoapUploading] = useState(false);
+  const [editingSoapId, setEditingSoapId] = useState(null);
+  const [editSoapData, setEditSoapData] = useState({ filename: '', notes: '' });
+  const soapFileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     patient_id: patientId,
     vitals: {
