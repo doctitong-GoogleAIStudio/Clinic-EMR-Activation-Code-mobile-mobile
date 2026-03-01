@@ -1243,7 +1243,6 @@ async def extract_text_from_image(request: OCRRequest, current_user: dict = Depe
         
         # Convert to base64
         image_base64 = base64.b64encode(file_content).decode('utf-8')
-        image_data_url = f"data:{content_type};base64,{image_base64}"
         
         # Create the OCR prompt
         system_message = """You are a medical document OCR specialist. Extract text from the provided image of medical notes, specifically looking for SOAP format content.
@@ -1281,10 +1280,15 @@ If the image is not a medical document or is unreadable, return:
             system_message=system_message
         ).with_model("openai", "gpt-5.2")
         
+        # Create image content for vision API
+        from emergentintegrations.llm.chat import ImageContent
+        
+        image_content = ImageContent(image_base64=image_base64)
+        
         # Send message with image
         user_message = UserMessage(
-            text="Please extract the text from this medical document and organize it into SOAP format if applicable.",
-            image_url=image_data_url
+            text="Please extract the text from this medical document image and organize it into SOAP format if applicable.",
+            file_contents=[image_content]
         )
         
         response = await chat.send_message(user_message)
