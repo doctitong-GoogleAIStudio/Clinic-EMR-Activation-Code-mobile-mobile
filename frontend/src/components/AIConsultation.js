@@ -284,7 +284,99 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
               Check Red Flags
             </Button>
           )}
+
+          {/* Save Draft Button */}
+          {aiResult && (
+            <Button
+              variant="outline"
+              onClick={saveDraft}
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              data-testid="ai-save-draft-btn"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
+            </Button>
+          )}
+
+          {/* Load Drafts Button */}
+          {savedDrafts.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowDrafts(!showDrafts)}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              data-testid="ai-load-drafts-btn"
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Saved Drafts ({savedDrafts.length})
+            </Button>
+          )}
         </div>
+
+        {/* Saved Drafts Panel */}
+        {showDrafts && savedDrafts.length > 0 && (
+          <div className="p-4 rounded-lg bg-purple-50 border border-purple-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-purple-800 flex items-center gap-2">
+                <FolderOpen className="w-4 h-4" />
+                Saved Drafts
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllDrafts}
+                className="text-red-600 hover:bg-red-50 text-xs h-7"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Clear All
+              </Button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {savedDrafts.slice().reverse().map((draft) => (
+                <div 
+                  key={draft.id}
+                  className="p-3 bg-white rounded-lg border border-purple-100 hover:border-purple-300 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-700 truncate font-medium">
+                        {draft.clinicalNotes.substring(0, 60)}...
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs text-slate-500">
+                          {formatDraftDate(draft.savedAt)}
+                        </span>
+                        {draft.aiResult?.parsed?.diagnoses?.[0] && (
+                          <Badge className="text-xs bg-slate-100 text-slate-600">
+                            {draft.aiResult.parsed.diagnoses[0].name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => loadDraft(draft)}
+                        className="h-7 px-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+                      >
+                        Load
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteDraft(draft.id)}
+                        className="h-7 px-2 text-red-500 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Red Flag Alerts */}
         {redFlags.length > 0 && (
