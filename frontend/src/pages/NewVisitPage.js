@@ -807,6 +807,26 @@ const NewVisitPage = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
+                          {/* OCR Extract Text - only for images */}
+                          {att.content_type?.startsWith('image/') && (
+                            <Button 
+                              type="button"
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleExtractText(att.id, att.content_type)}
+                              disabled={extractingOCR === att.id}
+                              className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                              title="Extract text from image (OCR)"
+                              data-testid={`soap-ocr-btn-${att.id}`}
+                            >
+                              {extractingOCR === att.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <ScanText className="w-4 h-4" />
+                              )}
+                              <span className="ml-1 text-xs">Extract</span>
+                            </Button>
+                          )}
                           <Button 
                             type="button"
                             variant="ghost" 
