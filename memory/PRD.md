@@ -37,6 +37,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
 - [x] **AI-Assisted Consultation** - Full AI consultation with SOAP generation, diagnosis suggestions, ICD-10 codes, medication recommendations, and red flag alerts (Mar 1, 2026)
 - [x] **Save Draft Feature** - Save and load AI consultation drafts per patient, with timestamps and diagnosis preview. Stored in localStorage (Mar 1, 2026)
+- [x] **Compare Drafts Feature** - Side-by-side comparison of saved AI consultations showing clinical notes, SOAP notes, diagnoses, and medications with ability to apply either draft (Mar 1, 2026)
 - [x] **Error Handling Fix** - All API error handlers now use getErrorMessage utility to prevent React crashes on Pydantic validation errors (Mar 1, 2026)
 
 ## Key DB Schema
@@ -64,6 +65,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 1, 2026**: Added "Compare Drafts" feature - doctors can select 2 saved AI consultations and view them side-by-side in a comparison dialog showing clinical notes, SOAP notes, diagnoses, and medications with color-coded sections
 - **Mar 1, 2026**: Added "Save Draft" feature for AI consultations - doctors can save AI-generated suggestions to localStorage and load them later before applying to visit record. Shows diagnosis preview and timestamp.
 - **Mar 1, 2026**: Fixed recurring React crash - Added getErrorMessage utility to ALL API error handlers across 8 files (AppointmentsPage, PatientsPage, SettingsPage, PatientProfilePage, VisitDetailPage, DashboardPage, NewVisitPage, AIConsultation)
 - **Mar 1, 2026**: AI-Assisted Consultation feature now fully functional on New Visit page with SOAP generation, diagnosis/ICD-10 suggestions, medication recommendations, and red flag alerts
