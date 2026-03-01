@@ -61,6 +61,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - `GET/POST /api/attachments` | `GET/PUT/DELETE /api/attachments/{id}`
 - `GET/POST /api/lab-requests` - Lab/Imaging request forms
 - `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
+- `POST /api/ai/ocr` - Extract text from uploaded SOAP images using GPT vision
 - `GET/POST /api/ai/drafts` - AI consultation drafts
 - `DELETE /api/ai/drafts/{draft_id}` - Delete specific draft
 - `DELETE /api/ai/drafts/patient/{patient_id}` - Clear all drafts for a patient
@@ -70,6 +71,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 1, 2026**: Added OCR (Optical Character Recognition) feature - doctors can upload scanned/handwritten SOAP notes and AI extracts text to pre-fill SOAP fields. Uses GPT-5.2 vision with emergentintegrations library
 - **Mar 1, 2026**: Moved "Upload SOAP Notes" feature from Visit Detail page to New Visit page - now appears after SOAP Notes section, before Labs & Imaging
 - **Mar 1, 2026**: Added "Draft History" feature - AI consultation drafts now stored in MongoDB instead of localStorage. Drafts persist across browser sessions, show creator name, and are limited to 10 per patient. New API endpoints: POST/GET/DELETE /api/ai/drafts
 - **Mar 1, 2026**: Added "Compare Drafts" feature - doctors can select 2 saved AI consultations and view them side-by-side in a comparison dialog showing clinical notes, SOAP notes, diagnoses, and medications with color-coded sections
