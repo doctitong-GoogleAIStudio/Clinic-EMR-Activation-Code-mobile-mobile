@@ -351,6 +351,20 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
               Saved Drafts ({savedDrafts.length})
             </Button>
           )}
+
+          {/* Compare Button */}
+          {savedDrafts.length >= 2 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={toggleCompareMode}
+              className={`border-indigo-300 text-indigo-700 hover:bg-indigo-50 ${compareMode ? 'bg-indigo-100' : ''}`}
+              data-testid="ai-compare-btn"
+            >
+              <GitCompare className="w-4 h-4 mr-2" />
+              Compare
+            </Button>
+          )}
         </div>
 
         {/* Saved Drafts Panel */}
@@ -359,68 +373,237 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-purple-800 flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
-                Saved Drafts
+                {compareMode ? 'Select 2 Drafts to Compare' : 'Saved Drafts'}
+                {compareMode && selectedForCompare.length > 0 && (
+                  <Badge className="bg-indigo-100 text-indigo-700">
+                    {selectedForCompare.length}/2 selected
+                  </Badge>
+                )}
               </h4>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={clearAllDrafts}
-                className="text-red-600 hover:bg-red-50 text-xs h-7"
-              >
-                <Trash2 className="w-3 h-3 mr-1" />
-                Clear All
-              </Button>
+              <div className="flex gap-2">
+                {compareMode && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleCompareMode}
+                    className="text-slate-600 hover:bg-slate-100 text-xs h-7"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllDrafts}
+                  className="text-red-600 hover:bg-red-50 text-xs h-7"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Clear All
+                </Button>
+              </div>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {savedDrafts.slice().reverse().map((draft) => (
-                <div 
-                  key={draft.id}
-                  className="p-3 bg-white rounded-lg border border-purple-100 hover:border-purple-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-700 truncate font-medium">
-                        {draft.clinicalNotes.substring(0, 60)}...
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        <span className="text-xs text-slate-500">
-                          {formatDraftDate(draft.savedAt)}
-                        </span>
-                        {draft.aiResult?.parsed?.diagnoses?.[0] && (
-                          <Badge className="text-xs bg-slate-100 text-slate-600">
-                            {draft.aiResult.parsed.diagnoses[0].name}
-                          </Badge>
+              {savedDrafts.slice().reverse().map((draft) => {
+                const isSelected = selectedForCompare.find(d => d.id === draft.id);
+                return (
+                  <div 
+                    key={draft.id}
+                    className={`p-3 bg-white rounded-lg border transition-colors cursor-pointer ${
+                      compareMode 
+                        ? isSelected 
+                          ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200' 
+                          : 'border-purple-100 hover:border-indigo-300'
+                        : 'border-purple-100 hover:border-purple-300'
+                    }`}
+                    onClick={compareMode ? () => toggleDraftSelection(draft) : undefined}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        {compareMode && (
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                              isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                            <span className="text-xs text-indigo-600 font-medium">
+                              {isSelected ? `Draft ${selectedForCompare.indexOf(draft) + 1}` : 'Click to select'}
+                            </span>
+                          </div>
                         )}
+                        <p className="text-sm text-slate-700 truncate font-medium">
+                          {draft.clinicalNotes.substring(0, 60)}...
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          <span className="text-xs text-slate-500">
+                            {formatDraftDate(draft.savedAt)}
+                          </span>
+                          {draft.aiResult?.parsed?.diagnoses?.[0] && (
+                            <Badge className="text-xs bg-slate-100 text-slate-600">
+                              {draft.aiResult.parsed.diagnoses[0].name}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => loadDraft(draft)}
-                        className="h-7 px-2 text-purple-600 border-purple-200 hover:bg-purple-50"
-                      >
-                        Load
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteDraft(draft.id)}
-                        className="h-7 px-2 text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      {!compareMode && (
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => loadDraft(draft)}
+                            className="h-7 px-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+                          >
+                            Load
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteDraft(draft.id)}
+                            className="h-7 px-2 text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
+
+        {/* Compare Dialog */}
+        <Dialog open={showCompareDialog} onOpenChange={setShowCompareDialog}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-indigo-700">
+                <ArrowLeftRight className="w-5 h-5" />
+                Compare AI Consultations
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedForCompare.length === 2 && (
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedForCompare.map((draft, idx) => (
+                    <div key={draft.id} className="space-y-4">
+                      {/* Header */}
+                      <div className={`p-3 rounded-lg ${idx === 0 ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <Badge className={idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}>
+                            Draft {idx + 1}
+                          </Badge>
+                          <span className="text-xs text-slate-500">{formatDraftDate(draft.savedAt)}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => applyFromCompare(draft)}
+                          className={`mt-2 w-full h-7 ${idx === 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}`}
+                        >
+                          Apply This Draft
+                        </Button>
+                      </div>
+
+                      {/* Clinical Notes */}
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Clinical Notes</h5>
+                        <p className="text-sm text-slate-700">{draft.clinicalNotes}</p>
+                      </div>
+
+                      {/* SOAP Notes */}
+                      {draft.aiResult?.parsed?.soap && (
+                        <div className="p-3 rounded-lg bg-white border border-slate-200">
+                          <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">SOAP Notes</h5>
+                          <div className="space-y-2 text-sm">
+                            {draft.aiResult.parsed.soap.subjective && (
+                              <div>
+                                <Badge className="bg-blue-100 text-blue-800 text-xs">S</Badge>
+                                <p className="text-slate-600 mt-1">{draft.aiResult.parsed.soap.subjective}</p>
+                              </div>
+                            )}
+                            {draft.aiResult.parsed.soap.objective && (
+                              <div>
+                                <Badge className="bg-green-100 text-green-800 text-xs">O</Badge>
+                                <p className="text-slate-600 mt-1">{draft.aiResult.parsed.soap.objective}</p>
+                              </div>
+                            )}
+                            {draft.aiResult.parsed.soap.assessment && (
+                              <div>
+                                <Badge className="bg-amber-100 text-amber-800 text-xs">A</Badge>
+                                <p className="text-slate-600 mt-1">{draft.aiResult.parsed.soap.assessment}</p>
+                              </div>
+                            )}
+                            {draft.aiResult.parsed.soap.plan && (
+                              <div>
+                                <Badge className="bg-purple-100 text-purple-800 text-xs">P</Badge>
+                                <p className="text-slate-600 mt-1">{draft.aiResult.parsed.soap.plan}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Diagnoses */}
+                      {draft.aiResult?.parsed?.diagnoses?.length > 0 && (
+                        <div className="p-3 rounded-lg bg-white border border-slate-200">
+                          <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Diagnoses</h5>
+                          <div className="space-y-2">
+                            {draft.aiResult.parsed.diagnoses.map((dx, i) => (
+                              <div key={i} className="flex items-start gap-2 text-sm">
+                                <Badge variant="outline" className="font-mono text-xs shrink-0">{dx.icd10 || 'N/A'}</Badge>
+                                <div>
+                                  <span className="font-medium">{dx.name}</span>
+                                  {dx.confidence && (
+                                    <Badge className={`ml-2 text-xs ${
+                                      dx.confidence === 'high' ? 'bg-green-100 text-green-700' :
+                                      dx.confidence === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                      'bg-slate-100 text-slate-700'
+                                    }`}>{dx.confidence}</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Medications */}
+                      {draft.aiResult?.parsed?.medications?.length > 0 && (
+                        <div className="p-3 rounded-lg bg-white border border-slate-200">
+                          <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Medications</h5>
+                          <div className="space-y-2">
+                            {draft.aiResult.parsed.medications.map((med, i) => (
+                              <div key={i} className="p-2 rounded bg-slate-50 text-sm">
+                                <div className="font-medium">{med.name}</div>
+                                <div className="text-slate-600 text-xs">
+                                  {med.dose} • {med.frequency} • {med.duration}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="button" variant="outline" onClick={closeCompare}>
+                Close Comparison
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Red Flag Alerts */}
         {redFlags.length > 0 && (
