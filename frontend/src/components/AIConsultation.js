@@ -534,6 +534,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                         Suggested Medications
                       </h4>
                       <Button
+                        type="button"
                         size="sm"
                         onClick={applyMedications}
                         className="h-7 bg-[#0F766E] hover:bg-[#115E59]"
