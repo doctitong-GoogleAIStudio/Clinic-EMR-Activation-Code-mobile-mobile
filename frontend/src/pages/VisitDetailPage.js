@@ -136,7 +136,7 @@ const VisitDetailPage = () => {
         setSoapAttachments(soapFiles);
       } catch (e) { /* silent */ }
     } catch (error) {
-      toast.error('Failed to load visit');
+      toast.error(getErrorMessage(error, 'Failed to load visit'));
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -189,7 +189,7 @@ const VisitDetailPage = () => {
         fetchData(); // Refresh to show saved form
       }, 300);
     } catch (error) {
-      toast.error('Failed to save prescription');
+      toast.error(getErrorMessage(error, 'Failed to save prescription'));
     }
   };
 
@@ -214,7 +214,7 @@ const VisitDetailPage = () => {
         fetchData(); // Refresh to show saved form
       }, 300);
     } catch (error) {
-      toast.error('Failed to save certificate');
+      toast.error(getErrorMessage(error, 'Failed to save certificate'));
     }
   };
 
@@ -289,7 +289,7 @@ const VisitDetailPage = () => {
         fetchData();
       }, 300);
     } catch (error) {
-      toast.error('Failed to save request');
+      toast.error(getErrorMessage(error, 'Failed to save request'));
     }
   };
 
