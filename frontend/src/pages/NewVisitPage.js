@@ -235,6 +235,43 @@ const NewVisitPage = () => {
     }
   };
 
+  // Handler for AI Consultation to apply SOAP notes
+  const handleApplySOAP = (soap) => {
+    setFormData(prev => ({
+      ...prev,
+      soap_subjective: soap.subjective || prev.soap_subjective,
+      soap_objective: soap.objective || prev.soap_objective,
+      soap_assessment: soap.assessment || prev.soap_assessment,
+      soap_plan: soap.plan || prev.soap_plan
+    }));
+  };
+
+  // Handler for AI Consultation to apply medications
+  const handleApplyMedications = (medications) => {
+    // Format medications for the plan section
+    const medsText = medications.map(m => 
+      `• ${m.name} ${m.dose} ${m.frequency} for ${m.duration}${m.notes ? ` (${m.notes})` : ''}`
+    ).join('\n');
+    
+    setFormData(prev => ({
+      ...prev,
+      soap_plan: prev.soap_plan 
+        ? `${prev.soap_plan}\n\nMedications:\n${medsText}`
+        : `Medications:\n${medsText}`
+    }));
+  };
+
+  // Get current vitals for AI red flag checking
+  const getCurrentVitals = () => ({
+    bp: formData.vitals.bp_systolic && formData.vitals.bp_diastolic 
+      ? `${formData.vitals.bp_systolic}/${formData.vitals.bp_diastolic}`
+      : null,
+    hr: formData.vitals.heart_rate || null,
+    temp: formData.vitals.temperature || null,
+    spo2: formData.vitals.spo2 || null,
+    rr: formData.vitals.respiratory_rate || null
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
