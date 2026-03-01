@@ -44,7 +44,7 @@ const DashboardPage = () => {
       setQueue(queueRes.data);
       setAppointments(aptsRes.data);
     } catch (error) {
-      toast.error('Failed to load dashboard');
+      toast.error(getErrorMessage(error, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ const DashboardPage = () => {
       toast.success(`Status updated to ${status.replace('_', ' ')}`);
       fetchDashboardData();
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error(getErrorMessage(error, 'Failed to update status'));
     }
   };
 

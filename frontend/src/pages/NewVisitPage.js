@@ -80,7 +80,7 @@ const NewVisitPage = () => {
       const response = await patientAPI.getOne(patientId);
       setPatient(response.data);
     } catch (error) {
-      toast.error('Failed to load patient');
+      toast.error(getErrorMessage(error, 'Failed to load patient'));
       navigate('/patients');
     }
   };
@@ -112,7 +112,7 @@ const NewVisitPage = () => {
       toast.success('File uploaded');
       setLabAttachments(prev => [res.data, ...prev]);
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error(getErrorMessage(error, 'Failed to upload file'));
     } finally {
       setLabUploading(false);
     }
