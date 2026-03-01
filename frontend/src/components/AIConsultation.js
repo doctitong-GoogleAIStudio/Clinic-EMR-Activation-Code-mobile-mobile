@@ -421,6 +421,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                 AI Consultation Results
               </h3>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDetails(!showDetails)}
@@ -442,6 +443,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                       </h4>
                       <div className="flex gap-2">
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           onClick={() => copyToClipboard(JSON.stringify(aiResult.parsed.soap, null, 2), 'soap')}
@@ -450,6 +452,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                           {copied === 'soap' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         </Button>
                         <Button
+                          type="button"
                           size="sm"
                           onClick={applySOAP}
                           className="h-7 bg-[#0F766E] hover:bg-[#115E59]"
