@@ -288,6 +288,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
           {/* Save Draft Button */}
           {aiResult && (
             <Button
+              type="button"
               variant="outline"
               onClick={saveDraft}
               className="border-blue-300 text-blue-700 hover:bg-blue-50"
@@ -301,6 +302,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
           {/* Load Drafts Button */}
           {savedDrafts.length > 0 && (
             <Button
+              type="button"
               variant="outline"
               onClick={() => setShowDrafts(!showDrafts)}
               className="border-purple-300 text-purple-700 hover:bg-purple-50"
