@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { aiAPI } from '../lib/api';
+import { getErrorMessage } from '../lib/utils';
 
 const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) => {
   const [clinicalNotes, setClinicalNotes] = useState('');
@@ -59,7 +60,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
       
       toast.success('AI consultation generated');
     } catch (error) {
-      toast.error('Failed to generate AI consultation');
+      toast.error(getErrorMessage(error, 'Failed to generate AI consultation'));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -100,7 +101,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
         toast.success('No red flags detected');
       }
     } catch (error) {
-      toast.error('Failed to check red flags');
+      toast.error(getErrorMessage(error, 'Failed to check red flags'));
     } finally {
       setCheckingRedFlags(false);
     }
