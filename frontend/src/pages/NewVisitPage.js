@@ -31,6 +31,7 @@ const NewVisitPage = () => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(null);
+  const [showAIConsultation, setShowAIConsultation] = useState(false);
   
   // Labs & Imaging state
   const [labAttachments, setLabAttachments] = useState([]);
