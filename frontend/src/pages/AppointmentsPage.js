@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
+import { getErrorMessage } from '../lib/utils';
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
