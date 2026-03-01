@@ -1214,11 +1214,18 @@ async def extract_text_from_image(request: OCRRequest, current_user: dict = Depe
         if not content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="OCR only works with image files (JPG, PNG, etc.)")
         
-        # Get the file content - check both file_url (disk) and file_data (base64)
+        # Get the file content - check both stored_filename (disk) and file_data (base64)
         file_content = None
         
-        if attachment.get("file_url"):
-            # File is stored on disk
+        if attachment.get("stored_filename"):
+            # File is stored on disk (new format)
+            file_path = UPLOADS_DIR / attachment.get("stored_filename")
+            if file_path.exists():
+                async with aiofiles.open(file_path, 'rb') as f:
+                    file_content = await f.read()
+        
+        if file_content is None and attachment.get("file_url"):
+            # File is stored on disk (legacy format)
             file_path = UPLOADS_DIR / attachment.get("file_url")
             if file_path.exists():
                 async with aiofiles.open(file_path, 'rb') as f:
