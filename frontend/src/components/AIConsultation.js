@@ -37,48 +37,54 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
     }
   }, [patient?.id]);
 
-  const getDraftStorageKey = () => `ai_consultation_drafts_${patient?.id}`;
-
-  const loadDrafts = () => {
+  const loadDrafts = async () => {
+    if (!patient?.id) return;
     try {
-      const stored = localStorage.getItem(getDraftStorageKey());
-      if (stored) {
-        const drafts = JSON.parse(stored);
-        setSavedDrafts(drafts);
-      }
+      const response = await aiAPI.getDrafts(patient.id);
+      // Transform API response to match component's expected format
+      const drafts = response.data.map(d => ({
+        id: d.id,
+        clinicalNotes: d.clinical_notes,
+        aiResult: d.ai_result,
+        redFlags: d.red_flags || [],
+        savedAt: d.created_at,
+        createdByName: d.created_by_name
+      }));
+      setSavedDrafts(drafts);
     } catch (e) {
       console.error('Failed to load drafts:', e);
+      // Silently fail - drafts are not critical
     }
   };
 
-  const saveDraft = () => {
+  const saveDraft = async () => {
     if (!aiResult) {
       toast.error('No AI consultation to save');
       return;
     }
 
     try {
-      const draft = {
-        id: Date.now(),
-        clinicalNotes,
-        aiResult,
-        redFlags,
-        savedAt: new Date().toISOString(),
-        patientName: patient?.full_name
+      const draftData = {
+        patient_id: patient.id,
+        clinical_notes: clinicalNotes,
+        ai_result: aiResult,
+        red_flags: redFlags
       };
 
-      const existingDrafts = [...savedDrafts];
-      // Keep max 5 drafts per patient
-      if (existingDrafts.length >= 5) {
-        existingDrafts.shift(); // Remove oldest
-      }
-      existingDrafts.push(draft);
+      const response = await aiAPI.saveDraft(draftData);
+      const newDraft = {
+        id: response.data.id,
+        clinicalNotes: response.data.clinical_notes,
+        aiResult: response.data.ai_result,
+        redFlags: response.data.red_flags || [],
+        savedAt: response.data.created_at,
+        createdByName: response.data.created_by_name
+      };
 
-      localStorage.setItem(getDraftStorageKey(), JSON.stringify(existingDrafts));
-      setSavedDrafts(existingDrafts);
-      toast.success('Draft saved successfully');
+      setSavedDrafts(prev => [newDraft, ...prev.slice(0, 9)]); // Keep max 10
+      toast.success('Draft saved to history');
     } catch (e) {
-      toast.error('Failed to save draft');
+      toast.error(getErrorMessage(e, 'Failed to save draft'));
       console.error(e);
     }
   };
@@ -91,18 +97,26 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
     toast.success('Draft loaded');
   };
 
-  const deleteDraft = (draftId) => {
-    const updatedDrafts = savedDrafts.filter(d => d.id !== draftId);
-    localStorage.setItem(getDraftStorageKey(), JSON.stringify(updatedDrafts));
-    setSavedDrafts(updatedDrafts);
-    toast.success('Draft deleted');
+  const deleteDraft = async (draftId) => {
+    try {
+      await aiAPI.deleteDraft(draftId);
+      setSavedDrafts(prev => prev.filter(d => d.id !== draftId));
+      toast.success('Draft deleted');
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to delete draft'));
+    }
   };
 
-  const clearAllDrafts = () => {
-    localStorage.removeItem(getDraftStorageKey());
-    setSavedDrafts([]);
-    setShowDrafts(false);
-    toast.success('All drafts cleared');
+  const clearAllDrafts = async () => {
+    if (!patient?.id) return;
+    try {
+      await aiAPI.deleteAllDrafts(patient.id);
+      setSavedDrafts([]);
+      setShowDrafts(false);
+      toast.success('All drafts cleared');
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to clear drafts'));
+    }
   };
 
   const formatDraftDate = (isoDate) => {
