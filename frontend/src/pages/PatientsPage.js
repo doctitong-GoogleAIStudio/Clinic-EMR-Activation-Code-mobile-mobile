@@ -29,7 +29,7 @@ const PatientsPage = () => {
       const response = await patientAPI.getAll(search);
       setPatients(response.data);
     } catch (error) {
-      toast.error('Failed to load patients');
+      toast.error(getErrorMessage(error, 'Failed to load patients'));
     } finally {
       setLoading(false);
     }

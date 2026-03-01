@@ -40,7 +40,7 @@ const AppointmentsPage = () => {
       const response = await appointmentAPI.getAll({ date: dateStr });
       setAppointments(response.data);
     } catch (error) {
-      toast.error('Failed to load appointments');
+      toast.error(getErrorMessage(error, 'Failed to load appointments'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ const AppointmentsPage = () => {
       setNewApt({ date: '', time: '', reason: '' });
       fetchAppointments();
     } catch (error) {
-      toast.error('Failed to create appointment');
+      toast.error(getErrorMessage(error, 'Failed to create appointment'));
     }
   };
 
@@ -98,7 +98,7 @@ const AppointmentsPage = () => {
       toast.success('Status updated');
       fetchAppointments();
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error(getErrorMessage(error, 'Failed to update status'));
     }
   };
 
@@ -109,7 +109,7 @@ const AppointmentsPage = () => {
       toast.success('Appointment deleted');
       fetchAppointments();
     } catch (error) {
-      toast.error('Failed to delete appointment');
+      toast.error(getErrorMessage(error, 'Failed to delete appointment'));
     }
   };
 
