@@ -325,6 +325,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                 Saved Drafts
               </h4>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={clearAllDrafts}
@@ -359,6 +360,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                     </div>
                     <div className="flex gap-1">
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => loadDraft(draft)}
@@ -367,6 +369,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                         Load
                       </Button>
                       <Button
+                        type="button"
                         size="sm"
                         variant="ghost"
                         onClick={() => deleteDraft(draft.id)}
