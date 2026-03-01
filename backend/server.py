@@ -863,6 +863,7 @@ class AttachmentUpdate(BaseModel):
     filename: Optional[str] = None
     tag: Optional[str] = None
     notes: Optional[str] = None
+    visit_id: Optional[str] = None
 
 @api_router.put("/attachments/{attachment_id}")
 async def update_attachment(attachment_id: str, updates: AttachmentUpdate, current_user: dict = Depends(get_current_user)):
