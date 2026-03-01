@@ -115,6 +115,39 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
     });
   };
 
+  // Compare functions
+  const toggleCompareMode = () => {
+    setCompareMode(!compareMode);
+    setSelectedForCompare([]);
+  };
+
+  const toggleDraftSelection = (draft) => {
+    if (selectedForCompare.find(d => d.id === draft.id)) {
+      setSelectedForCompare(selectedForCompare.filter(d => d.id !== draft.id));
+    } else if (selectedForCompare.length < 2) {
+      const newSelection = [...selectedForCompare, draft];
+      setSelectedForCompare(newSelection);
+      if (newSelection.length === 2) {
+        setShowCompareDialog(true);
+      }
+    }
+  };
+
+  const closeCompare = () => {
+    setShowCompareDialog(false);
+    setSelectedForCompare([]);
+    setCompareMode(false);
+  };
+
+  const applyFromCompare = (draft) => {
+    setClinicalNotes(draft.clinicalNotes);
+    setAiResult(draft.aiResult);
+    setRedFlags(draft.redFlags || []);
+    closeCompare();
+    setShowDrafts(false);
+    toast.success('Draft applied from comparison');
+  };
+
   const runFullConsultation = async () => {
     if (!clinicalNotes.trim()) {
       toast.error('Please enter clinical notes first');
