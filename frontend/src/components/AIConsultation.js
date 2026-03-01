@@ -451,11 +451,16 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
                         <p className="text-sm text-slate-700 truncate font-medium">
                           {draft.clinicalNotes.substring(0, 60)}...
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Clock className="w-3 h-3 text-slate-400" />
                           <span className="text-xs text-slate-500">
                             {formatDraftDate(draft.savedAt)}
                           </span>
+                          {draft.createdByName && (
+                            <span className="text-xs text-slate-400">
+                              by {draft.createdByName}
+                            </span>
+                          )}
                           {draft.aiResult?.parsed?.diagnoses?.[0] && (
                             <Badge className="text-xs bg-slate-100 text-slate-600">
                               {draft.aiResult.parsed.diagnoses[0].name}
