@@ -435,13 +435,23 @@ const NewVisitPage = () => {
       };
 
       const response = await visitAPI.create(visitData);
+      const visitId = response.data.id;
+      
+      // Link SOAP attachments to the newly created visit
+      if (soapAttachments.length > 0) {
+        await Promise.all(
+          soapAttachments.map(att => 
+            attachmentAPI.update(att.id, { visit_id: visitId })
+          )
+        );
+      }
       
       if (appointmentId) {
         await appointmentAPI.update(appointmentId, { status: 'done' });
       }
 
       toast.success('Visit recorded successfully');
-      navigate(`/visits/${response.data.id}`);
+      navigate(`/visits/${visitId}`);
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save visit'));
     } finally {
