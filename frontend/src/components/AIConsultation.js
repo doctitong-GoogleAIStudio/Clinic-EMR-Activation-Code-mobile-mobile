@@ -420,7 +420,7 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
               </div>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {savedDrafts.slice().reverse().map((draft) => {
+              {savedDrafts.map((draft) => {
                 const isSelected = selectedForCompare.find(d => d.id === draft.id);
                 return (
                   <div 
