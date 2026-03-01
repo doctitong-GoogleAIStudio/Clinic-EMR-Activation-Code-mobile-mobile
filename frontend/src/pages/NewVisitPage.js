@@ -54,6 +54,7 @@ const NewVisitPage = () => {
   const [soapUploading, setSoapUploading] = useState(false);
   const [editingSoapId, setEditingSoapId] = useState(null);
   const [editSoapData, setEditSoapData] = useState({ filename: '', notes: '' });
+  const [extractingOCR, setExtractingOCR] = useState(null); // holds attachment id being processed
   const soapFileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
