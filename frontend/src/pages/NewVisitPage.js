@@ -14,7 +14,8 @@ import {
   ArrowLeft, Save, Activity, Stethoscope, Sparkles, 
   Thermometer, Heart, Loader2, Microscope, Upload, Send,
   FileImage, File, Eye, Download, Trash2, Edit, X,
-  ZoomIn, ZoomOut, Maximize2, RotateCcw, Paperclip, Brain
+  ZoomIn, ZoomOut, Maximize2, RotateCcw, Paperclip, Brain,
+  FileText, Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
