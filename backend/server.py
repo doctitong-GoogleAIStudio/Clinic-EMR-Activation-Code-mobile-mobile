@@ -1188,6 +1188,96 @@ Return alerts in JSON format:
         logger.error(f"AI assist error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
 
+# ============== AI DRAFT ROUTES ==============
+@api_router.post("/ai/drafts", response_model=AIDraftResponse)
+async def create_ai_draft(draft: AIDraftCreate, current_user: dict = Depends(get_current_user)):
+    """Save an AI consultation draft for later review"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can save AI drafts")
+    
+    # Verify patient ownership
+    patient = await db.patients.find_one({"id": draft.patient_id, "owner_id": current_user["id"]})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    draft_doc = {
+        "id": str(uuid.uuid4()),
+        "patient_id": draft.patient_id,
+        "clinical_notes": draft.clinical_notes,
+        "ai_result": draft.ai_result,
+        "red_flags": draft.red_flags or [],
+        "owner_id": current_user["id"],
+        "created_by_name": current_user["full_name"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.ai_drafts.insert_one(draft_doc)
+    
+    # Keep max 10 drafts per patient per owner
+    existing_count = await db.ai_drafts.count_documents({
+        "patient_id": draft.patient_id,
+        "owner_id": current_user["id"]
+    })
+    
+    if existing_count > 10:
+        # Delete oldest drafts beyond limit
+        oldest = await db.ai_drafts.find({
+            "patient_id": draft.patient_id,
+            "owner_id": current_user["id"]
+        }).sort("created_at", 1).limit(existing_count - 10).to_list(existing_count - 10)
+        
+        for old_draft in oldest:
+            await db.ai_drafts.delete_one({"id": old_draft["id"]})
+    
+    return {k: v for k, v in draft_doc.items() if k != "_id"}
+
+@api_router.get("/ai/drafts/{patient_id}", response_model=List[AIDraftResponse])
+async def get_ai_drafts(patient_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all AI consultation drafts for a patient"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can view AI drafts")
+    
+    # Verify patient ownership
+    patient = await db.patients.find_one({"id": patient_id, "owner_id": current_user["id"]})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    drafts = await db.ai_drafts.find(
+        {"patient_id": patient_id, "owner_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return drafts
+
+@api_router.delete("/ai/drafts/{draft_id}")
+async def delete_ai_draft(draft_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a specific AI consultation draft"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can delete AI drafts")
+    
+    result = await db.ai_drafts.delete_one({
+        "id": draft_id,
+        "owner_id": current_user["id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    
+    return {"message": "Draft deleted"}
+
+@api_router.delete("/ai/drafts/patient/{patient_id}")
+async def delete_all_patient_drafts(patient_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete all AI consultation drafts for a patient"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can delete AI drafts")
+    
+    result = await db.ai_drafts.delete_many({
+        "patient_id": patient_id,
+        "owner_id": current_user["id"]
+    })
+    
+    return {"message": f"Deleted {result.deleted_count} drafts"}
+
 # ============== AUDIT LOG ROUTES ==============
 @api_router.get("/audit-logs", response_model=List[AuditLog])
 async def get_audit_logs(
