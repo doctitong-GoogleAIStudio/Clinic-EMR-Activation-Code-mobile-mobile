@@ -1080,10 +1080,82 @@ Include:
 - What to do (medications, diet, activity)
 - Warning signs to watch for
 - When to return or seek emergency care
-Use simple words, avoid medical jargon."""
+Use simple words, avoid medical jargon.""",
+
+            "full_consultation": """You are an AI clinical decision support system for physicians. Based on the brief clinical notes provided, generate a comprehensive consultation response in JSON format:
+
+{
+  "soap": {
+    "subjective": "Patient's complaints and history",
+    "objective": "Physical examination findings based on the notes",
+    "assessment": "Primary diagnosis with differential diagnoses",
+    "plan": "Treatment plan with specific recommendations"
+  },
+  "diagnoses": [
+    {"name": "Primary Diagnosis", "icd10": "ICD-10 code", "confidence": "high/medium/low", "reasoning": "brief explanation"}
+  ],
+  "medications": [
+    {"name": "Drug name", "dose": "Recommended dose", "frequency": "Dosing frequency", "duration": "Treatment duration", "notes": "Special instructions"}
+  ],
+  "follow_up": {
+    "timeline": "When to follow up",
+    "instructions": "What to monitor",
+    "red_flags": ["Warning signs to watch for"]
+  },
+  "icd10_codes": ["List of relevant ICD-10 codes"]
+}
+
+IMPORTANT: These are AI suggestions only. All clinical decisions must be verified by the attending physician. Consider patient allergies, contraindications, and individual factors.""",
+
+            "icd10_code": """You are a medical coding assistant. Based on the diagnosis or clinical description provided, suggest appropriate ICD-10-CM codes.
+Format your response as:
+- Primary code: [CODE] - [Description]
+- Related codes: [CODE] - [Description]
+Include the most specific code applicable.""",
+
+            "drug_calculator": """You are a clinical pharmacology assistant. Calculate the appropriate drug dosing based on the medication and patient information provided.
+Consider:
+- Age and weight-based dosing
+- Renal/hepatic adjustments if applicable
+- Maximum daily doses
+- Pediatric vs adult dosing
+Provide the calculated dose with frequency and any important warnings.""",
+
+            "red_flag_check": """You are a clinical safety alert system. Analyze the provided vitals, lab values, and medications for any red flags or safety concerns.
+Check for:
+1. Critical vital signs (BP > 180/120, HR < 40 or > 150, SpO2 < 90%, Temp > 39.5°C)
+2. Critical lab values if provided
+3. Drug-drug interactions
+4. Pregnancy category concerns
+5. Contraindications based on patient history
+
+Return alerts in JSON format:
+{
+  "alerts": [
+    {"severity": "critical/warning/info", "type": "vital/lab/drug/interaction", "message": "Alert description", "recommendation": "What to do"}
+  ],
+  "has_critical": true/false
+}"""
         }
         
         system_message = system_prompts.get(request.request_type, system_prompts["patient_instructions"])
+        
+        # Build context-aware prompt
+        prompt_text = request.text
+        if request.patient_context:
+            context = request.patient_context
+            prompt_text += f"\n\nPatient Context:\n- Age: {context.get('age', 'Unknown')}\n- Sex: {context.get('sex', 'Unknown')}"
+            if context.get('allergies'):
+                prompt_text += f"\n- Allergies: {', '.join(context['allergies'])}"
+            if context.get('chronic_conditions'):
+                prompt_text += f"\n- Chronic Conditions: {', '.join(context['chronic_conditions'])}"
+        
+        if request.medications and request.request_type == "red_flag_check":
+            prompt_text += f"\n\nCurrent Medications: {', '.join(request.medications)}"
+        
+        if request.vitals and request.request_type == "red_flag_check":
+            vitals = request.vitals
+            prompt_text += f"\n\nVitals: BP: {vitals.get('bp', 'N/A')}, HR: {vitals.get('hr', 'N/A')}, Temp: {vitals.get('temp', 'N/A')}, SpO2: {vitals.get('spo2', 'N/A')}, RR: {vitals.get('rr', 'N/A')}"
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
@@ -1091,7 +1163,7 @@ Use simple words, avoid medical jargon."""
             system_message=system_message
         ).with_model("openai", "gpt-5.2")
         
-        user_message = UserMessage(text=request.text)
+        user_message = UserMessage(text=prompt_text)
         response = await chat.send_message(user_message)
         
         return {"result": response, "type": request.request_type}
