@@ -1188,6 +1188,115 @@ Return alerts in JSON format:
         logger.error(f"AI assist error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
 
+# ============== OCR ENDPOINT ==============
+class OCRRequest(BaseModel):
+    attachment_id: str
+
+@api_router.post("/ai/ocr")
+async def extract_text_from_image(request: OCRRequest, current_user: dict = Depends(get_current_user)):
+    """Extract SOAP notes from an uploaded image using OCR/Vision AI"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can use OCR")
+    
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="AI service not configured")
+    
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        # Get attachment
+        attachment = await db.attachments.find_one({"id": request.attachment_id}, {"_id": 0})
+        if not attachment:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        
+        # Check file type
+        content_type = attachment.get("content_type", "")
+        if not content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="OCR only works with image files (JPG, PNG, etc.)")
+        
+        # Read the file
+        file_path = UPLOADS_DIR / attachment.get("file_url", "")
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="File not found on disk")
+        
+        async with aiofiles.open(file_path, 'rb') as f:
+            file_content = await f.read()
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(file_content).decode('utf-8')
+        image_data_url = f"data:{content_type};base64,{image_base64}"
+        
+        # Create the OCR prompt
+        system_message = """You are a medical document OCR specialist. Extract text from the provided image of medical notes, specifically looking for SOAP format content.
+
+Extract and organize the content into these sections if present:
+- Subjective (S): Patient's reported symptoms, chief complaint, history
+- Objective (O): Physical examination findings, vital signs, observations  
+- Assessment (A): Diagnosis, differential diagnoses, clinical impressions
+- Plan (P): Treatment plan, medications, follow-up instructions
+
+Return the extracted text in this JSON format:
+{
+  "raw_text": "The complete raw text extracted from the image",
+  "soap": {
+    "subjective": "Extracted subjective content or empty string",
+    "objective": "Extracted objective content or empty string", 
+    "assessment": "Extracted assessment content or empty string",
+    "plan": "Extracted plan content or empty string"
+  },
+  "confidence": "high/medium/low based on image clarity",
+  "notes": "Any observations about the image quality or content"
+}
+
+If the image is not a medical document or is unreadable, return:
+{
+  "raw_text": "",
+  "soap": {"subjective": "", "objective": "", "assessment": "", "plan": ""},
+  "confidence": "low",
+  "notes": "Description of the issue"
+}"""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"emr-ocr-{current_user['id']}-{datetime.now().timestamp()}",
+            system_message=system_message
+        ).with_model("openai", "gpt-5.2")
+        
+        # Send message with image
+        user_message = UserMessage(
+            text="Please extract the text from this medical document and organize it into SOAP format if applicable.",
+            image_url=image_data_url
+        )
+        
+        response = await chat.send_message(user_message)
+        
+        # Try to parse the JSON response
+        import json
+        try:
+            # Clean the response - remove markdown code blocks if present
+            clean_response = response.strip()
+            if clean_response.startswith("```"):
+                clean_response = clean_response.split("```")[1]
+                if clean_response.startswith("json"):
+                    clean_response = clean_response[4:]
+                clean_response = clean_response.strip()
+            
+            result = json.loads(clean_response)
+        except json.JSONDecodeError:
+            # If parsing fails, return raw response
+            result = {
+                "raw_text": response,
+                "soap": {"subjective": "", "objective": "", "assessment": "", "plan": ""},
+                "confidence": "low",
+                "notes": "Could not parse structured response"
+            }
+        
+        return {"result": result, "attachment_id": request.attachment_id}
+    
+    except Exception as e:
+        logger.error(f"OCR error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"OCR service error: {str(e)}")
+
 # ============== AI DRAFT ROUTES ==============
 @api_router.post("/ai/drafts", response_model=AIDraftResponse)
 async def create_ai_draft(draft: AIDraftCreate, current_user: dict = Depends(get_current_user)):
