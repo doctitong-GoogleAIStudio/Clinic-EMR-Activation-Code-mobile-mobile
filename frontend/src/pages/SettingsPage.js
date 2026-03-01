@@ -96,11 +96,7 @@ const SettingsPage = () => {
       });
       fetchData();
     } catch (error) {
-      const detail = error.response?.data?.detail;
-      const errorMsg = Array.isArray(detail) 
-        ? detail.map(e => e.msg || e.message).join(', ')
-        : (typeof detail === 'string' ? detail : 'Failed to create user');
-      toast.error(errorMsg);
+      toast.error(getErrorMessage(error, 'Failed to create user'));
     }
   };
 
@@ -115,12 +111,7 @@ const SettingsPage = () => {
       toast.success('Receptionist account created');
       setReceptionistForm({ full_name: '', email: '', password: '' });
     } catch (error) {
-      const detail = error.response?.data?.detail;
-      // Handle Pydantic validation errors (array) vs string errors
-      const errorMsg = Array.isArray(detail) 
-        ? detail.map(e => e.msg || e.message).join(', ')
-        : (typeof detail === 'string' ? detail : 'Failed to create receptionist');
-      toast.error(errorMsg);
+      toast.error(getErrorMessage(error, 'Failed to create receptionist'));
     } finally {
       setCreatingReceptionist(false);
     }
