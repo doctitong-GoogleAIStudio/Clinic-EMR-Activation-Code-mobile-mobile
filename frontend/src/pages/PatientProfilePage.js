@@ -89,7 +89,7 @@ const PatientProfilePage = () => {
         setCertificates(certRes.data);
       }
     } catch (error) {
-      toast.error('Failed to load patient');
+      toast.error(getErrorMessage(error, 'Failed to load patient'));
       navigate('/patients');
     } finally {
       setLoading(false);
@@ -117,7 +117,7 @@ const PatientProfilePage = () => {
       setEditing(false);
       toast.success('Patient updated');
     } catch (error) {
-      toast.error('Failed to update patient');
+      toast.error(getErrorMessage(error, 'Failed to update patient'));
     }
   };
 
@@ -138,7 +138,7 @@ const PatientProfilePage = () => {
       setUploadData({ tag: 'other', notes: '' });
       fetchPatientData();
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error(getErrorMessage(error, 'Failed to upload file'));
     }
   };
 
@@ -148,7 +148,7 @@ const PatientProfilePage = () => {
       toast.success('Attachment deleted');
       fetchPatientData();
     } catch (error) {
-      toast.error('Failed to delete attachment');
+      toast.error(getErrorMessage(error, 'Failed to delete attachment'));
     }
   };
 
@@ -164,7 +164,7 @@ const PatientProfilePage = () => {
       setShowAppointment(false);
       setAppointmentData({ date: '', time: '', reason: '' });
     } catch (error) {
-      toast.error('Failed to create appointment');
+      toast.error(getErrorMessage(error, 'Failed to create appointment'));
     }
   };
 
@@ -189,7 +189,7 @@ const PatientProfilePage = () => {
       toast.success('Visit deleted');
       fetchPatientData();
     } catch (error) {
-      toast.error('Failed to delete visit');
+      toast.error(getErrorMessage(error, 'Failed to delete visit'));
     }
   };
 
