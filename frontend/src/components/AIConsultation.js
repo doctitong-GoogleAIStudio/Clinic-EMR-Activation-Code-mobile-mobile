@@ -5,11 +5,12 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { 
   Sparkles, Brain, Pill, AlertTriangle, FileText, 
   Loader2, ChevronDown, ChevronUp, Copy, Check, 
   Stethoscope, ClipboardList, AlertCircle, Zap,
-  Save, FolderOpen, Trash2, Clock
+  Save, FolderOpen, Trash2, Clock, GitCompare, X, ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { aiAPI } from '../lib/api';
@@ -25,6 +26,9 @@ const AIConsultation = ({ patient, vitals, onApplySOAP, onApplyMedications }) =>
   const [checkingRedFlags, setCheckingRedFlags] = useState(false);
   const [savedDrafts, setSavedDrafts] = useState([]);
   const [showDrafts, setShowDrafts] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showCompareDialog, setShowCompareDialog] = useState(false);
 
   // Load saved drafts on mount
   useEffect(() => {
