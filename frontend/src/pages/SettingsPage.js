@@ -64,7 +64,7 @@ const SettingsPage = () => {
       setUsers(usersRes.data);
       setAuditLogs(auditRes.data);
     } catch (error) {
-      toast.error('Failed to load settings');
+      toast.error(getErrorMessage(error, 'Failed to load settings'));
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ const SettingsPage = () => {
       await settingsAPI.update(settings);
       toast.success('Settings saved');
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error(getErrorMessage(error, 'Failed to save settings'));
     }
   };
 
@@ -137,7 +137,7 @@ const SettingsPage = () => {
       a.click();
       toast.success('Export downloaded');
     } catch (error) {
-      toast.error('Failed to export');
+      toast.error(getErrorMessage(error, 'Failed to export'));
     }
   };
 
@@ -152,7 +152,7 @@ const SettingsPage = () => {
       a.click();
       toast.success('Export downloaded');
     } catch (error) {
-      toast.error('Failed to export');
+      toast.error(getErrorMessage(error, 'Failed to export'));
     }
   };
 
