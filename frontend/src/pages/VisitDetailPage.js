@@ -322,7 +322,7 @@ const VisitDetailPage = () => {
       setShowEditSoap(false);
       fetchData(); // Refresh data
     } catch (error) {
-      toast.error('Failed to update SOAP notes');
+      toast.error(getErrorMessage(error, 'Failed to update SOAP notes'));
     }
   };
 
@@ -352,7 +352,7 @@ const VisitDetailPage = () => {
       toast.success('SOAP file uploaded');
       fetchData();
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error(getErrorMessage(error, 'Failed to upload file'));
     } finally {
       setIsUploadingSoap(false);
       if (soapFileInputRef.current) soapFileInputRef.current.value = '';
@@ -372,7 +372,7 @@ const VisitDetailPage = () => {
       setEditingSoapAttachment(null);
       fetchData();
     } catch (error) {
-      toast.error('Failed to update file');
+      toast.error(getErrorMessage(error, 'Failed to update file'));
     }
   };
 
@@ -383,7 +383,7 @@ const VisitDetailPage = () => {
       toast.success('File deleted');
       fetchData();
     } catch (error) {
-      toast.error('Failed to delete file');
+      toast.error(getErrorMessage(error, 'Failed to delete file'));
     }
   };
 
@@ -405,7 +405,7 @@ const VisitDetailPage = () => {
         const a = document.createElement('a'); a.href = fileUrl; a.download = att.filename; a.click();
       }
     } catch (error) {
-      toast.error('Failed to load file');
+      toast.error(getErrorMessage(error, 'Failed to load file'));
     }
   };
 
