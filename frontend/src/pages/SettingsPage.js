@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
