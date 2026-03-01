@@ -115,6 +115,8 @@ export const aiAPI = {
   getDrafts: (patientId) => axios.get(`${API}/ai/drafts/${patientId}`),
   deleteDraft: (draftId) => axios.delete(`${API}/ai/drafts/${draftId}`),
   deleteAllDrafts: (patientId) => axios.delete(`${API}/ai/drafts/patient/${patientId}`),
+  // OCR endpoint
+  extractText: (attachmentId) => axios.post(`${API}/ai/ocr`, { attachment_id: attachmentId }),
 };
 
 // Dashboard APIs
