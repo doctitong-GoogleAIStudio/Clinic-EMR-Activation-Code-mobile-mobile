@@ -279,6 +279,61 @@ const NewVisitPage = () => {
     }
   };
 
+  // OCR - Extract text from SOAP image
+  const handleExtractText = async (attachmentId, contentType) => {
+    if (!contentType?.startsWith('image/')) {
+      toast.error('OCR only works with image files (JPG, PNG, etc.)');
+      return;
+    }
+    
+    setExtractingOCR(attachmentId);
+    try {
+      const response = await aiAPI.extractText(attachmentId);
+      const result = response.data.result;
+      
+      if (result.confidence === 'low' && !result.raw_text) {
+        toast.error(result.notes || 'Could not extract text from image');
+        return;
+      }
+      
+      // Pre-fill SOAP fields with extracted text
+      const soap = result.soap;
+      if (soap) {
+        setFormData(prev => ({
+          ...prev,
+          soap_subjective: soap.subjective || prev.soap_subjective,
+          soap_objective: soap.objective || prev.soap_objective,
+          soap_assessment: soap.assessment || prev.soap_assessment,
+          soap_plan: soap.plan || prev.soap_plan
+        }));
+        
+        const filledFields = [
+          soap.subjective && 'Subjective',
+          soap.objective && 'Objective',
+          soap.assessment && 'Assessment',
+          soap.plan && 'Plan'
+        ].filter(Boolean);
+        
+        if (filledFields.length > 0) {
+          toast.success(`Extracted: ${filledFields.join(', ')} (${result.confidence} confidence)`);
+        } else if (result.raw_text) {
+          // If no SOAP sections found but raw text exists, put in subjective
+          setFormData(prev => ({
+            ...prev,
+            soap_subjective: result.raw_text
+          }));
+          toast.success('Text extracted and added to Subjective');
+        } else {
+          toast.info('No SOAP content found in image');
+        }
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to extract text'));
+    } finally {
+      setExtractingOCR(null);
+    }
+  };
+
   const calculateBMI = () => {
     const { weight, height } = formData.vitals;
     if (weight && height) {
