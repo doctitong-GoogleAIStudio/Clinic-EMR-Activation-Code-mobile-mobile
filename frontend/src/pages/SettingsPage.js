@@ -610,6 +610,16 @@ const SettingsPage = () => {
                     <p className="font-medium text-sm text-slate-900">SOAP Notes</p>
                     <p className="text-xs text-slate-500">Structured documentation</p>
                   </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 text-center border border-purple-100">
+                    <Brain className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">AI Consultation</p>
+                    <p className="text-xs text-slate-500">SOAP, Dx, ICD-10, Rx</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 text-center border border-teal-100">
+                    <ScanText className="w-5 h-5 text-teal-600 mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">OCR Extract</p>
+                    <p className="text-xs text-slate-500">Scan handwritten notes</p>
+                  </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
                     <FileText className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
                     <p className="font-medium text-sm text-slate-900">Print Forms</p>
@@ -621,9 +631,19 @@ const SettingsPage = () => {
                     <p className="text-xs text-slate-500">Role-based access</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
-                    <Sparkles className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
-                    <p className="font-medium text-sm text-slate-900">AI Assist</p>
-                    <p className="text-xs text-slate-500">Smart suggestions</p>
+                    <Upload className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Upload SOAP</p>
+                    <p className="text-xs text-slate-500">Scan & extract text</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <FolderOpen className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Draft History</p>
+                    <p className="text-xs text-slate-500">Save AI consultations</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <GitCompare className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Compare Drafts</p>
+                    <p className="text-xs text-slate-500">Side-by-side view</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
                     <Microscope className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
@@ -636,9 +656,9 @@ const SettingsPage = () => {
                     <p className="text-xs text-slate-500">Queue & scheduling</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
-                    <Upload className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
-                    <p className="font-medium text-sm text-slate-900">File Uploads</p>
-                    <p className="text-xs text-slate-500">Labs & imaging files</p>
+                    <Sparkles className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">AI Assist</p>
+                    <p className="text-xs text-slate-500">Smart suggestions</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
                     <Smartphone className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
