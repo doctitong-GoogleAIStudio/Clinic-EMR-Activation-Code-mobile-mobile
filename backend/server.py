@@ -264,6 +264,22 @@ class AIRequest(BaseModel):
     medications: Optional[List[str]] = None  # For drug interaction checks
     vitals: Optional[Dict[str, Any]] = None  # For red flag detection
 
+class AIDraftCreate(BaseModel):
+    patient_id: str
+    clinical_notes: str
+    ai_result: Dict[str, Any]
+    red_flags: Optional[List[str]] = None
+
+class AIDraftResponse(BaseModel):
+    id: str
+    patient_id: str
+    clinical_notes: str
+    ai_result: Dict[str, Any]
+    red_flags: Optional[List[str]] = None
+    owner_id: str
+    created_by_name: str
+    created_at: str
+
 class AuditLog(BaseModel):
     id: str
     user_id: str
