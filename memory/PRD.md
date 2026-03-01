@@ -50,6 +50,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **prescriptions**: `{id, patient_id, visit_id, medications, notes, created_by}`
 - **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
 - **lab_requests**: `{id, patient_id, visit_id, request_type, tests, clinical_info, urgency, created_by, created_at}`
+- **ai_drafts**: `{id, patient_id, owner_id, clinical_notes, ai_result, red_flags, created_by_name, created_at}` - Persisted AI consultation drafts
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login`
