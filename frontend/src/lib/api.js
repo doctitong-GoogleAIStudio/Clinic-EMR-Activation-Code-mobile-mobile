@@ -88,6 +88,28 @@ export const settingsAPI = {
 // AI APIs
 export const aiAPI = {
   assist: (data) => axios.post(`${API}/ai/assist`, data),
+  fullConsultation: (text, patientContext, vitals) => axios.post(`${API}/ai/assist`, {
+    request_type: 'full_consultation',
+    text,
+    patient_context: patientContext,
+    vitals
+  }),
+  getICD10: (diagnosis) => axios.post(`${API}/ai/assist`, {
+    request_type: 'icd10_code',
+    text: diagnosis
+  }),
+  calculateDose: (medication, patientContext) => axios.post(`${API}/ai/assist`, {
+    request_type: 'drug_calculator',
+    text: medication,
+    patient_context: patientContext
+  }),
+  checkRedFlags: (vitals, medications, patientContext) => axios.post(`${API}/ai/assist`, {
+    request_type: 'red_flag_check',
+    text: 'Check for clinical red flags',
+    vitals,
+    medications,
+    patient_context: patientContext
+  }),
 };
 
 // Dashboard APIs
