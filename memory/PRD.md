@@ -35,6 +35,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] **Private Receptionist Creation** - Doctors/Admins create receptionists from Settings (Dec 2025)
 - [x] **Receptionist-Doctor Binding** - Receptionist tied to specific doctor who created them. Sees only their doctor's patients/appointments (Dec 2025)
 - [x] **Per-User Clinic Settings** - Each user has their own clinic settings pre-filled from signup
+- [x] **AI-Assisted Consultation** - Full AI consultation with SOAP generation, diagnosis suggestions, ICD-10 codes, medication recommendations, and red flag alerts (Mar 1, 2026)
+- [x] **Error Handling Fix** - All API error handlers now use getErrorMessage utility to prevent React crashes on Pydantic validation errors (Mar 1, 2026)
 
 ## Key DB Schema
 - **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization, created_by}` (created_by links receptionist to doctor)
@@ -48,12 +50,12 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login`
-- `POST /api/users/create-receptionist` - Doctor/Admin creates receptionist (NEW)
+- `POST /api/users/create-receptionist` - Doctor/Admin creates receptionist
 - `GET/POST /api/patients` | `GET/PUT/DELETE /api/patients/{id}`
 - `GET/POST /api/visits` | `GET/PUT/DELETE /api/visits/{id}`
 - `GET/POST /api/appointments` | `PUT/DELETE /api/appointments/{id}`
 - `GET/POST /api/attachments` | `GET/PUT/DELETE /api/attachments/{id}`
-- `GET/POST /api/lab-requests` - Lab/Imaging request forms (NEW)
+- `GET/POST /api/lab-requests` - Lab/Imaging request forms
 - `GET/POST /api/prescriptions` | `GET/POST /api/certificates`
 - `GET/PUT /api/settings` (per-user) | `POST /api/ai/assist`
 
@@ -61,13 +63,15 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 1, 2026**: Fixed recurring React crash - Added getErrorMessage utility to ALL API error handlers across 8 files (AppointmentsPage, PatientsPage, SettingsPage, PatientProfilePage, VisitDetailPage, DashboardPage, NewVisitPage, AIConsultation)
+- **Mar 1, 2026**: AI-Assisted Consultation feature now fully functional on New Visit page with SOAP generation, diagnosis/ICD-10 suggestions, medication recommendations, and red flag alerts
 - **Dec 2025**: Fixed React error - Pydantic validation error objects now properly extracted for toast messages
 - **Dec 2025**: Create Receptionist flow verified end-to-end (Doctor/Admin creates, receptionist logs in, limited access confirmed)
 - **Dec 2025**: Data isolation between doctors verified (Doctor A cannot see Doctor B's patients)
 - **Dec 2025**: Fixed uuid4 bug and created ReceptionistCreate model for cleaner API
-- **Feb 25, 2026**: Added Labs & Imaging section to New Visit page — doctors can upload/view/edit/analyze patient's lab results and imaging files during visit documentation. Same messenger-style UI with zoom/pan viewer.
-- **Feb 25, 2026**: Added edit/rename for Labs & Imaging files — inline edit form with filename, tag, and notes fields. Backend PUT /api/attachments/{id} with data isolation.
-- **Feb 25, 2026**: Enhanced Labs & Imaging file viewer with zoom controls (slider, +/- buttons, mouse wheel), drag-to-pan (up/down, side to side), reset/fit buttons, and download. PDFs open in new tab.
+- **Feb 25, 2026**: Added Labs & Imaging section to New Visit page
+- **Feb 25, 2026**: Added edit/rename for Labs & Imaging files
+- **Feb 25, 2026**: Enhanced Labs & Imaging file viewer with zoom controls
 - [x] Data isolation verified (backend + frontend testing passed)
 - [x] Labs & Imaging with messenger-style UI
 
@@ -76,7 +80,6 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [ ] Attachment tagging improvements
 
 ## P2 - Future/Backlog
-- [ ] Lab/Rad request forms
 - [ ] Simple inventory management
 - [ ] Billing/OR and receipt printing
 - [ ] Email/SMS appointment reminders
