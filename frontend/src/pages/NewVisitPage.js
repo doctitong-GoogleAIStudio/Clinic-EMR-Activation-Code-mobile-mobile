@@ -656,6 +656,140 @@ const NewVisitPage = () => {
           </CardContent>
         </Card>
 
+        {/* Upload SOAP Notes */}
+        <Card className="bg-white border-slate-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="font-heading flex items-center gap-2">
+              <Upload className="w-5 h-5 text-[#0F766E]" />
+              Upload SOAP Notes
+              {soapAttachments.length > 0 && (
+                <Badge variant="outline" className="ml-1 font-mono text-xs">{soapAttachments.length}</Badge>
+              )}
+            </CardTitle>
+            <div>
+              <input
+                type="file"
+                ref={soapFileInputRef}
+                onChange={handleSoapFileUpload}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx"
+                data-testid="soap-file-input"
+              />
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm" 
+                onClick={() => soapFileInputRef.current?.click()}
+                disabled={soapUploading}
+                className="text-[#0F766E] border-[#0F766E]/30 hover:bg-[#0F766E]/10"
+                data-testid="upload-soap-btn"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {soapUploading ? 'Uploading...' : 'Upload File'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {soapAttachments.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No SOAP files uploaded yet</p>
+                <p className="text-xs mt-1">Upload scanned notes, handwritten SOAP, or related documents</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {soapAttachments.map((att) => (
+                  <div 
+                    key={att.id} 
+                    className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-[#0F766E]/30 hover:bg-slate-50 transition-colors"
+                    data-testid={`soap-attachment-${att.id}`}
+                  >
+                    {editingSoapId === att.id ? (
+                      // Edit mode
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          value={editSoapData.filename}
+                          onChange={(e) => setEditSoapData({ ...editSoapData, filename: e.target.value })}
+                          placeholder="Filename"
+                          className="h-8"
+                          data-testid="soap-edit-filename"
+                        />
+                        <Input
+                          value={editSoapData.notes}
+                          onChange={(e) => setEditSoapData({ ...editSoapData, notes: e.target.value })}
+                          placeholder="Notes (optional)"
+                          className="h-8"
+                          data-testid="soap-edit-notes"
+                        />
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" onClick={saveEditSoap} className="bg-[#0F766E] hover:bg-[#115E59]">
+                            Save
+                          </Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={cancelEditSoap}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // View mode
+                      <>
+                        <div 
+                          className="flex items-center gap-3 flex-1 cursor-pointer"
+                          onClick={() => handleViewSoapAttachment(att.id)}
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                            {att.content_type?.startsWith('image/') ? (
+                              <FileImage className="w-5 h-5 text-teal-600" />
+                            ) : (
+                              <File className="w-5 h-5 text-teal-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-slate-900 truncate">{att.filename}</p>
+                            {att.notes && <p className="text-xs text-slate-500 truncate">{att.notes}</p>}
+                            <p className="text-xs text-slate-400">{att.uploaded_at ? format(parseISO(att.uploaded_at), 'MMM d, h:mm a') : 'Just now'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleViewSoapAttachment(att.id)}
+                            className="h-8 w-8 p-0 text-slate-500 hover:text-[#0F766E]"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => startEditSoap(att)}
+                            className="h-8 w-8 p-0 text-slate-500 hover:text-[#0F766E]"
+                            data-testid={`soap-edit-btn-${att.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteSoapAttachment(att.id); }}
+                            className="h-8 w-8 p-0 text-slate-500 hover:text-red-600"
+                            data-testid={`soap-delete-btn-${att.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Labs & Imaging */}
         <Card className="bg-white border-slate-100 shadow-sm">
           <CardHeader>
