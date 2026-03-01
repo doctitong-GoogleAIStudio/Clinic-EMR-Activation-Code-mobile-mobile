@@ -110,6 +110,11 @@ export const aiAPI = {
     medications,
     patient_context: patientContext
   }),
+  // AI Draft endpoints
+  saveDraft: (draft) => axios.post(`${API}/ai/drafts`, draft),
+  getDrafts: (patientId) => axios.get(`${API}/ai/drafts/${patientId}`),
+  deleteDraft: (draftId) => axios.delete(`${API}/ai/drafts/${draftId}`),
+  deleteAllDrafts: (patientId) => axios.delete(`${API}/ai/drafts/patient/${patientId}`),
 };
 
 // Dashboard APIs
