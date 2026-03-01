@@ -70,6 +70,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 1, 2026**: Moved "Upload SOAP Notes" feature from Visit Detail page to New Visit page - now appears after SOAP Notes section, before Labs & Imaging
 - **Mar 1, 2026**: Added "Draft History" feature - AI consultation drafts now stored in MongoDB instead of localStorage. Drafts persist across browser sessions, show creator name, and are limited to 10 per patient. New API endpoints: POST/GET/DELETE /api/ai/drafts
 - **Mar 1, 2026**: Added "Compare Drafts" feature - doctors can select 2 saved AI consultations and view them side-by-side in a comparison dialog showing clinical notes, SOAP notes, diagnoses, and medications with color-coded sections
 - **Mar 1, 2026**: Added "Save Draft" feature for AI consultations - doctors can save AI-generated suggestions and load them later before applying to visit record. Shows diagnosis preview and timestamp.
