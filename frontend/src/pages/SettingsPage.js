@@ -675,6 +675,22 @@ const SettingsPage = () => {
                   What's New
                 </h3>
                 <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <div className="flex gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-purple-500"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">AI-Assisted Consultation</p>
+                      <p className="text-xs text-slate-600">Full AI consultation with SOAP generation, diagnosis suggestions, ICD-10 codes, medication recommendations, red flag alerts, save drafts, and compare drafts side-by-side</p>
+                      <p className="text-xs text-slate-400 mt-1">Mar 1, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-teal-500"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Upload SOAP Notes with OCR</p>
+                      <p className="text-xs text-slate-600">Upload scanned/handwritten SOAP notes and extract text using AI vision. Auto-populates SOAP fields. Files carry over to Visit Details</p>
+                      <p className="text-xs text-slate-400 mt-1">Mar 1, 2026</p>
+                    </div>
+                  </div>
                   <div className="flex gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
                     <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500"></div>
                     <div>
