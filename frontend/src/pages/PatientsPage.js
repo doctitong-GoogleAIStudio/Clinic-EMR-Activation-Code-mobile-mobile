@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { 
   Users, Search, Plus, Phone, Mail, Calendar, ChevronRight, 
-  User, Filter
+  User, Filter, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
