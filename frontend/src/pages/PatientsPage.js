@@ -174,7 +174,19 @@ const PatientsPage = () => {
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleDeletePatient(e, patient.id, patient.full_name)}
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                      title="Delete patient"
+                      data-testid={`delete-patient-btn-${patient.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
