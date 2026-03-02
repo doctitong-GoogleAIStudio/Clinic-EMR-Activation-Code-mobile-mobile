@@ -42,6 +42,22 @@ const PatientsPage = () => {
     }
   };
 
+  const handleDeletePatient = async (e, patientId, patientName) => {
+    e.stopPropagation(); // Prevent card click navigation
+    
+    if (!window.confirm(`Are you sure you want to delete "${patientName}"?\n\nThis will also delete all their visits, attachments, and appointments. This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await patientAPI.delete(patientId);
+      toast.success('Patient deleted successfully');
+      fetchPatients(searchQuery);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete patient'));
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="patients-page">
       {/* Header */}
