@@ -698,8 +698,12 @@ async def get_appointments(
     return appointments
 
 @api_router.get("/appointments/today", response_model=List[AppointmentResponse])
-async def get_today_appointments(current_user: dict = Depends(get_current_user)):
-    today = date.today().isoformat()
+async def get_today_appointments(
+    local_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    # Use client's local date if provided, otherwise fall back to server date
+    today = local_date if local_date else date.today().isoformat()
     owner_id = await get_owner_id_for_user(current_user)
     appointments = await db.appointments.find({"date": today, "owner_id": owner_id}, {"_id": 0}).sort("time", 1).to_list(100)
     return appointments
@@ -717,8 +721,12 @@ async def get_appointment(appointment_id: str, current_user: dict = Depends(get_
     return appointment
 
 @api_router.get("/queue/today", response_model=List[AppointmentResponse])
-async def get_today_queue(current_user: dict = Depends(get_current_user)):
-    today = date.today().isoformat()
+async def get_today_queue(
+    local_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    # Use client's local date if provided, otherwise fall back to server date
+    today = local_date if local_date else date.today().isoformat()
     # Receptionist sees queue of their doctor; others only their own
     owner_id = await get_owner_id_for_user(current_user)
     appointments = await db.appointments.find(
@@ -1528,8 +1536,12 @@ async def export_visits(
 
 # ============== DASHBOARD STATS ==============
 @api_router.get("/dashboard/stats")
-async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
-    today = date.today().isoformat()
+async def get_dashboard_stats(
+    local_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    # Use client's local date if provided, otherwise fall back to server date
+    today = local_date if local_date else date.today().isoformat()
     user_id = current_user["id"]
     
     # Data isolation: only count user's own data

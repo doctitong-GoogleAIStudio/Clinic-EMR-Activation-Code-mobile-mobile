@@ -34,12 +34,19 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, []);
 
+  // Get local date in YYYY-MM-DD format
+  const getLocalDate = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
   const fetchDashboardData = async () => {
     try {
+      const localDate = getLocalDate();
       const [statsRes, queueRes, aptsRes] = await Promise.all([
-        dashboardAPI.getStats(),
-        appointmentAPI.getQueue(),
-        appointmentAPI.getToday()
+        dashboardAPI.getStats(localDate),
+        appointmentAPI.getQueue(localDate),
+        appointmentAPI.getToday(localDate)
       ]);
       setStats(statsRes.data);
       setQueue(queueRes.data);

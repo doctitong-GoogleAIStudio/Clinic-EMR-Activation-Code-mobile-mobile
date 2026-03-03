@@ -39,8 +39,8 @@ export const visitAPI = {
 export const appointmentAPI = {
   getAll: (params) => axios.get(`${API}/appointments`, { params }),
   getOne: (id) => axios.get(`${API}/appointments/${id}`),
-  getToday: () => axios.get(`${API}/appointments/today`),
-  getQueue: () => axios.get(`${API}/queue/today`),
+  getToday: (localDate) => axios.get(`${API}/appointments/today`, { params: { local_date: localDate } }),
+  getQueue: (localDate) => axios.get(`${API}/queue/today`, { params: { local_date: localDate } }),
   create: (data) => axios.post(`${API}/appointments`, data),
   update: (id, data) => axios.put(`${API}/appointments/${id}`, data),
   delete: (id) => axios.delete(`${API}/appointments/${id}`),
@@ -125,7 +125,7 @@ export const aiAPI = {
 
 // Dashboard APIs
 export const dashboardAPI = {
-  getStats: () => axios.get(`${API}/dashboard/stats`),
+  getStats: (localDate) => axios.get(`${API}/dashboard/stats`, { params: { local_date: localDate } }),
 };
 
 // Export APIs
