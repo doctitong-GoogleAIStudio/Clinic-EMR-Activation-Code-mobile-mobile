@@ -71,6 +71,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 3, 2026**: **Added Vitals Ready Indicators** - Appointments with pre-recorded vitals now display green "Vitals Ready" badges on Dashboard queue, Appointments page, and sidebar. Visual distinction helps doctors identify patients ready for consultation
 - **Mar 3, 2026**: **Verified Receptionist-to-Doctor Vitals Flow** - Receptionist can enter vital signs when scheduling appointments, and these vitals automatically populate the doctor's New Visit page with "Vitals loaded from appointment" toast confirmation
 - **Mar 1, 2026**: Added OCR (Optical Character Recognition) feature - doctors can upload scanned/handwritten SOAP notes and AI extracts text to pre-fill SOAP fields. Uses GPT-5.2 vision with emergentintegrations library
 - **Mar 1, 2026**: Moved "Upload SOAP Notes" feature from Visit Detail page to New Visit page - now appears after SOAP Notes section, before Labs & Imaging

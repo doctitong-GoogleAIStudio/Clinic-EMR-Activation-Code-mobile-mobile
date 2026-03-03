@@ -306,15 +306,35 @@ const DashboardPage = () => {
                 {queue.map((apt, index) => (
                   <div
                     key={apt.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                      apt.vitals && Object.keys(apt.vitals).length > 0
+                        ? 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-300'
+                        : 'bg-slate-50 border-slate-100 hover:border-slate-200'
+                    }`}
                     data-testid={`queue-item-${apt.id}`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[#0F766E]/10 flex items-center justify-center font-mono font-bold text-[#0F766E]">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold ${
+                        apt.vitals && Object.keys(apt.vitals).length > 0
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-[#0F766E]/10 text-[#0F766E]'
+                      }`}>
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{apt.patient_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-900">{apt.patient_name}</p>
+                          {apt.vitals && Object.keys(apt.vitals).length > 0 && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs gap-1"
+                              data-testid={`queue-vitals-${apt.id}`}
+                            >
+                              <Activity className="w-3 h-3" />
+                              Vitals
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
                           <Clock className="w-3 h-3" />
                           {apt.time}
@@ -411,12 +431,21 @@ const DashboardPage = () => {
                 {appointments.map((apt) => (
                   <div
                     key={apt.id}
-                    className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors"
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      apt.vitals && Object.keys(apt.vitals).length > 0
+                        ? 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                        : 'bg-slate-50 hover:bg-slate-100'
+                    }`}
                     onClick={() => navigate(`/patients/${apt.patient_id}`)}
                     data-testid={`appointment-${apt.id}`}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-slate-900 text-sm">{apt.patient_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-slate-900 text-sm">{apt.patient_name}</p>
+                        {apt.vitals && Object.keys(apt.vitals).length > 0 && (
+                          <Activity className="w-3 h-3 text-emerald-600" />
+                        )}
+                      </div>
                       <Badge variant="outline" className={`${statusColors[apt.status]} text-xs`}>
                         {apt.status.replace('_', ' ')}
                       </Badge>

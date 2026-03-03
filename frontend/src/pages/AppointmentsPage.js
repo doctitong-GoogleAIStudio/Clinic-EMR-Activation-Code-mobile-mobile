@@ -454,7 +454,11 @@ const AppointmentsPage = () => {
                 {appointments.map((apt) => (
                   <div
                     key={apt.id}
-                    className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                      apt.vitals && Object.keys(apt.vitals).length > 0 
+                        ? 'border-emerald-200 bg-emerald-50/30 hover:border-emerald-300' 
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
                     data-testid={`apt-item-${apt.id}`}
                   >
                     <div className="flex items-center gap-4">
@@ -462,12 +466,24 @@ const AppointmentsPage = () => {
                         <p className="text-lg font-semibold text-slate-900">{apt.time}</p>
                       </div>
                       <div>
-                        <p 
-                          className="font-medium text-slate-900 hover:text-[#0F766E] cursor-pointer"
-                          onClick={() => navigate(`/patients/${apt.patient_id}`)}
-                        >
-                          {apt.patient_name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p 
+                            className="font-medium text-slate-900 hover:text-[#0F766E] cursor-pointer"
+                            onClick={() => navigate(`/patients/${apt.patient_id}`)}
+                          >
+                            {apt.patient_name}
+                          </p>
+                          {apt.vitals && Object.keys(apt.vitals).length > 0 && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs gap-1"
+                              data-testid={`vitals-badge-${apt.id}`}
+                            >
+                              <Activity className="w-3 h-3" />
+                              Vitals Ready
+                            </Badge>
+                          )}
+                        </div>
                         {apt.reason && <p className="text-sm text-slate-500">{apt.reason}</p>}
                       </div>
                     </div>
