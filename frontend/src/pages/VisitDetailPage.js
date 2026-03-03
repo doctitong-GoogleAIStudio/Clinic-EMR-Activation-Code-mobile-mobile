@@ -152,6 +152,40 @@ const VisitDetailPage = () => {
   const handlePrintSavedRx = useReactToPrint({ contentRef: savedRxRef, documentTitle: 'Prescription' });
   const handlePrintSavedCert = useReactToPrint({ contentRef: savedCertRef, documentTitle: 'Certificate' });
 
+  // Delete handlers for saved forms
+  const deletePrescription = async (rx) => {
+    if (!window.confirm('Are you sure you want to delete this prescription?')) return;
+    try {
+      await prescriptionAPI.delete(rx.id);
+      toast.success('Prescription deleted');
+      setSavedPrescriptions(prev => prev.filter(p => p.id !== rx.id));
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete prescription'));
+    }
+  };
+
+  const deleteCertificate = async (cert) => {
+    if (!window.confirm('Are you sure you want to delete this certificate?')) return;
+    try {
+      await certificateAPI.delete(cert.id);
+      toast.success('Certificate deleted');
+      setSavedCertificates(prev => prev.filter(c => c.id !== cert.id));
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete certificate'));
+    }
+  };
+
+  const deleteLabRequest = async (req) => {
+    if (!window.confirm('Are you sure you want to delete this lab request?')) return;
+    try {
+      await labRequestAPI.delete(req.id);
+      toast.success('Lab request deleted');
+      setSavedLabRequests(prev => prev.filter(r => r.id !== req.id));
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete lab request'));
+    }
+  };
+
   const addMedication = () => {
     setRxData({
       ...rxData,
@@ -1086,14 +1120,26 @@ const VisitDetailPage = () => {
                           <Pill className="w-4 h-4 text-[#0F766E]" />
                           <span className="font-medium text-sm">Prescription</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => { e.stopPropagation(); reprintPrescription(rx); }}
-                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); reprintPrescription(rx); }}
+                            className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                            data-testid={`print-rx-${rx.id}`}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); deletePrescription(rx); }}
+                            className="h-8 px-2 text-red-500 hover:bg-red-50"
+                            data-testid={`delete-rx-${rx.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
                         {rx.medications?.length || 0} medication(s) • {format(parseISO(rx.created_at), 'MMM d, h:mm a')}
@@ -1114,14 +1160,26 @@ const VisitDetailPage = () => {
                           {cert.certificate_type === 'referral' && <Send className="w-4 h-4 text-[#0F766E]" />}
                           <span className="font-medium text-sm">{getCertificateTypeName(cert.certificate_type)}</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => { e.stopPropagation(); reprintCertificate(cert); }}
-                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); reprintCertificate(cert); }}
+                            className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                            data-testid={`print-cert-${cert.id}`}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); deleteCertificate(cert); }}
+                            className="h-8 px-2 text-red-500 hover:bg-red-50"
+                            data-testid={`delete-cert-${cert.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
                         {format(parseISO(cert.created_at), 'MMM d, h:mm a')}
@@ -1145,14 +1203,26 @@ const VisitDetailPage = () => {
                             </Badge>
                           )}
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => { e.stopPropagation(); reprintLabRequest(req); }}
-                          className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); reprintLabRequest(req); }}
+                            className="h-8 px-2 text-[#0F766E] hover:bg-[#0F766E]/10"
+                            data-testid={`print-labreq-${req.id}`}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); deleteLabRequest(req); }}
+                            className="h-8 px-2 text-red-500 hover:bg-red-50"
+                            data-testid={`delete-labreq-${req.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
                         {req.tests?.length || 0} test(s) • {format(parseISO(req.created_at), 'MMM d, h:mm a')}

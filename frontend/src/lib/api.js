@@ -66,18 +66,21 @@ export const attachmentAPI = {
 export const prescriptionAPI = {
   getAll: (params) => axios.get(`${API}/prescriptions`, { params }),
   create: (data) => axios.post(`${API}/prescriptions`, data),
+  delete: (id) => axios.delete(`${API}/prescriptions/${id}`),
 };
 
 // Certificate APIs
 export const certificateAPI = {
   getAll: (params) => axios.get(`${API}/certificates`, { params }),
   create: (data) => axios.post(`${API}/certificates`, data),
+  delete: (id) => axios.delete(`${API}/certificates/${id}`),
 };
 
 // Lab Request APIs
 export const labRequestAPI = {
   getAll: (params) => axios.get(`${API}/lab-requests`, { params }),
   create: (data) => axios.post(`${API}/lab-requests`, data),
+  delete: (id) => axios.delete(`${API}/lab-requests/${id}`),
 };
 
 // Settings APIs

@@ -959,6 +959,23 @@ async def get_prescriptions(
     prescriptions = await db.prescriptions.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return prescriptions
 
+@api_router.delete("/prescriptions/{prescription_id}")
+async def delete_prescription(prescription_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can delete prescriptions")
+    
+    # Verify ownership through patient
+    prescription = await db.prescriptions.find_one({"id": prescription_id})
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+    
+    if not await verify_patient_ownership(prescription["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Prescription not found")
+    
+    await db.prescriptions.delete_one({"id": prescription_id})
+    await log_audit(current_user["id"], current_user["full_name"], "delete", "prescription", prescription_id)
+    return {"message": "Prescription deleted"}
+
 # ============== CERTIFICATE ROUTES ==============
 @api_router.post("/certificates", response_model=CertificateResponse)
 async def create_certificate(certificate: CertificateCreate, current_user: dict = Depends(get_current_user)):
@@ -1007,6 +1024,23 @@ async def get_certificates(
     certificates = await db.certificates.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return certificates
 
+@api_router.delete("/certificates/{certificate_id}")
+async def delete_certificate(certificate_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can delete certificates")
+    
+    # Verify ownership through patient
+    certificate = await db.certificates.find_one({"id": certificate_id})
+    if not certificate:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    
+    if not await verify_patient_ownership(certificate["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    
+    await db.certificates.delete_one({"id": certificate_id})
+    await log_audit(current_user["id"], current_user["full_name"], "delete", "certificate", certificate_id)
+    return {"message": "Certificate deleted"}
+
 # ============== LAB REQUEST ROUTES ==============
 @api_router.post("/lab-requests", response_model=LabRequestResponse)
 async def create_lab_request(request: LabRequestCreate, current_user: dict = Depends(get_current_user)):
@@ -1054,6 +1088,23 @@ async def get_lab_requests(
     
     lab_requests = await db.lab_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return lab_requests
+
+@api_router.delete("/lab-requests/{request_id}")
+async def delete_lab_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can delete lab requests")
+    
+    # Verify ownership through patient
+    lab_request = await db.lab_requests.find_one({"id": request_id})
+    if not lab_request:
+        raise HTTPException(status_code=404, detail="Lab request not found")
+    
+    if not await verify_patient_ownership(lab_request["patient_id"], current_user["id"]):
+        raise HTTPException(status_code=404, detail="Lab request not found")
+    
+    await db.lab_requests.delete_one({"id": request_id})
+    await log_audit(current_user["id"], current_user["full_name"], "delete", "lab_request", request_id)
+    return {"message": "Lab request deleted"}
 
 # ============== CLINIC SETTINGS ==============
 @api_router.get("/settings")
