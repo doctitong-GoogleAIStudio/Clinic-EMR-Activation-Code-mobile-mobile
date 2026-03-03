@@ -83,7 +83,37 @@ const NewVisitPage = () => {
     if (patientId) {
       fetchPatient();
     }
-  }, [patientId]);
+    // Load vitals from appointment if appointmentId is provided
+    if (appointmentId) {
+      fetchAppointmentVitals();
+    }
+  }, [patientId, appointmentId]);
+
+  const fetchAppointmentVitals = async () => {
+    try {
+      const response = await appointmentAPI.getOne(appointmentId);
+      const appointment = response.data;
+      
+      if (appointment.vitals) {
+        setFormData(prev => ({
+          ...prev,
+          vitals: {
+            bp_systolic: appointment.vitals.bp_systolic?.toString() || '',
+            bp_diastolic: appointment.vitals.bp_diastolic?.toString() || '',
+            heart_rate: appointment.vitals.heart_rate?.toString() || '',
+            respiratory_rate: appointment.vitals.respiratory_rate?.toString() || '',
+            temperature: appointment.vitals.temperature?.toString() || '',
+            spo2: appointment.vitals.spo2?.toString() || '',
+            weight: appointment.vitals.weight?.toString() || '',
+            height: appointment.vitals.height?.toString() || ''
+          }
+        }));
+        toast.success('Vitals loaded from appointment');
+      }
+    } catch (error) {
+      console.error('Failed to load appointment vitals:', error);
+    }
+  };
 
   const fetchPatient = async () => {
     try {

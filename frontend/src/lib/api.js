@@ -38,6 +38,7 @@ export const visitAPI = {
 // Appointment APIs
 export const appointmentAPI = {
   getAll: (params) => axios.get(`${API}/appointments`, { params }),
+  getOne: (id) => axios.get(`${API}/appointments/${id}`),
   getToday: () => axios.get(`${API}/appointments/today`),
   getQueue: () => axios.get(`${API}/queue/today`),
   create: (data) => axios.post(`${API}/appointments`, data),

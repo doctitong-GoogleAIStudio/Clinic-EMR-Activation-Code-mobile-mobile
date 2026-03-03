@@ -16,7 +16,7 @@ import {
   User, Phone, Mail, MapPin, Calendar, Heart, AlertTriangle, 
   Edit, Save, Plus, FileText, Image, Upload, Trash2, 
   Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer, AlertCircle,
-  Microscope, Download, Eye, FileImage, File, ZoomIn, ZoomOut, Maximize2, RotateCcw
+  Microscope, Download, Eye, FileImage, File, ZoomIn, ZoomOut, Maximize2, RotateCcw, Activity, Thermometer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -43,7 +43,21 @@ const PatientProfilePage = () => {
   const [uploadData, setUploadData] = useState({ tag: 'other', notes: '' });
   const [uploadFile, setUploadFile] = useState(null);
   const [showAppointment, setShowAppointment] = useState(false);
-  const [appointmentData, setAppointmentData] = useState({ date: '', time: '', reason: '' });
+  const [appointmentData, setAppointmentData] = useState({ 
+    date: '', 
+    time: '', 
+    reason: '',
+    vitals: {
+      bp_systolic: '',
+      bp_diastolic: '',
+      heart_rate: '',
+      respiratory_rate: '',
+      temperature: '',
+      spo2: '',
+      weight: '',
+      height: ''
+    }
+  });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [labFile, setLabFile] = useState(null);
@@ -154,15 +168,42 @@ const PatientProfilePage = () => {
 
   const handleCreateAppointment = async () => {
     try {
+      // Only include vitals if at least one field is filled
+      const vitalsData = {};
+      Object.entries(appointmentData.vitals).forEach(([key, value]) => {
+        if (value !== '' && value !== null) {
+          vitalsData[key] = ['temperature', 'weight', 'height'].includes(key) 
+            ? parseFloat(value) 
+            : parseInt(value);
+        }
+      });
+      
       await appointmentAPI.create({
         patient_id: patientId,
         patient_name: patient.full_name,
-        ...appointmentData,
+        date: appointmentData.date,
+        time: appointmentData.time,
+        reason: appointmentData.reason,
+        vitals: Object.keys(vitalsData).length > 0 ? vitalsData : null,
         status: 'waiting'
       });
       toast.success('Appointment scheduled');
       setShowAppointment(false);
-      setAppointmentData({ date: '', time: '', reason: '' });
+      setAppointmentData({ 
+        date: '', 
+        time: '', 
+        reason: '',
+        vitals: {
+          bp_systolic: '',
+          bp_diastolic: '',
+          heart_rate: '',
+          respiratory_rate: '',
+          temperature: '',
+          spo2: '',
+          weight: '',
+          height: ''
+        }
+      });
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to create appointment'));
     }
@@ -370,6 +411,131 @@ const PatientProfilePage = () => {
                     data-testid="appointment-reason-input"
                   />
                 </div>
+                
+                {/* Vital Signs Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Activity className="w-4 h-4 text-[#0F766E]" />
+                    <Label className="text-sm font-medium">Vital Signs (Optional)</Label>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">BP Sys</Label>
+                      <Input
+                        type="number"
+                        placeholder="120"
+                        value={appointmentData.vitals.bp_systolic}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, bp_systolic: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-bp-sys"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">BP Dia</Label>
+                      <Input
+                        type="number"
+                        placeholder="80"
+                        value={appointmentData.vitals.bp_diastolic}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, bp_diastolic: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-bp-dia"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">HR (bpm)</Label>
+                      <Input
+                        type="number"
+                        placeholder="72"
+                        value={appointmentData.vitals.heart_rate}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, heart_rate: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-hr"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">RR (cpm)</Label>
+                      <Input
+                        type="number"
+                        placeholder="16"
+                        value={appointmentData.vitals.respiratory_rate}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, respiratory_rate: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-rr"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Temp (°C)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="36.5"
+                        value={appointmentData.vitals.temperature}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, temperature: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-temp"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">SpO2 (%)</Label>
+                      <Input
+                        type="number"
+                        placeholder="98"
+                        value={appointmentData.vitals.spo2}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, spo2: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-spo2"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Wt (kg)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="70"
+                        value={appointmentData.vitals.weight}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, weight: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-weight"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Ht (cm)</Label>
+                      <Input
+                        type="number"
+                        placeholder="170"
+                        value={appointmentData.vitals.height}
+                        onChange={(e) => setAppointmentData({ 
+                          ...appointmentData, 
+                          vitals: { ...appointmentData.vitals, height: e.target.value }
+                        })}
+                        className="h-8 text-sm"
+                        data-testid="apt-vitals-height"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
                 <Button onClick={handleCreateAppointment} className="w-full bg-[#0F766E] hover:bg-[#115E59]" data-testid="confirm-appointment-btn">
                   Schedule Appointment
                 </Button>

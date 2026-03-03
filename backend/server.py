@@ -174,6 +174,7 @@ class AppointmentBase(BaseModel):
     time: str
     reason: Optional[str] = None
     status: QueueStatus = QueueStatus.WAITING
+    vitals: Optional[Dict[str, Any]] = None  # Pre-recorded vitals
 
 class AppointmentCreate(AppointmentBase):
     pass
@@ -183,6 +184,7 @@ class AppointmentUpdate(BaseModel):
     time: Optional[str] = None
     reason: Optional[str] = None
     status: Optional[QueueStatus] = None
+    vitals: Optional[Dict[str, Any]] = None
 
 class AppointmentResponse(AppointmentBase):
     id: str
@@ -701,6 +703,18 @@ async def get_today_appointments(current_user: dict = Depends(get_current_user))
     owner_id = await get_owner_id_for_user(current_user)
     appointments = await db.appointments.find({"date": today, "owner_id": owner_id}, {"_id": 0}).sort("time", 1).to_list(100)
     return appointments
+
+@api_router.get("/appointments/{appointment_id}", response_model=AppointmentResponse)
+async def get_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single appointment by ID"""
+    owner_id = await get_owner_id_for_user(current_user)
+    appointment = await db.appointments.find_one(
+        {"id": appointment_id, "owner_id": owner_id},
+        {"_id": 0}
+    )
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return appointment
 
 @api_router.get("/queue/today", response_model=List[AppointmentResponse])
 async def get_today_queue(current_user: dict = Depends(get_current_user)):
