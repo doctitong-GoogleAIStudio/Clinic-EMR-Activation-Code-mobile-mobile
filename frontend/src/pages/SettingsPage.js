@@ -249,7 +249,7 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>License Number</Label>
+                  <Label>S2 No.</Label>
                   <Input
                     value={settings.license_no}
                     onChange={(e) => setSettings({ ...settings, license_no: e.target.value })}
