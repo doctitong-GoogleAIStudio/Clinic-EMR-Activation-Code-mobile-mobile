@@ -143,12 +143,18 @@ const AppointmentsPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this appointment?')) return;
+    console.log('Delete clicked for appointment:', id);
+    if (!window.confirm('Delete this appointment?')) {
+      console.log('Delete cancelled by user');
+      return;
+    }
     try {
+      console.log('Deleting appointment...');
       await appointmentAPI.delete(id);
       toast.success('Appointment deleted');
       fetchAppointments();
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error(getErrorMessage(error, 'Failed to delete appointment'));
     }
   };
@@ -504,8 +510,13 @@ const AppointmentsPage = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleDelete(apt.id)}
-                        className="text-red-500 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleDelete(apt.id);
+                        }}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        data-testid={`delete-apt-${apt.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
