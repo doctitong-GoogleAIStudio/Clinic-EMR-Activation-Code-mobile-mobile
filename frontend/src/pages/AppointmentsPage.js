@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { format, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
+import VitalsTooltip from '../components/VitalsTooltip';
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
@@ -474,14 +475,12 @@ const AppointmentsPage = () => {
                             {apt.patient_name}
                           </p>
                           {apt.vitals && Object.keys(apt.vitals).length > 0 && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs gap-1"
-                              data-testid={`vitals-badge-${apt.id}`}
-                            >
-                              <Activity className="w-3 h-3" />
-                              Vitals Ready
-                            </Badge>
+                            <VitalsTooltip 
+                              vitals={apt.vitals} 
+                              variant="badge" 
+                              size="md"
+                              testId={`vitals-badge-${apt.id}`}
+                            />
                           )}
                         </div>
                         {apt.reason && <p className="text-sm text-slate-500">{apt.reason}</p>}

@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
+import VitalsTooltip from '../components/VitalsTooltip';
 
 const DashboardPage = () => {
   const { user, isDoctor } = useAuth();
@@ -325,14 +326,12 @@ const DashboardPage = () => {
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-slate-900">{apt.patient_name}</p>
                           {apt.vitals && Object.keys(apt.vitals).length > 0 && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs gap-1"
-                              data-testid={`queue-vitals-${apt.id}`}
-                            >
-                              <Activity className="w-3 h-3" />
-                              Vitals
-                            </Badge>
+                            <VitalsTooltip 
+                              vitals={apt.vitals} 
+                              variant="badge" 
+                              size="sm"
+                              testId={`queue-vitals-${apt.id}`}
+                            />
                           )}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -443,7 +442,12 @@ const DashboardPage = () => {
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-slate-900 text-sm">{apt.patient_name}</p>
                         {apt.vitals && Object.keys(apt.vitals).length > 0 && (
-                          <Activity className="w-3 h-3 text-emerald-600" />
+                          <VitalsTooltip 
+                            vitals={apt.vitals} 
+                            variant="icon" 
+                            size="sm"
+                            testId={`sidebar-vitals-${apt.id}`}
+                          />
                         )}
                       </div>
                       <Badge variant="outline" className={`${statusColors[apt.status]} text-xs`}>
