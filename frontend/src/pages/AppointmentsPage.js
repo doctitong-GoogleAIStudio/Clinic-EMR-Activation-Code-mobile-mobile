@@ -11,6 +11,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+import { 
   Calendar as CalendarIcon, Clock, Plus, Search, 
   ChevronLeft, ChevronRight, Trash2, Edit, User, Activity, Heart, Thermometer
 } from 'lucide-react';
@@ -28,6 +38,8 @@ const AppointmentsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
   const [newApt, setNewApt] = useState({ 
     date: '', 
     time: '', 
@@ -142,20 +154,23 @@ const AppointmentsPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    console.log('Delete clicked for appointment:', id);
-    if (!window.confirm('Delete this appointment?')) {
-      console.log('Delete cancelled by user');
-      return;
-    }
+  const handleDeleteClick = (apt) => {
+    setAppointmentToDelete(apt);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!appointmentToDelete) return;
+    
     try {
-      console.log('Deleting appointment...');
-      await appointmentAPI.delete(id);
+      await appointmentAPI.delete(appointmentToDelete.id);
       toast.success('Appointment deleted');
       fetchAppointments();
     } catch (error) {
-      console.error('Delete error:', error);
       toast.error(getErrorMessage(error, 'Failed to delete appointment'));
+    } finally {
+      setDeleteDialogOpen(false);
+      setAppointmentToDelete(null);
     }
   };
 
@@ -512,11 +527,11 @@ const AppointmentsPage = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          console.log('Delete button clicked for:', apt.id);
-                          handleDelete(apt.id);
+                          handleDeleteClick(apt);
                         }}
-                        className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                        className="p-2 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-md transition-colors border border-red-200"
                         data-testid={`delete-apt-${apt.id}`}
+                        title="Delete appointment"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -528,6 +543,30 @@ const AppointmentsPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the appointment for{' '}
+              <strong>{appointmentToDelete?.patient_name}</strong>
+              {appointmentToDelete?.time && ` at ${appointmentToDelete.time}`}?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
