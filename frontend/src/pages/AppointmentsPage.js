@@ -507,19 +507,19 @@ const AppointmentsPage = () => {
                           <SelectItem value="no_show">No Show</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
+                      <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
+                          console.log('Delete button clicked for:', apt.id);
                           handleDelete(apt.id);
                         }}
-                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
                         data-testid={`delete-apt-${apt.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ))}
