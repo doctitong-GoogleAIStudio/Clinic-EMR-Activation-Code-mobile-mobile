@@ -71,6 +71,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 4, 2026**: **Fixed Appointment Delete Function** - Replaced window.confirm() with AlertDialog component for reliable cross-browser support. Delete now shows proper confirmation dialog with patient name and time
+- **Mar 4, 2026**: **Fixed Timezone Issue for Dashboard** - Dashboard, queue, and stats now use client's local date instead of server date. Appointments created in your timezone will now appear correctly
+- **Mar 4, 2026**: **Removed "Made with Emergent" Badge** - Hidden the badge from the UI
 - **Mar 3, 2026**: **Added Delete Option for Saved Forms** - Prescriptions, Certificates, and Lab Requests can now be deleted from the Visit Detail page. Red trash icon appears next to the print button for each saved form
 - **Mar 3, 2026**: **Added Vitals Preview Tooltip** - Hover over "Vitals Ready" badges to see detailed vital values (BP, HR, RR, Temp, SpO2, Weight, Height) without opening the visit. Color-coded icons for easy reading
 - **Mar 3, 2026**: **Added Vitals Ready Indicators** - Appointments with pre-recorded vitals now display green "Vitals Ready" badges on Dashboard queue, Appointments page, and sidebar. Visual distinction helps doctors identify patients ready for consultation
