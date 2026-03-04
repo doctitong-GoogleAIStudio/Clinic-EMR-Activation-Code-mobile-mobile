@@ -258,6 +258,11 @@ class ClinicSettings(BaseModel):
     prc_no: str = ""
     specialization: str = ""
     logo_data: Optional[str] = None
+    # Print Header customization
+    print_header_title: str = ""
+    print_header_subtitle: str = ""
+    print_header_logo: str = ""
+    print_header_extra: str = ""
 
 class AIRequest(BaseModel):
     text: str

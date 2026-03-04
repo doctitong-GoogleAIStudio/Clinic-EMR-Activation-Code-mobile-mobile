@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -31,7 +31,12 @@ const SettingsPage = () => {
     license_no: '',
     ptr_no: '',
     prc_no: '',
-    specialization: ''
+    specialization: '',
+    // Print Header customization
+    print_header_title: '',
+    print_header_subtitle: '',
+    print_header_logo: '',
+    print_header_extra: ''
   });
   const [users, setUsers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -289,6 +294,92 @@ const SettingsPage = () => {
                 <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-settings-btn">
                   <Save className="w-4 h-4 mr-2" />
                   Save Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Print Header Customization */}
+          <Card className="bg-white border-slate-100 shadow-sm mt-6">
+            <CardHeader>
+              <CardTitle className="font-heading flex items-center gap-2">
+                <Printer className="w-5 h-5 text-[#0F766E]" />
+                Print Header Customization
+              </CardTitle>
+              <CardDescription>Customize the header that appears on printed forms (Prescriptions, Certificates, Lab Requests)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Header Title</Label>
+                  <Input
+                    value={settings.print_header_title}
+                    onChange={(e) => setSettings({ ...settings, print_header_title: e.target.value })}
+                    placeholder="Leave empty to use Clinic Name"
+                    data-testid="print-header-title-input"
+                  />
+                  <p className="text-xs text-slate-500">Main title on printed forms. Leave blank to use clinic name.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Subtitle / Tagline</Label>
+                  <Input
+                    value={settings.print_header_subtitle}
+                    onChange={(e) => setSettings({ ...settings, print_header_subtitle: e.target.value })}
+                    placeholder="e.g. Your Trusted Healthcare Partner"
+                    data-testid="print-header-subtitle-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Logo URL (Optional)</Label>
+                  <Input
+                    value={settings.print_header_logo}
+                    onChange={(e) => setSettings({ ...settings, print_header_logo: e.target.value })}
+                    placeholder="https://example.com/logo.png"
+                    data-testid="print-header-logo-input"
+                  />
+                  <p className="text-xs text-slate-500">URL to your clinic logo image</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Additional Header Text</Label>
+                  <Input
+                    value={settings.print_header_extra}
+                    onChange={(e) => setSettings({ ...settings, print_header_extra: e.target.value })}
+                    placeholder="e.g. Open Mon-Sat 8AM-5PM"
+                    data-testid="print-header-extra-input"
+                  />
+                </div>
+              </div>
+              
+              {/* Print Header Preview */}
+              <div className="mt-6 p-4 border rounded-lg bg-slate-50">
+                <p className="text-xs text-slate-500 mb-3">Preview:</p>
+                <div className="text-center border-b-2 border-[#0F766E] pb-4 bg-white p-4 rounded">
+                  {settings.print_header_logo && (
+                    <img 
+                      src={settings.print_header_logo} 
+                      alt="Clinic Logo" 
+                      className="h-12 mx-auto mb-2"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  )}
+                  <h1 className="text-xl font-bold text-[#0F766E]">
+                    {settings.print_header_title || settings.clinic_name || 'Clinic Name'}
+                  </h1>
+                  {settings.print_header_subtitle && (
+                    <p className="text-sm text-slate-600 italic">{settings.print_header_subtitle}</p>
+                  )}
+                  {settings.address && <p className="text-sm text-slate-600">{settings.address}</p>}
+                  {settings.phone && <p className="text-sm text-slate-600">Tel: {settings.phone}</p>}
+                  {settings.print_header_extra && (
+                    <p className="text-xs text-slate-500 mt-1">{settings.print_header_extra}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t mt-4">
+                <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Header Settings
                 </Button>
               </div>
             </CardContent>

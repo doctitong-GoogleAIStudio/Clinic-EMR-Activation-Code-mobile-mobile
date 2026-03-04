@@ -475,10 +475,26 @@ const VisitDetailPage = () => {
 
   const PrintHeader = () => (
     <div className="print-header text-center border-b-2 border-[#0F766E] pb-4 mb-6">
-      <h1 className="font-print text-2xl font-bold text-[#0F766E]">{settings.clinic_name || 'Private Clinic EMR'}</h1>
+      {settings.print_header_logo && (
+        <img 
+          src={settings.print_header_logo} 
+          alt="Clinic Logo" 
+          className="h-12 mx-auto mb-2"
+          onError={(e) => e.target.style.display = 'none'}
+        />
+      )}
+      <h1 className="font-print text-2xl font-bold text-[#0F766E]">
+        {settings.print_header_title || settings.clinic_name || 'Private Clinic EMR'}
+      </h1>
+      {settings.print_header_subtitle && (
+        <p className="text-sm text-slate-600 italic">{settings.print_header_subtitle}</p>
+      )}
       {settings.address && <p className="text-sm text-slate-600">{settings.address}</p>}
       {settings.phone && <p className="text-sm text-slate-600">Tel: {settings.phone}</p>}
-      {settings.license_no && <p className="text-xs text-slate-500">License No: {settings.license_no}</p>}
+      {settings.print_header_extra && (
+        <p className="text-xs text-slate-500">{settings.print_header_extra}</p>
+      )}
+      {settings.license_no && <p className="text-xs text-slate-500">S2 No: {settings.license_no}</p>}
     </div>
   );
 
