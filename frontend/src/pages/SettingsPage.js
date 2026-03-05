@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { settingsAPI, userAPI, auditAPI, exportAPI } from '../lib/api';
+import { settingsAPI, userAPI, auditAPI, exportAPI, authAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -26,6 +26,16 @@ const SettingsPage = () => {
   const [myReceptionists, setMyReceptionists] = useState([]);
   const [editingReceptionist, setEditingReceptionist] = useState(null);
   const [editReceptionistForm, setEditReceptionistForm] = useState({ full_name: '', email: '', password: '' });
+  // Password change state
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [settings, setSettings] = useState({
     clinic_name: '',
     address: '',
@@ -162,6 +172,54 @@ const SettingsPage = () => {
       fetchData();
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to delete receptionist'));
+    }
+  };
+
+  // Password strength checker
+  const getPasswordStrength = (password) => {
+    if (!password) return { strength: 0, text: '', color: '' };
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    
+    if (strength <= 1) return { strength: 1, text: 'Weak', color: 'bg-red-500' };
+    if (strength <= 2) return { strength: 2, text: 'Fair', color: 'bg-orange-500' };
+    if (strength <= 3) return { strength: 3, text: 'Good', color: 'bg-yellow-500' };
+    if (strength <= 4) return { strength: 4, text: 'Strong', color: 'bg-green-500' };
+    return { strength: 5, text: 'Very Strong', color: 'bg-emerald-500' };
+  };
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!passwordForm.current_password) {
+      toast.error('Please enter your current password');
+      return;
+    }
+    if (!passwordForm.new_password) {
+      toast.error('Please enter a new password');
+      return;
+    }
+    if (passwordForm.new_password.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error('New password and confirmation do not match');
+      return;
+    }
+    
+    setChangingPassword(true);
+    try {
+      await authAPI.changePassword(passwordForm);
+      toast.success('Password changed successfully! Please login again with your new password.');
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to change password'));
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -458,6 +516,125 @@ const SettingsPage = () => {
                   <Save className="w-4 h-4 mr-2" />
                   Save Header Settings
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Change Password Section */}
+          <Card className="bg-white border-slate-100 shadow-sm mt-6">
+            <CardHeader>
+              <CardTitle className="font-heading flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#0F766E]" />
+                Change Password
+              </CardTitle>
+              <CardDescription>Update your account password. You'll need to login again after changing.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-w-md space-y-4">
+                <div className="space-y-2">
+                  <Label>Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwordForm.current_password}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                      placeholder="Enter current password"
+                      data-testid="current-password-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordForm.new_password}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                      placeholder="Enter new password (min 8 characters)"
+                      data-testid="new-password-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {/* Password strength meter */}
+                  {passwordForm.new_password && (
+                    <div className="space-y-1">
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded ${
+                              level <= getPasswordStrength(passwordForm.new_password).strength
+                                ? getPasswordStrength(passwordForm.new_password).color
+                                : 'bg-slate-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Password strength: {getPasswordStrength(passwordForm.new_password).text}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwordForm.confirm_password}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                      placeholder="Confirm new password"
+                      data-testid="confirm-password-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {passwordForm.confirm_password && passwordForm.new_password !== passwordForm.confirm_password && (
+                    <p className="text-xs text-red-500">Passwords do not match</p>
+                  )}
+                  {passwordForm.confirm_password && passwordForm.new_password === passwordForm.confirm_password && (
+                    <p className="text-xs text-green-600">Passwords match ✓</p>
+                  )}
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || !passwordForm.current_password || !passwordForm.new_password || !passwordForm.confirm_password}
+                    className="bg-[#0F766E] hover:bg-[#115E59]"
+                    data-testid="change-password-btn"
+                  >
+                    <Key className="w-4 h-4 mr-2" />
+                    {changingPassword ? 'Changing...' : 'Change Password'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })}
+                    disabled={changingPassword}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

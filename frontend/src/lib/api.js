@@ -7,6 +7,7 @@ export const authAPI = {
   login: (data) => axios.post(`${API}/auth/login`, data),
   register: (data) => axios.post(`${API}/auth/register`, data),
   getMe: () => axios.get(`${API}/auth/me`),
+  changePassword: (data) => axios.post(`${API}/account/change-password`, data),
 };
 
 // User APIs

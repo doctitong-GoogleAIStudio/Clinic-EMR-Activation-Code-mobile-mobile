@@ -297,6 +297,14 @@ class AuditLog(BaseModel):
     details: Optional[str] = None
     timestamp: str
 
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+# In-memory rate limiting for password change attempts
+password_change_attempts: Dict[str, Dict[str, Any]] = {}
+
 # ============== HELPER FUNCTIONS ==============
 def calculate_age(birthdate_str: str) -> int:
     try:
@@ -403,6 +411,88 @@ async def login(credentials: UserLogin):
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
+
+@api_router.post("/account/change-password")
+async def change_password(request: PasswordChangeRequest, current_user: dict = Depends(get_current_user)):
+    """Change password for the authenticated user (doctors/admins)"""
+    user_id = current_user["id"]
+    
+    # Rate limiting check
+    now = datetime.now(timezone.utc)
+    if user_id in password_change_attempts:
+        attempts = password_change_attempts[user_id]
+        # Check if locked out (5 failed attempts = 10 minute lockout)
+        if attempts.get("lockout_until"):
+            lockout_until = datetime.fromisoformat(attempts["lockout_until"])
+            if now < lockout_until:
+                remaining = int((lockout_until - now).total_seconds() / 60) + 1
+                raise HTTPException(
+                    status_code=429, 
+                    detail=f"Too many failed attempts. Please try again in {remaining} minutes."
+                )
+            else:
+                # Lockout expired, reset
+                password_change_attempts[user_id] = {"count": 0, "lockout_until": None}
+    
+    # Validate new password
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+    
+    if request.new_password != request.confirm_password:
+        raise HTTPException(status_code=400, detail="New password and confirmation do not match")
+    
+    # Get current user with password
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify current password
+    if not verify_password(request.current_password, user["password"]):
+        # Track failed attempt
+        if user_id not in password_change_attempts:
+            password_change_attempts[user_id] = {"count": 0, "lockout_until": None}
+        
+        password_change_attempts[user_id]["count"] += 1
+        
+        # Check if should lock out
+        if password_change_attempts[user_id]["count"] >= 5:
+            lockout_time = now + timedelta(minutes=10)
+            password_change_attempts[user_id]["lockout_until"] = lockout_time.isoformat()
+            raise HTTPException(
+                status_code=429, 
+                detail="Too many failed attempts. Account locked for 10 minutes."
+            )
+        
+        remaining_attempts = 5 - password_change_attempts[user_id]["count"]
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Current password is incorrect. {remaining_attempts} attempts remaining."
+        )
+    
+    # Check if new password is same as current
+    if verify_password(request.new_password, user["password"]):
+        raise HTTPException(status_code=400, detail="New password cannot be the same as current password")
+    
+    # Hash and update new password
+    new_password_hash = hash_password(request.new_password)
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "password": new_password_hash,
+                "password_updated_at": now.isoformat()
+            }
+        }
+    )
+    
+    # Clear rate limiting on success
+    if user_id in password_change_attempts:
+        del password_change_attempts[user_id]
+    
+    # Log the action (without exposing password)
+    await log_audit(user_id, current_user["full_name"], "change_password", "user", user_id)
+    
+    return {"message": "Password changed successfully"}
 
 @api_router.get("/users", response_model=List[UserResponse])
 async def get_users(current_user: dict = Depends(get_current_user)):

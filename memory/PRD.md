@@ -71,6 +71,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 5, 2026**: **Added Change Password Feature** - Doctors can change their password from Settings. Includes: password strength meter (Weak to Very Strong), show/hide eye icons, match validation, rate limiting (5 attempts then 10 min lockout), prevents reusing current password
 - **Mar 5, 2026**: **Added Receptionist Account Management** - Doctors can now view list of their receptionists, edit account details (name, email, password), and delete receptionist accounts from the Settings page
 - **Mar 5, 2026**: **Added Print Header Customization** - New section in Settings to customize printed form headers with: Header Title, Subtitle/Tagline, Logo Upload (from local file), and Additional Text. Includes live preview
 - **Mar 4, 2026**: **Fixed Appointment Delete Function** - Replaced window.confirm() with AlertDialog component for reliable cross-browser support. Delete now shows proper confirmation dialog with patient name and time
