@@ -330,14 +330,49 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Logo URL (Optional)</Label>
-                  <Input
-                    value={settings.print_header_logo}
-                    onChange={(e) => setSettings({ ...settings, print_header_logo: e.target.value })}
-                    placeholder="https://example.com/logo.png"
-                    data-testid="print-header-logo-input"
-                  />
-                  <p className="text-xs text-slate-500">URL to your clinic logo image</p>
+                  <Label>Clinic Logo (Optional)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          if (file.size > 500000) {
+                            toast.error('Logo file must be less than 500KB');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setSettings({ ...settings, print_header_logo: reader.result });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="flex-1"
+                      data-testid="print-header-logo-input"
+                    />
+                    {settings.print_header_logo && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSettings({ ...settings, print_header_logo: '' })}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">Upload your clinic logo (PNG, JPG - max 500KB)</p>
+                  {settings.print_header_logo && (
+                    <div className="mt-2 p-2 bg-slate-100 rounded inline-block">
+                      <img 
+                        src={settings.print_header_logo} 
+                        alt="Logo preview" 
+                        className="h-10"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Additional Header Text</Label>
@@ -359,7 +394,6 @@ const SettingsPage = () => {
                       src={settings.print_header_logo} 
                       alt="Clinic Logo" 
                       className="h-12 mx-auto mb-2"
-                      onError={(e) => e.target.style.display = 'none'}
                     />
                   )}
                   <h1 className="text-xl font-bold text-[#0F766E]">
