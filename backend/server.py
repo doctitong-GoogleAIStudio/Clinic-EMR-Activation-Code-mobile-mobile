@@ -437,14 +437,71 @@ async def create_receptionist(user: ReceptionistCreate, current_user: dict = Dep
 
 @api_router.put("/users/{user_id}")
 async def update_user(user_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin" and current_user["id"] != user_id:
+    # Admin can update any user
+    # Doctors can update their own receptionists
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_own_receptionist = (
+        target_user.get("role") == "receptionist" and 
+        target_user.get("created_by") == current_user["id"]
+    )
+    
+    if current_user["role"] != "admin" and current_user["id"] != user_id and not is_own_receptionist:
         raise HTTPException(status_code=403, detail="Unauthorized")
     
-    if "password" in updates:
+    # Handle password update
+    if "password" in updates and updates["password"]:
         updates["password"] = hash_password(updates["password"])
+    else:
+        updates.pop("password", None)  # Don't update password if empty
     
-    await db.users.update_one({"id": user_id}, {"$set": updates})
+    # Remove fields that shouldn't be updated
+    updates.pop("id", None)
+    updates.pop("created_by", None)
+    updates.pop("created_at", None)
+    
+    if updates:
+        await db.users.update_one({"id": user_id}, {"$set": updates})
+    
+    await log_audit(current_user["id"], current_user["full_name"], "update", "user", user_id)
     return {"message": "User updated"}
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    # Admin can delete any user (except themselves)
+    # Doctors can delete their own receptionists
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_own_receptionist = (
+        target_user.get("role") == "receptionist" and 
+        target_user.get("created_by") == current_user["id"]
+    )
+    
+    if current_user["role"] != "admin" and not is_own_receptionist:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    await db.users.delete_one({"id": user_id})
+    await log_audit(current_user["id"], current_user["full_name"], "delete", "user", user_id, target_user.get("email"))
+    return {"message": "User deleted"}
+
+@api_router.get("/users/my-receptionists")
+async def get_my_receptionists(current_user: dict = Depends(get_current_user)):
+    """Get receptionists created by the current doctor"""
+    if current_user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only doctors can have receptionists")
+    
+    receptionists = await db.users.find(
+        {"role": "receptionist", "created_by": current_user["id"]},
+        {"_id": 0, "password": 0}
+    ).to_list(100)
+    return receptionists
 
 # ============== PATIENT ROUTES ==============
 @api_router.post("/patients", response_model=PatientResponse)

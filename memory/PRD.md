@@ -71,7 +71,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
-- **Mar 4, 2026**: **Added Print Header Customization** - New section in Settings to customize printed form headers with: Header Title, Subtitle/Tagline, Logo URL, and Additional Text. Includes live preview. Updates apply to Prescriptions, Certificates, and Lab Requests
+- **Mar 5, 2026**: **Added Receptionist Account Management** - Doctors can now view list of their receptionists, edit account details (name, email, password), and delete receptionist accounts from the Settings page
+- **Mar 5, 2026**: **Added Print Header Customization** - New section in Settings to customize printed form headers with: Header Title, Subtitle/Tagline, Logo Upload (from local file), and Additional Text. Includes live preview
 - **Mar 4, 2026**: **Fixed Appointment Delete Function** - Replaced window.confirm() with AlertDialog component for reliable cross-browser support. Delete now shows proper confirmation dialog with patient name and time
 - **Mar 4, 2026**: **Fixed Timezone Issue for Dashboard** - Dashboard, queue, and stats now use client's local date instead of server date. Appointments created in your timezone will now appear correctly
 - **Mar 4, 2026**: **Removed "Made with Emergent" Badge** - Hidden the badge from the UI

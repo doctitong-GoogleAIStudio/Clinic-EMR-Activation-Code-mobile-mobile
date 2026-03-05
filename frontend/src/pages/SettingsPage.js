@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -23,6 +23,9 @@ const SettingsPage = () => {
   const { user, isAdmin, isDoctor } = useAuth();
   const [receptionistForm, setReceptionistForm] = useState({ full_name: '', email: '', password: '' });
   const [creatingReceptionist, setCreatingReceptionist] = useState(false);
+  const [myReceptionists, setMyReceptionists] = useState([]);
+  const [editingReceptionist, setEditingReceptionist] = useState(null);
+  const [editReceptionistForm, setEditReceptionistForm] = useState({ full_name: '', email: '', password: '' });
   const [settings, setSettings] = useState({
     clinic_name: '',
     address: '',
@@ -60,14 +63,16 @@ const SettingsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [settingsRes, usersRes, auditRes] = await Promise.all([
+      const [settingsRes, usersRes, auditRes, receptionistsRes] = await Promise.all([
         settingsAPI.get(),
         isAdmin ? userAPI.getAll() : Promise.resolve({ data: [] }),
-        isAdmin ? auditAPI.getAll(50) : Promise.resolve({ data: [] })
+        isAdmin ? auditAPI.getAll(50) : Promise.resolve({ data: [] }),
+        (isDoctor || isAdmin) ? userAPI.getMyReceptionists() : Promise.resolve({ data: [] })
       ]);
       setSettings(settingsRes.data);
       setUsers(usersRes.data);
       setAuditLogs(auditRes.data);
+      setMyReceptionists(receptionistsRes.data);
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to load settings'));
     } finally {
@@ -115,10 +120,48 @@ const SettingsPage = () => {
       await userAPI.createReceptionist(receptionistForm);
       toast.success('Receptionist account created');
       setReceptionistForm({ full_name: '', email: '', password: '' });
+      fetchData(); // Refresh to show new receptionist
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to create receptionist'));
     } finally {
       setCreatingReceptionist(false);
+    }
+  };
+
+  const handleEditReceptionist = (receptionist) => {
+    setEditingReceptionist(receptionist);
+    setEditReceptionistForm({
+      full_name: receptionist.full_name,
+      email: receptionist.email,
+      password: '' // Empty - only update if user enters new password
+    });
+  };
+
+  const handleUpdateReceptionist = async () => {
+    if (!editReceptionistForm.full_name || !editReceptionistForm.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+    try {
+      await userAPI.update(editingReceptionist.id, editReceptionistForm);
+      toast.success('Receptionist updated');
+      setEditingReceptionist(null);
+      fetchData();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update receptionist'));
+    }
+  };
+
+  const handleDeleteReceptionist = async (receptionist) => {
+    if (!window.confirm(`Are you sure you want to delete ${receptionist.full_name}'s account? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await userAPI.delete(receptionist.id);
+      toast.success('Receptionist account deleted');
+      fetchData();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete receptionist'));
     }
   };
 
@@ -472,6 +515,102 @@ const SettingsPage = () => {
                     {creatingReceptionist ? 'Creating...' : 'Create Receptionist'}
                   </Button>
                 </div>
+
+                {/* List of My Receptionists */}
+                {myReceptionists.length > 0 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-[#0F766E]" />
+                      My Receptionists ({myReceptionists.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {myReceptionists.map((rec) => (
+                        <div 
+                          key={rec.id}
+                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        >
+                          <div>
+                            <p className="font-medium text-slate-900">{rec.full_name}</p>
+                            <p className="text-sm text-slate-500">{rec.email}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditReceptionist(rec)}
+                              className="text-[#0F766E] hover:bg-[#0F766E]/10"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteReceptionist(rec)}
+                              className="text-red-500 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Edit Receptionist Dialog */}
+                <Dialog open={!!editingReceptionist} onOpenChange={(open) => !open && setEditingReceptionist(null)}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Edit Receptionist</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Full Name</Label>
+                        <Input
+                          value={editReceptionistForm.full_name}
+                          onChange={(e) => setEditReceptionistForm({ ...editReceptionistForm, full_name: e.target.value })}
+                          placeholder="Full name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={editReceptionistForm.email}
+                          onChange={(e) => setEditReceptionistForm({ ...editReceptionistForm, email: e.target.value })}
+                          placeholder="Email address"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Key className="w-4 h-4" />
+                          New Password (leave blank to keep current)
+                        </Label>
+                        <Input
+                          type="password"
+                          value={editReceptionistForm.password}
+                          onChange={(e) => setEditReceptionistForm({ ...editReceptionistForm, password: e.target.value })}
+                          placeholder="Enter new password"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditingReceptionist(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleUpdateReceptionist}
+                          className="bg-[#0F766E] hover:bg-[#115E59]"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           )}

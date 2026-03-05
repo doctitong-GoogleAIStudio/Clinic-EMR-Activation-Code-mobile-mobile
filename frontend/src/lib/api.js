@@ -15,6 +15,8 @@ export const userAPI = {
   update: (id, data) => axios.put(`${API}/users/${id}`, data),
   create: (data) => axios.post(`${API}/auth/register`, data),
   createReceptionist: (data) => axios.post(`${API}/users/create-receptionist`, data),
+  delete: (id) => axios.delete(`${API}/users/${id}`),
+  getMyReceptionists: () => axios.get(`${API}/users/my-receptionists`),
 };
 
 // Patient APIs
