@@ -1684,7 +1684,8 @@ async def export_visits(
     current_user: dict = Depends(get_current_user)
 ):
     # Data isolation: only export visits for own patients
-    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(1000)
+    patient_map = {p["id"]: p for p in owned_patients}
     owned_patient_ids = [p["id"] for p in owned_patients]
     
     query = {"patient_id": {"$in": owned_patient_ids}}
@@ -1698,7 +1699,16 @@ async def export_visits(
     
     total_count = await db.visits.count_documents(query)
     visits = await db.visits.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-    return {"data": visits, "count": len(visits), "total": total_count, "skip": skip, "limit": limit}
+    
+    # Enrich visits with patient info for easier re-import
+    enriched_visits = []
+    for visit in visits:
+        patient = patient_map.get(visit.get("patient_id"), {})
+        visit["patient_display_id"] = patient.get("patient_id", "")  # P-XXXX format
+        visit["patient_name"] = patient.get("full_name", "")
+        enriched_visits.append(visit)
+    
+    return {"data": enriched_visits, "count": len(enriched_visits), "total": total_count, "skip": skip, "limit": limit}
 
 # ============== IMPORT DATA ==============
 class ImportResult(BaseModel):
@@ -1790,8 +1800,8 @@ async def import_visits(
     
     for i, visit_data in enumerate(data):
         try:
-            # Get patient reference (can be patient_id, internal id, or name)
-            patient_ref = visit_data.get("patient_id") or visit_data.get("patient_name")
+            # Get patient reference (can be patient_id, internal id, display id, or name)
+            patient_ref = visit_data.get("patient_id") or visit_data.get("patient_display_id") or visit_data.get("patient_name")
             
             # Try to find patient by various methods
             patient = None
@@ -1799,14 +1809,17 @@ async def import_visits(
             patient_display_name = "Unknown Patient"
             
             if patient_ref:
-                # Try matching by patient_id (P-XXXX format)
-                patient = patient_id_map.get(patient_ref)
+                # Try matching by patient_id (P-XXXX format) - check display ID field too
+                patient = patient_id_map.get(patient_ref) or patient_id_map.get(visit_data.get("patient_display_id"))
                 if not patient:
                     # Try matching by internal UUID
                     patient = patient_internal_id_map.get(patient_ref)
                 if not patient and isinstance(patient_ref, str):
                     # Try matching by patient name (case-insensitive)
                     patient = patient_name_map.get(patient_ref.lower())
+                # Also try the patient_name field specifically
+                if not patient and visit_data.get("patient_name"):
+                    patient = patient_name_map.get(visit_data.get("patient_name").lower())
             
             if patient:
                 # Found matching patient

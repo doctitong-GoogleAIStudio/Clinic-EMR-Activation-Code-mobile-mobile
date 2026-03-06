@@ -1282,6 +1282,7 @@ const SettingsPage = () => {
                     <p className="font-medium mb-1">Expected JSON format:</p>
                     <pre className="bg-slate-100 p-2 rounded overflow-x-auto">{`[
   {
+    "patient_name": "Juan Dela Cruz",
     "patient_id": "P-ABC12345",
     "soap_subjective": "Patient complaints...",
     "soap_objective": "Physical exam findings...",
@@ -1297,7 +1298,7 @@ const SettingsPage = () => {
 ]`}</pre>
                     <p className="mt-2 text-blue-600">
                       <Info className="w-3 h-3 inline mr-1" />
-                      Tip: Use patient_id (P-XXXX) or patient_name to match existing patients. Visits will still import even if no match is found.
+                      Matching: Uses <strong>patient_name</strong> (recommended) or <strong>patient_id</strong> (P-XXXX). Import patients first if they don't exist yet.
                     </p>
                   </div>
                 </div>
