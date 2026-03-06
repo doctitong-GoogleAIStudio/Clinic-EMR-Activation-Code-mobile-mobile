@@ -98,6 +98,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [x] Data isolation verified (backend + frontend testing passed)
 - [x] Labs & Imaging with messenger-style UI
 
+## Recent Changes (continued)
+- **Mar 6, 2026**: **Added User Guide Page** - Comprehensive step-by-step user guide added to Settings page with separate guides for Doctors and Receptionists. Includes collapsible sections for Login, Patients, Appointments, SOAP Notes, Prescriptions, Labs, Printing, and Troubleshooting.
+
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
 - [ ] Attachment tagging/filtering in "Labs & Imaging" section

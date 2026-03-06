@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen
 } from 'lucide-react';
+import UserGuidePage from './UserGuidePage';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
@@ -371,6 +372,10 @@ const SettingsPage = () => {
           <TabsTrigger value="about" data-testid="tab-about">
             <Info className="w-4 h-4 mr-2" />
             About
+          </TabsTrigger>
+          <TabsTrigger value="guide" data-testid="tab-guide">
+            <BookOpen className="w-4 h-4 mr-2" />
+            User Guide
           </TabsTrigger>
         </TabsList>
 
@@ -1308,6 +1313,11 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* User Guide Tab */}
+        <TabsContent value="guide">
+          <UserGuidePage />
         </TabsContent>
       </Tabs>
     </div>
