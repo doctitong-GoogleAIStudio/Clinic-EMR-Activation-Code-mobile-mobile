@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { settingsAPI, userAPI, auditAPI, exportAPI, authAPI } from '../lib/api';
+import { settingsAPI, userAPI, auditAPI, exportAPI, authAPI, importAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import UserGuidePage from './UserGuidePage';
 import { toast } from 'sonner';
@@ -56,6 +56,10 @@ const SettingsPage = () => {
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNewUser, setShowNewUser] = useState(false);
+  // Import state
+  const [importingPatients, setImportingPatients] = useState(false);
+  const [importingVisits, setImportingVisits] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -361,6 +365,12 @@ const SettingsPage = () => {
             <TabsTrigger value="exports" data-testid="tab-exports">
               <Download className="w-4 h-4 mr-2" />
               Exports
+            </TabsTrigger>
+          )}
+          {(isAdmin || isDoctor) && (
+            <TabsTrigger value="imports" data-testid="tab-imports">
+              <FileUp className="w-4 h-4 mr-2" />
+              Imports
             </TabsTrigger>
           )}
           {isAdmin && (
@@ -1064,6 +1074,224 @@ const SettingsPage = () => {
 
                 <p className="text-xs text-slate-400 mt-4">
                   Note: Exports contain only your own data. JSON format preserves all data structure, CSV is compatible with Excel/Sheets.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Imports - visible to admins and doctors */}
+        {(isAdmin || isDoctor) && (
+          <TabsContent value="imports">
+            <Card className="bg-white border-slate-100 shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <FileUp className="w-5 h-5 text-[#0F766E]" />
+                  Data Import
+                </CardTitle>
+                <CardDescription>Import patient and visit data from JSON files</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Import Result Display */}
+                {importResult && (
+                  <div className={`p-4 rounded-lg border ${importResult.failed > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {importResult.failed > 0 ? (
+                        <AlertCircle className="w-5 h-5 text-amber-600" />
+                      ) : (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      )}
+                      <span className="font-medium">
+                        Import Complete: {importResult.success} successful, {importResult.failed} failed
+                      </span>
+                    </div>
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <div className="mt-2 max-h-32 overflow-y-auto">
+                        <p className="text-sm text-amber-700 font-medium mb-1">Errors:</p>
+                        {importResult.errors.map((err, idx) => (
+                          <p key={idx} className="text-xs text-amber-600">{err}</p>
+                        ))}
+                      </div>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="mt-2 text-slate-500"
+                      onClick={() => setImportResult(null)}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                )}
+
+                {/* Patient Registry Import */}
+                <div className="p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-slate-900 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#0F766E]" />
+                        Patient Registry
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">Import patients from a JSON file</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Input
+                      type="file"
+                      accept=".json"
+                      disabled={importingPatients}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        setImportingPatients(true);
+                        setImportResult(null);
+                        
+                        try {
+                          const text = await file.text();
+                          const data = JSON.parse(text);
+                          
+                          if (!Array.isArray(data)) {
+                            toast.error('JSON file must contain an array of patients');
+                            setImportingPatients(false);
+                            return;
+                          }
+                          
+                          toast.info(`Importing ${data.length} patients...`);
+                          const response = await importAPI.patients(data);
+                          setImportResult(response.data);
+                          
+                          if (response.data.success > 0) {
+                            toast.success(`Successfully imported ${response.data.success} patients`);
+                          }
+                          if (response.data.failed > 0) {
+                            toast.warning(`${response.data.failed} patients failed to import`);
+                          }
+                        } catch (error) {
+                          if (error instanceof SyntaxError) {
+                            toast.error('Invalid JSON file format');
+                          } else {
+                            toast.error(getErrorMessage(error, 'Failed to import patients'));
+                          }
+                        } finally {
+                          setImportingPatients(false);
+                          e.target.value = ''; // Reset file input
+                        }
+                      }}
+                      data-testid="import-patients-json-input"
+                    />
+                    {importingPatients && (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
+                        <div className="w-4 h-4 border-2 border-[#0F766E]/30 border-t-[#0F766E] rounded-full animate-spin" />
+                        Importing patients...
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 p-3 bg-slate-50 rounded text-xs text-slate-600">
+                    <p className="font-medium mb-1">Expected JSON format:</p>
+                    <pre className="bg-slate-100 p-2 rounded overflow-x-auto">{`[
+  {
+    "full_name": "Juan Dela Cruz",
+    "birthdate": "1990-01-15",
+    "sex": "Male",
+    "mobile": "09171234567",
+    "address": "123 Main St",
+    "allergies": ["Penicillin"],
+    "chronic_conditions": ["Hypertension"]
+  }
+]`}</pre>
+                  </div>
+                </div>
+
+                {/* Visit Records Import */}
+                <div className="p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-slate-900 flex items-center gap-2">
+                        <Stethoscope className="w-4 h-4 text-[#0F766E]" />
+                        Visit Records
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">Import visit records from a JSON file (requires matching patient IDs)</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Input
+                      type="file"
+                      accept=".json"
+                      disabled={importingVisits}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        setImportingVisits(true);
+                        setImportResult(null);
+                        
+                        try {
+                          const text = await file.text();
+                          const data = JSON.parse(text);
+                          
+                          if (!Array.isArray(data)) {
+                            toast.error('JSON file must contain an array of visits');
+                            setImportingVisits(false);
+                            return;
+                          }
+                          
+                          toast.info(`Importing ${data.length} visits...`);
+                          const response = await importAPI.visits(data);
+                          setImportResult(response.data);
+                          
+                          if (response.data.success > 0) {
+                            toast.success(`Successfully imported ${response.data.success} visits`);
+                          }
+                          if (response.data.failed > 0) {
+                            toast.warning(`${response.data.failed} visits failed to import`);
+                          }
+                        } catch (error) {
+                          if (error instanceof SyntaxError) {
+                            toast.error('Invalid JSON file format');
+                          } else {
+                            toast.error(getErrorMessage(error, 'Failed to import visits'));
+                          }
+                        } finally {
+                          setImportingVisits(false);
+                          e.target.value = ''; // Reset file input
+                        }
+                      }}
+                      data-testid="import-visits-json-input"
+                    />
+                    {importingVisits && (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
+                        <div className="w-4 h-4 border-2 border-[#0F766E]/30 border-t-[#0F766E] rounded-full animate-spin" />
+                        Importing visits...
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 p-3 bg-slate-50 rounded text-xs text-slate-600">
+                    <p className="font-medium mb-1">Expected JSON format:</p>
+                    <pre className="bg-slate-100 p-2 rounded overflow-x-auto">{`[
+  {
+    "patient_id": "P-ABC12345",
+    "soap_subjective": "Patient complaints...",
+    "soap_objective": "Physical exam findings...",
+    "soap_assessment": "Diagnosis...",
+    "soap_plan": "Treatment plan...",
+    "diagnosis_codes": ["J06.9"],
+    "vitals": {
+      "bp_systolic": 120,
+      "bp_diastolic": 80,
+      "heart_rate": 72
+    }
+  }
+]`}</pre>
+                    <p className="mt-2 text-amber-600">
+                      <AlertCircle className="w-3 h-3 inline mr-1" />
+                      Note: patient_id must match an existing patient in your records (use the P-XXXX format from exports)
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 mt-4">
+                  Note: Imports will create new records. Duplicate detection is not performed. Always backup your data before importing.
                 </p>
               </CardContent>
             </Card>

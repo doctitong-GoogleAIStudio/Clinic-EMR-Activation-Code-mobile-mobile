@@ -137,6 +137,12 @@ export const exportAPI = {
   visits: (params) => axios.get(`${API}/export/visits`, { params }),
 };
 
+// Import APIs
+export const importAPI = {
+  patients: (data) => axios.post(`${API}/import/patients`, data),
+  visits: (data) => axios.post(`${API}/import/visits`, data),
+};
+
 // Audit Log APIs
 export const auditAPI = {
   getAll: (limit) => axios.get(`${API}/audit-logs`, { params: { limit } }),

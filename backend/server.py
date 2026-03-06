@@ -1686,6 +1686,147 @@ async def export_visits(
     visits = await db.visits.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return {"data": visits, "count": len(visits), "total": total_count, "skip": skip, "limit": limit}
 
+# ============== IMPORT DATA ==============
+class ImportResult(BaseModel):
+    success: int = 0
+    failed: int = 0
+    errors: List[str] = []
+
+@api_router.post("/import/patients")
+async def import_patients(
+    data: List[dict],
+    current_user: dict = Depends(get_current_user)
+):
+    """Import patients from JSON array"""
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors and admins can import patients")
+    
+    user_id = current_user["id"]
+    result = {"success": 0, "failed": 0, "errors": [], "imported_ids": []}
+    
+    for i, patient_data in enumerate(data):
+        try:
+            # Required fields validation
+            if not patient_data.get("full_name"):
+                result["errors"].append(f"Row {i+1}: Missing required field 'full_name'")
+                result["failed"] += 1
+                continue
+            if not patient_data.get("birthdate"):
+                result["errors"].append(f"Row {i+1}: Missing required field 'birthdate'")
+                result["failed"] += 1
+                continue
+            if not patient_data.get("sex"):
+                result["errors"].append(f"Row {i+1}: Missing required field 'sex'")
+                result["failed"] += 1
+                continue
+            
+            # Generate new IDs
+            patient_id = f"P-{str(uuid.uuid4())[:8].upper()}"
+            new_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc).isoformat()
+            
+            # Build patient document
+            new_patient = {
+                "id": new_id,
+                "patient_id": patient_id,
+                "full_name": patient_data["full_name"],
+                "birthdate": patient_data["birthdate"],
+                "sex": patient_data["sex"],
+                "address": patient_data.get("address"),
+                "mobile": patient_data.get("mobile"),
+                "email": patient_data.get("email"),
+                "emergency_contact_name": patient_data.get("emergency_contact_name"),
+                "emergency_contact_phone": patient_data.get("emergency_contact_phone"),
+                "allergies": patient_data.get("allergies", []),
+                "chronic_conditions": patient_data.get("chronic_conditions", []),
+                "owner_id": user_id,
+                "created_by": user_id,
+                "created_at": now,
+                "updated_at": now
+            }
+            
+            await db.patients.insert_one(new_patient)
+            result["success"] += 1
+            result["imported_ids"].append({"id": new_id, "patient_id": patient_id, "full_name": patient_data["full_name"]})
+            
+        except Exception as e:
+            result["errors"].append(f"Row {i+1}: {str(e)}")
+            result["failed"] += 1
+    
+    return result
+
+@api_router.post("/import/visits")
+async def import_visits(
+    data: List[dict],
+    current_user: dict = Depends(get_current_user)
+):
+    """Import visits from JSON array. Requires patient_id to match existing patients."""
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors and admins can import visits")
+    
+    user_id = current_user["id"]
+    result = {"success": 0, "failed": 0, "errors": [], "imported_ids": []}
+    
+    # Get all patient IDs owned by this user for validation
+    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(10000)
+    patient_id_map = {p["patient_id"]: p for p in owned_patients}
+    patient_internal_id_map = {p["id"]: p for p in owned_patients}
+    
+    for i, visit_data in enumerate(data):
+        try:
+            # Required field validation
+            patient_ref = visit_data.get("patient_id")
+            if not patient_ref:
+                result["errors"].append(f"Row {i+1}: Missing required field 'patient_id'")
+                result["failed"] += 1
+                continue
+            
+            # Try to find patient by patient_id (P-XXXX) or internal id
+            patient = patient_id_map.get(patient_ref) or patient_internal_id_map.get(patient_ref)
+            if not patient:
+                result["errors"].append(f"Row {i+1}: Patient '{patient_ref}' not found in your records")
+                result["failed"] += 1
+                continue
+            
+            # Generate new ID
+            new_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc).isoformat()
+            
+            # Handle vitals if present
+            vitals = None
+            if visit_data.get("vitals"):
+                vitals = visit_data["vitals"]
+            
+            # Build visit document
+            new_visit = {
+                "id": new_id,
+                "patient_id": patient["id"],  # Use internal ID
+                "vitals": vitals,
+                "soap_subjective": visit_data.get("soap_subjective"),
+                "soap_objective": visit_data.get("soap_objective"),
+                "soap_assessment": visit_data.get("soap_assessment"),
+                "soap_plan": visit_data.get("soap_plan"),
+                "diagnosis_codes": visit_data.get("diagnosis_codes", []),
+                "follow_up_date": visit_data.get("follow_up_date"),
+                "patient_instructions": visit_data.get("patient_instructions"),
+                "warning_signs": visit_data.get("warning_signs"),
+                "created_by": user_id,
+                "created_by_name": current_user["full_name"],
+                "owner_id": user_id,
+                "created_at": visit_data.get("created_at", now),
+                "updated_at": now
+            }
+            
+            await db.visits.insert_one(new_visit)
+            result["success"] += 1
+            result["imported_ids"].append({"id": new_id, "patient_name": patient["full_name"]})
+            
+        except Exception as e:
+            result["errors"].append(f"Row {i+1}: {str(e)}")
+            result["failed"] += 1
+    
+    return result
+
 # ============== DASHBOARD STATS ==============
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(
