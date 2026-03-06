@@ -1795,41 +1795,70 @@ async def import_visits(
     owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(10000)
     patient_id_map = {p["patient_id"]: p for p in owned_patients}
     patient_internal_id_map = {p["id"]: p for p in owned_patients}
-    # Also map by full_name for flexible matching
-    patient_name_map = {p["full_name"].lower(): p for p in owned_patients}
+    # Also map by full_name for flexible matching (strip whitespace, lowercase)
+    patient_name_map = {p["full_name"].strip().lower(): p for p in owned_patients}
+    
+    # Log available patients for debugging
+    logger.info(f"Import visits: Found {len(owned_patients)} patients for user {user_id}")
+    for p in owned_patients[:5]:
+        logger.info(f"  Patient: '{p['full_name']}' (id: {p['patient_id']})")
     
     for i, visit_data in enumerate(data):
         try:
-            # Get patient reference (can be patient_id, internal id, display id, or name)
-            patient_ref = visit_data.get("patient_id") or visit_data.get("patient_display_id") or visit_data.get("patient_name")
+            # Get patient reference - try multiple fields
+            patient_name_from_data = visit_data.get("patient_name", "").strip() if visit_data.get("patient_name") else ""
+            patient_id_from_data = visit_data.get("patient_id", "").strip() if visit_data.get("patient_id") else ""
+            patient_display_id = visit_data.get("patient_display_id", "").strip() if visit_data.get("patient_display_id") else ""
+            # Also check full_name field (in case user uses patient format)
+            full_name_from_data = visit_data.get("full_name", "").strip() if visit_data.get("full_name") else ""
+            
+            logger.info(f"Row {i+1}: patient_name='{patient_name_from_data}', patient_id='{patient_id_from_data}', full_name='{full_name_from_data}'")
             
             # Try to find patient by various methods
             patient = None
-            resolved_patient_id = None
             patient_display_name = "Unknown Patient"
             
-            if patient_ref:
-                # Try matching by patient_id (P-XXXX format) - check display ID field too
-                patient = patient_id_map.get(patient_ref) or patient_id_map.get(visit_data.get("patient_display_id"))
-                if not patient:
-                    # Try matching by internal UUID
-                    patient = patient_internal_id_map.get(patient_ref)
-                if not patient and isinstance(patient_ref, str):
-                    # Try matching by patient name (case-insensitive)
-                    patient = patient_name_map.get(patient_ref.lower())
-                # Also try the patient_name field specifically
-                if not patient and visit_data.get("patient_name"):
-                    patient = patient_name_map.get(visit_data.get("patient_name").lower())
+            # Method 1: Match by patient_id (P-XXXX format)
+            if patient_id_from_data:
+                patient = patient_id_map.get(patient_id_from_data)
+                if patient:
+                    logger.info(f"  Matched by patient_id: {patient_id_from_data}")
             
+            # Method 2: Match by patient_display_id
+            if not patient and patient_display_id:
+                patient = patient_id_map.get(patient_display_id)
+                if patient:
+                    logger.info(f"  Matched by patient_display_id: {patient_display_id}")
+            
+            # Method 3: Match by internal UUID
+            if not patient and patient_id_from_data:
+                patient = patient_internal_id_map.get(patient_id_from_data)
+                if patient:
+                    logger.info(f"  Matched by internal UUID")
+            
+            # Method 4: Match by patient_name (case-insensitive, trimmed)
+            if not patient and patient_name_from_data:
+                patient = patient_name_map.get(patient_name_from_data.lower())
+                if patient:
+                    logger.info(f"  Matched by patient_name: {patient_name_from_data}")
+                else:
+                    logger.info(f"  No match for patient_name '{patient_name_from_data.lower()}' in keys: {list(patient_name_map.keys())[:5]}")
+            
+            # Method 5: Match by full_name field (fallback for patient-format JSON)
+            if not patient and full_name_from_data:
+                patient = patient_name_map.get(full_name_from_data.lower())
+                if patient:
+                    logger.info(f"  Matched by full_name: {full_name_from_data}")
+            
+            # Determine final patient_id and display name
             if patient:
-                # Found matching patient
                 resolved_patient_id = patient["id"]
                 patient_display_name = patient["full_name"]
             else:
-                # No match found - use provided patient_id as-is or generate one
-                resolved_patient_id = patient_ref if patient_ref else f"UNLINKED-{str(uuid.uuid4())[:8]}"
-                patient_display_name = visit_data.get("patient_name", patient_ref or "Unlinked Visit")
-                result["warnings"].append(f"Row {i+1}: Patient '{patient_ref}' not found - visit imported with provided ID")
+                # No match found - use provided reference or generate one
+                resolved_patient_id = patient_id_from_data or patient_name_from_data or full_name_from_data or f"UNLINKED-{str(uuid.uuid4())[:8]}"
+                patient_display_name = patient_name_from_data or full_name_from_data or resolved_patient_id
+                result["warnings"].append(f"Row {i+1}: Patient '{patient_display_name}' not found - visit imported but unlinked")
             
             # Generate new ID
             new_id = str(uuid.uuid4())
