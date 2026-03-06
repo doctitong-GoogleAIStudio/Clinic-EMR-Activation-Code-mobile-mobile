@@ -1838,17 +1838,22 @@ async def import_visits(
             
             # Method 4: Match by patient_name (case-insensitive, trimmed)
             if not patient and patient_name_from_data:
-                patient = patient_name_map.get(patient_name_from_data.lower())
+                search_key = patient_name_from_data.strip().lower()
+                patient = patient_name_map.get(search_key)
                 if patient:
                     logger.info(f"  Matched by patient_name: {patient_name_from_data}")
                 else:
-                    logger.info(f"  No match for patient_name '{patient_name_from_data.lower()}' in keys: {list(patient_name_map.keys())[:5]}")
+                    available_names = list(patient_name_map.keys())[:10]
+                    logger.warning(f"  No match for patient_name '{search_key}'. Available patients: {available_names}")
             
             # Method 5: Match by full_name field (fallback for patient-format JSON)
             if not patient and full_name_from_data:
-                patient = patient_name_map.get(full_name_from_data.lower())
+                search_key = full_name_from_data.strip().lower()
+                patient = patient_name_map.get(search_key)
                 if patient:
                     logger.info(f"  Matched by full_name: {full_name_from_data}")
+                else:
+                    logger.warning(f"  No match for full_name '{search_key}'")
             
             # Determine final patient_id and display name
             if patient:
@@ -1858,7 +1863,9 @@ async def import_visits(
                 # No match found - use provided reference or generate one
                 resolved_patient_id = patient_id_from_data or patient_name_from_data or full_name_from_data or f"UNLINKED-{str(uuid.uuid4())[:8]}"
                 patient_display_name = patient_name_from_data or full_name_from_data or resolved_patient_id
-                result["warnings"].append(f"Row {i+1}: Patient '{patient_display_name}' not found - visit imported but unlinked")
+                # Show available patient names in warning
+                available_names = [p["full_name"] for p in owned_patients[:5]]
+                result["warnings"].append(f"Row {i+1}: Patient '{patient_display_name}' not found. Your patients: {available_names}")
             
             # Generate new ID
             new_id = str(uuid.uuid4())

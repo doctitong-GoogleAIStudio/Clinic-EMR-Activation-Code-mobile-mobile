@@ -1107,10 +1107,10 @@ const SettingsPage = () => {
                       </span>
                     </div>
                     {importResult.warnings && importResult.warnings.length > 0 && (
-                      <div className="mt-2 max-h-32 overflow-y-auto">
-                        <p className="text-sm text-blue-700 font-medium mb-1">Warnings (imported but unlinked):</p>
+                      <div className="mt-2 max-h-48 overflow-y-auto">
+                        <p className="text-sm text-amber-700 font-medium mb-1">Warnings (patient not matched):</p>
                         {importResult.warnings.map((warn, idx) => (
-                          <p key={idx} className="text-xs text-blue-600">{warn}</p>
+                          <p key={idx} className="text-xs text-amber-600 break-words">{warn}</p>
                         ))}
                       </div>
                     )}
