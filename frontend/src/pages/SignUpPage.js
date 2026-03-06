@@ -167,7 +167,7 @@ const SignUpPage = () => {
                   <p className="text-sm font-medium text-slate-700">Doctor Credentials (for print signatures)</p>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">License No.</Label>
+                      <Label className="text-xs">S2 No.</Label>
                       <Input
                         value={formData.license_no}
                         onChange={(e) => setFormData({ ...formData, license_no: e.target.value })}

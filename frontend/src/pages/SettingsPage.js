@@ -867,7 +867,7 @@ const SettingsPage = () => {
                       {newUser.role === 'doctor' && (
                         <div className="grid grid-cols-3 gap-3">
                           <div className="space-y-2">
-                            <Label>License No.</Label>
+                            <Label>S2 No.</Label>
                             <Input
                               value={newUser.license_no}
                               onChange={(e) => setNewUser({ ...newUser, license_no: e.target.value })}
