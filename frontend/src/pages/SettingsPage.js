@@ -1094,7 +1094,7 @@ const SettingsPage = () => {
               <CardContent className="space-y-6">
                 {/* Import Result Display */}
                 {importResult && (
-                  <div className={`p-4 rounded-lg border ${importResult.failed > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className={`p-4 rounded-lg border ${importResult.failed > 0 ? 'bg-amber-50 border-amber-200' : importResult.warnings?.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
                     <div className="flex items-center gap-2 mb-2">
                       {importResult.failed > 0 ? (
                         <AlertCircle className="w-5 h-5 text-amber-600" />
@@ -1103,8 +1103,17 @@ const SettingsPage = () => {
                       )}
                       <span className="font-medium">
                         Import Complete: {importResult.success} successful, {importResult.failed} failed
+                        {importResult.warnings?.length > 0 && `, ${importResult.warnings.length} with warnings`}
                       </span>
                     </div>
+                    {importResult.warnings && importResult.warnings.length > 0 && (
+                      <div className="mt-2 max-h-32 overflow-y-auto">
+                        <p className="text-sm text-blue-700 font-medium mb-1">Warnings (imported but unlinked):</p>
+                        {importResult.warnings.map((warn, idx) => (
+                          <p key={idx} className="text-xs text-blue-600">{warn}</p>
+                        ))}
+                      </div>
+                    )}
                     {importResult.errors && importResult.errors.length > 0 && (
                       <div className="mt-2 max-h-32 overflow-y-auto">
                         <p className="text-sm text-amber-700 font-medium mb-1">Errors:</p>
@@ -1211,7 +1220,7 @@ const SettingsPage = () => {
                         <Stethoscope className="w-4 h-4 text-[#0F766E]" />
                         Visit Records
                       </h3>
-                      <p className="text-sm text-slate-500 mt-1">Import visit records from a JSON file (requires matching patient IDs)</p>
+                      <p className="text-sm text-slate-500 mt-1">Import visit records from a JSON file (will match patients if possible)</p>
                     </div>
                   </div>
                   <div className="mt-4">
@@ -1242,6 +1251,9 @@ const SettingsPage = () => {
                           
                           if (response.data.success > 0) {
                             toast.success(`Successfully imported ${response.data.success} visits`);
+                          }
+                          if (response.data.warnings && response.data.warnings.length > 0) {
+                            toast.info(`${response.data.warnings.length} visits imported without patient match`);
                           }
                           if (response.data.failed > 0) {
                             toast.warning(`${response.data.failed} visits failed to import`);
@@ -1283,9 +1295,9 @@ const SettingsPage = () => {
     }
   }
 ]`}</pre>
-                    <p className="mt-2 text-amber-600">
-                      <AlertCircle className="w-3 h-3 inline mr-1" />
-                      Note: patient_id must match an existing patient in your records (use the P-XXXX format from exports)
+                    <p className="mt-2 text-blue-600">
+                      <Info className="w-3 h-3 inline mr-1" />
+                      Tip: Use patient_id (P-XXXX) or patient_name to match existing patients. Visits will still import even if no match is found.
                     </p>
                   </div>
                 </div>

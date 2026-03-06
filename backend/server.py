@@ -1774,33 +1774,49 @@ async def import_visits(
     data: List[dict],
     current_user: dict = Depends(get_current_user)
 ):
-    """Import visits from JSON array. Requires patient_id to match existing patients."""
+    """Import visits from JSON array. Will try to match patient_id, but imports even if no match found."""
     if current_user["role"] not in ["doctor", "admin"]:
         raise HTTPException(status_code=403, detail="Only doctors and admins can import visits")
     
     user_id = current_user["id"]
-    result = {"success": 0, "failed": 0, "errors": [], "imported_ids": []}
+    result = {"success": 0, "failed": 0, "errors": [], "imported_ids": [], "warnings": []}
     
-    # Get all patient IDs owned by this user for validation
+    # Get all patient IDs owned by this user for matching
     owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(10000)
     patient_id_map = {p["patient_id"]: p for p in owned_patients}
     patient_internal_id_map = {p["id"]: p for p in owned_patients}
+    # Also map by full_name for flexible matching
+    patient_name_map = {p["full_name"].lower(): p for p in owned_patients}
     
     for i, visit_data in enumerate(data):
         try:
-            # Required field validation
-            patient_ref = visit_data.get("patient_id")
-            if not patient_ref:
-                result["errors"].append(f"Row {i+1}: Missing required field 'patient_id'")
-                result["failed"] += 1
-                continue
+            # Get patient reference (can be patient_id, internal id, or name)
+            patient_ref = visit_data.get("patient_id") or visit_data.get("patient_name")
             
-            # Try to find patient by patient_id (P-XXXX) or internal id
-            patient = patient_id_map.get(patient_ref) or patient_internal_id_map.get(patient_ref)
-            if not patient:
-                result["errors"].append(f"Row {i+1}: Patient '{patient_ref}' not found in your records")
-                result["failed"] += 1
-                continue
+            # Try to find patient by various methods
+            patient = None
+            resolved_patient_id = None
+            patient_display_name = "Unknown Patient"
+            
+            if patient_ref:
+                # Try matching by patient_id (P-XXXX format)
+                patient = patient_id_map.get(patient_ref)
+                if not patient:
+                    # Try matching by internal UUID
+                    patient = patient_internal_id_map.get(patient_ref)
+                if not patient and isinstance(patient_ref, str):
+                    # Try matching by patient name (case-insensitive)
+                    patient = patient_name_map.get(patient_ref.lower())
+            
+            if patient:
+                # Found matching patient
+                resolved_patient_id = patient["id"]
+                patient_display_name = patient["full_name"]
+            else:
+                # No match found - use provided patient_id as-is or generate one
+                resolved_patient_id = patient_ref if patient_ref else f"UNLINKED-{str(uuid.uuid4())[:8]}"
+                patient_display_name = visit_data.get("patient_name", patient_ref or "Unlinked Visit")
+                result["warnings"].append(f"Row {i+1}: Patient '{patient_ref}' not found - visit imported with provided ID")
             
             # Generate new ID
             new_id = str(uuid.uuid4())
@@ -1814,7 +1830,8 @@ async def import_visits(
             # Build visit document
             new_visit = {
                 "id": new_id,
-                "patient_id": patient["id"],  # Use internal ID
+                "patient_id": resolved_patient_id,
+                "patient_name_imported": patient_display_name,  # Store original name for reference
                 "vitals": vitals,
                 "soap_subjective": visit_data.get("soap_subjective"),
                 "soap_objective": visit_data.get("soap_objective"),
@@ -1833,7 +1850,7 @@ async def import_visits(
             
             await db.visits.insert_one(new_visit)
             result["success"] += 1
-            result["imported_ids"].append({"id": new_id, "patient_name": patient["full_name"]})
+            result["imported_ids"].append({"id": new_id, "patient_name": patient_display_name, "matched": patient is not None})
             
         except Exception as e:
             result["errors"].append(f"Row {i+1}: {str(e)}")
