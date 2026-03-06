@@ -6,7 +6,7 @@ import {
   BookOpen, User, UserCog, CheckCircle, AlertTriangle, Lightbulb, 
   LogIn, Users, Calendar, FileText, Stethoscope, Pill, Microscope, 
   Printer, Edit, Database, HelpCircle, Search, Clock, Shield,
-  ChevronRight, ChevronDown, Phone, Mail
+  ChevronRight, ChevronDown, Phone, Mail, UserPlus
 } from 'lucide-react';
 
 const UserGuidePage = () => {
@@ -95,11 +95,11 @@ const UserGuidePage = () => {
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="doctor" className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4" />
-            Doctor Guide
+            Doctor's Guide
           </TabsTrigger>
           <TabsTrigger value="receptionist" className="flex items-center gap-2">
             <UserCog className="w-4 h-4" />
-            Receptionist Guide
+            Receptionist's Guide
           </TabsTrigger>
         </TabsList>
 
@@ -109,7 +109,7 @@ const UserGuidePage = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-2">
                 <Stethoscope className="w-6 h-6 text-[#0F766E]" />
-                <h2 className="text-lg font-semibold text-slate-900">Doctor User Guide</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Doctor's User Guide</h2>
               </div>
               <p className="text-slate-600 text-sm">
                 As a doctor, you have full access to patient records, consultations, prescriptions, 
@@ -392,6 +392,53 @@ const UserGuidePage = () => {
               isolated and only visible to you and your authorized receptionists.
             </Tip>
           </SectionHeader>
+
+          {/* 11. Manage Receptionists */}
+          <SectionHeader id="doc-receptionist" icon={UserPlus} title="11. Create & Manage Receptionists">
+            <h4 className="font-medium text-slate-900 mb-3">Creating a Receptionist Account</h4>
+            <Step number="1">Click <strong>Settings</strong> in the left sidebar</Step>
+            <Step number="2">Scroll down to <strong>Create Receptionist Account</strong> section</Step>
+            <Step number="3">Fill in the required fields:</Step>
+            <Checklist items={[
+              "Full Name - The receptionist's complete name",
+              "Email - Their login email address",
+              "Password - A temporary password they can change later"
+            ]} />
+            <Step number="4">Click <Badge variant="outline" className="bg-[#0F766E] text-white">Create Receptionist</Badge></Step>
+            
+            <Tip>
+              <strong>Quick Tip:</strong> Receptionists you create are automatically linked to your account. 
+              They can only see and manage your patients and appointments.
+            </Tip>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Viewing Your Receptionists</h4>
+            <p className="text-slate-600 text-sm mb-3">
+              After creating receptionists, they will appear in a list under "My Receptionists" in the same section.
+            </p>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Editing a Receptionist Account</h4>
+            <Step number="1">Go to <strong>Settings</strong></Step>
+            <Step number="2">Find the receptionist in <strong>My Receptionists</strong> list</Step>
+            <Step number="3">Click the <strong>Edit</strong> (pencil) button</Step>
+            <Step number="4">Update any of the following:</Step>
+            <Checklist items={[
+              "Full Name - Change their display name",
+              "Email - Update their login email",
+              "Password - Set a new password (leave blank to keep current)"
+            ]} />
+            <Step number="5">Click <Badge variant="outline" className="bg-[#0F766E] text-white">Save Changes</Badge></Step>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Deleting a Receptionist Account</h4>
+            <Step number="1">Go to <strong>Settings</strong></Step>
+            <Step number="2">Find the receptionist in <strong>My Receptionists</strong> list</Step>
+            <Step number="3">Click the <strong>Delete</strong> (trash) button</Step>
+            <Step number="4">Confirm the deletion when prompted</Step>
+            
+            <Warning>
+              <strong>Important:</strong> Deleting a receptionist account is permanent and cannot be undone. 
+              The receptionist will immediately lose access to the system.
+            </Warning>
+          </SectionHeader>
         </TabsContent>
 
         {/* ============ RECEPTIONIST GUIDE ============ */}
@@ -400,7 +447,7 @@ const UserGuidePage = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-2">
                 <UserCog className="w-6 h-6 text-blue-600" />
-                <h2 className="text-lg font-semibold text-slate-900">Receptionist User Guide</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Receptionist's User Guide</h2>
               </div>
               <p className="text-slate-600 text-sm">
                 As a receptionist, you can register patients, manage appointments, and record vital signs. 

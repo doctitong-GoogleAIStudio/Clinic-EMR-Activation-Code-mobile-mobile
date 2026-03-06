@@ -100,6 +100,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 
 ## Recent Changes (continued)
 - **Mar 6, 2026**: **Added User Guide Page** - Comprehensive step-by-step user guide added to Settings page with separate guides for Doctors and Receptionists. Includes collapsible sections for Login, Patients, Appointments, SOAP Notes, Prescriptions, Labs, Printing, and Troubleshooting.
+- **Mar 6, 2026**: **Updated User Guide** - Changed "Doctor Guide" to "Doctor's Guide" and "Receptionist Guide" to "Receptionist's Guide". Added Section 11: "Create & Manage Receptionists" with instructions for creating, viewing, editing, and deleting receptionist accounts.
 
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
