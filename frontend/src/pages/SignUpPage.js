@@ -6,7 +6,6 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Stethoscope, UserPlus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/utils';
@@ -32,7 +31,17 @@ const SignUpPage = () => {
     e.preventDefault();
     setError('');
 
-    // Validation
+    // Basic validation
+    if (!formData.full_name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Please enter your email');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -56,7 +65,7 @@ const SignUpPage = () => {
       toast.success('Account created successfully! Welcome to Private Clinic EMR.');
       navigate('/');
     } catch (err) {
-      const errorMsg = getErrorMessage(err, 'Registration failed. Email may already be in use.');
+      const errorMsg = getErrorMessage(err, 'Registration failed. Please try again.');
       setError(errorMsg);
       toast.error('Registration failed');
     } finally {
@@ -66,7 +75,7 @@ const SignUpPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-md">
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center space-y-2 pb-4">
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -76,7 +85,7 @@ const SignUpPage = () => {
             </div>
             <CardTitle className="text-2xl font-heading font-bold text-slate-900">Create Account</CardTitle>
             <CardDescription className="font-body text-slate-500">
-              Register for Private Clinic EMR
+              Quick and simple registration
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -115,124 +124,68 @@ const SignUpPage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min 6 characters"
-                    required
-                    className="h-11 bg-white border-slate-200"
-                    data-testid="signup-password-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    placeholder="Repeat password"
-                    required
-                    className="h-11 bg-white border-slate-200"
-                    data-testid="signup-confirm-password-input"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Min 6 characters"
+                  required
+                  className="h-11 bg-white border-slate-200"
+                  data-testid="signup-password-input"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
-                  <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v })}>
-                    <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="signup-role-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="doctor">Doctor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Input
-                    id="specialization"
-                    value={formData.specialization}
-                    onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                    placeholder="Internal Medicine"
-                    className="h-11 bg-white border-slate-200"
-                    data-testid="signup-specialization-input"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="Repeat password"
+                  required
+                  className="h-11 bg-white border-slate-200"
+                  data-testid="signup-confirm-password-input"
+                />
               </div>
-
-              {formData.role === 'doctor' && (
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
-                  <p className="text-sm font-medium text-slate-700">Doctor Credentials (for print signatures)</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">S2 No.</Label>
-                      <Input
-                        value={formData.license_no}
-                        onChange={(e) => setFormData({ ...formData, license_no: e.target.value })}
-                        placeholder="12345"
-                        className="h-9 text-sm bg-white"
-                        data-testid="signup-license-input"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">PTR No.</Label>
-                      <Input
-                        value={formData.ptr_no}
-                        onChange={(e) => setFormData({ ...formData, ptr_no: e.target.value })}
-                        placeholder="12345"
-                        className="h-9 text-sm bg-white"
-                        data-testid="signup-ptr-input"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">PRC No.</Label>
-                      <Input
-                        value={formData.prc_no}
-                        onChange={(e) => setFormData({ ...formData, prc_no: e.target.value })}
-                        placeholder="12345"
-                        className="h-9 text-sm bg-white"
-                        data-testid="signup-prc-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-[#0F766E] hover:bg-[#115E59] text-white font-medium"
                 data-testid="signup-submit-btn"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Creating Account...
-                  </span>
+                  </div>
                 ) : (
-                  <span className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <UserPlus className="w-4 h-4" />
                     Create Account
-                  </span>
+                  </div>
                 )}
               </Button>
+            </form>
 
-              <p className="text-center text-sm text-slate-600">
+            <div className="mt-6 text-center">
+              <p className="text-sm text-slate-600">
                 Already have an account?{' '}
-                <Link to="/login" className="text-[#0F766E] font-medium hover:underline">
-                  Sign In
+                <Link to="/login" className="text-[#0F766E] hover:underline font-medium">
+                  Sign in
                 </Link>
               </p>
-            </form>
+            </div>
+
+            <div className="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
+              <p className="text-xs text-slate-500 text-center">
+                You can add your credentials (S2 No., PTR, PRC) later in Settings
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
