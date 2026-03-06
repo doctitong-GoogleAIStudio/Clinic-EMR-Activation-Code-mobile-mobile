@@ -223,33 +223,101 @@ const SettingsPage = () => {
     }
   };
 
-  const handleExportPatients = async () => {
+  const handleExportPatients = async (exportFormat = 'json') => {
     try {
+      toast.info(`Preparing ${exportFormat.toUpperCase()} export...`);
       const response = await exportAPI.patients();
-      const blob = new Blob([JSON.stringify(response.data.data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `patients_export_${format(new Date(), 'yyyy-MM-dd')}.json`;
-      a.click();
-      toast.success('Export downloaded');
+      const data = response.data.data || response.data;
+      
+      if (exportFormat === 'csv') {
+        if (!data || data.length === 0) {
+          toast.error('No patient data to export');
+          return;
+        }
+        const headers = ['Full Name', 'Date of Birth', 'Gender', 'Phone', 'Email', 'Address', 'Blood Type', 'Emergency Contact', 'Emergency Phone', 'Created At'];
+        const csvRows = [headers.join(',')];
+        data.forEach(p => {
+          const row = [
+            `"${p.full_name || ''}"`,
+            p.date_of_birth || '',
+            p.gender || '',
+            `"${p.phone || ''}"`,
+            `"${p.email || ''}"`,
+            `"${(p.address || '').replace(/"/g, '""')}"`,
+            p.blood_type || '',
+            `"${p.emergency_contact || ''}"`,
+            `"${p.emergency_phone || ''}"`,
+            p.created_at || ''
+          ];
+          csvRows.push(row.join(','));
+        });
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `patient_registry_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        a.click();
+      } else {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `patient_registry_${format(new Date(), 'yyyy-MM-dd')}.json`;
+        a.click();
+      }
+      toast.success(`Patient registry exported as ${exportFormat.toUpperCase()}`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to export'));
+      toast.error(getErrorMessage(error, 'Failed to export patients'));
     }
   };
 
-  const handleExportVisits = async () => {
+  const handleExportVisits = async (exportFormat = 'json') => {
     try {
+      toast.info(`Preparing ${exportFormat.toUpperCase()} export...`);
       const response = await exportAPI.visits({});
-      const blob = new Blob([JSON.stringify(response.data.data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `visits_export_${format(new Date(), 'yyyy-MM-dd')}.json`;
-      a.click();
-      toast.success('Export downloaded');
+      const data = response.data.data || response.data;
+      
+      if (exportFormat === 'csv') {
+        if (!data || data.length === 0) {
+          toast.error('No visit data to export');
+          return;
+        }
+        const headers = ['Patient Name', 'Visit Date', 'Chief Complaint', 'Subjective', 'Objective', 'Assessment', 'Plan', 'Diagnosis', 'ICD10 Code', 'Notes'];
+        const csvRows = [headers.join(',')];
+        data.forEach(v => {
+          const row = [
+            `"${v.patient_name || ''}"`,
+            v.created_at || '',
+            `"${(v.chief_complaint || '').replace(/"/g, '""')}"`,
+            `"${(v.soap_subjective || '').replace(/"/g, '""')}"`,
+            `"${(v.soap_objective || '').replace(/"/g, '""')}"`,
+            `"${(v.soap_assessment || '').replace(/"/g, '""')}"`,
+            `"${(v.soap_plan || '').replace(/"/g, '""')}"`,
+            `"${(v.diagnosis || '').replace(/"/g, '""')}"`,
+            `"${v.icd10_code || ''}"`,
+            `"${(v.notes || '').replace(/"/g, '""')}"`
+          ];
+          csvRows.push(row.join(','));
+        });
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visit_records_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        a.click();
+      } else {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visit_records_${format(new Date(), 'yyyy-MM-dd')}.json`;
+        a.click();
+      }
+      toast.success(`Visit records exported as ${exportFormat.toUpperCase()}`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to export'));
+      toast.error(getErrorMessage(error, 'Failed to export visits'));
     }
   };
 
@@ -286,15 +354,19 @@ const SettingsPage = () => {
                 <Users className="w-4 h-4 mr-2" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="exports" data-testid="tab-exports">
-                <Download className="w-4 h-4 mr-2" />
-                Exports
-              </TabsTrigger>
-              <TabsTrigger value="audit" data-testid="tab-audit">
-                <Shield className="w-4 h-4 mr-2" />
-                Audit Log
-              </TabsTrigger>
             </>
+          )}
+          {(isAdmin || isDoctor) && (
+            <TabsTrigger value="exports" data-testid="tab-exports">
+              <Download className="w-4 h-4 mr-2" />
+              Exports
+            </TabsTrigger>
+          )}
+          {isAdmin && (
+            <TabsTrigger value="audit" data-testid="tab-audit">
+              <Shield className="w-4 h-4 mr-2" />
+              Audit Log
+            </TabsTrigger>
           )}
           <TabsTrigger value="about" data-testid="tab-about">
             <Info className="w-4 h-4 mr-2" />
@@ -927,8 +999,8 @@ const SettingsPage = () => {
           </TabsContent>
         )}
 
-        {/* Exports */}
-        {isAdmin && (
+        {/* Exports - visible to admins and doctors */}
+        {(isAdmin || isDoctor) && (
           <TabsContent value="exports">
             <Card className="bg-white border-slate-100 shadow-sm">
               <CardHeader>
@@ -936,31 +1008,58 @@ const SettingsPage = () => {
                   <Download className="w-5 h-5 text-[#0F766E]" />
                   Data Export
                 </CardTitle>
-                <CardDescription>Export clinic data for backup or reporting</CardDescription>
+                <CardDescription>Export your clinic data for backup or reporting</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <Card className="border-slate-200">
-                    <CardContent className="p-4">
-                      <h3 className="font-medium text-slate-900 mb-2">Patient Registry</h3>
-                      <p className="text-sm text-slate-500 mb-4">Export all patient records</p>
-                      <Button variant="outline" onClick={handleExportPatients} data-testid="export-patients-btn">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Patients
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-slate-200">
-                    <CardContent className="p-4">
-                      <h3 className="font-medium text-slate-900 mb-2">Visit Records</h3>
-                      <p className="text-sm text-slate-500 mb-4">Export all consultation records</p>
-                      <Button variant="outline" onClick={handleExportVisits} data-testid="export-visits-btn">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Visits
-                      </Button>
-                    </CardContent>
-                  </Card>
+              <CardContent className="space-y-6">
+                {/* Patient Registry Export */}
+                <div className="p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-slate-900 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#0F766E]" />
+                        Patient Registry
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">Export all your patient records including demographics and contact info</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="outline" onClick={() => handleExportPatients('json')} data-testid="export-patients-json-btn">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export JSON
+                    </Button>
+                    <Button variant="outline" onClick={() => handleExportPatients('csv')} data-testid="export-patients-csv-btn">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Visit Records Export */}
+                <div className="p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-slate-900 flex items-center gap-2">
+                        <Stethoscope className="w-4 h-4 text-[#0F766E]" />
+                        Visit Records
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">Export all consultation records including SOAP notes and diagnoses</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="outline" onClick={() => handleExportVisits('json')} data-testid="export-visits-json-btn">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export JSON
+                    </Button>
+                    <Button variant="outline" onClick={() => handleExportVisits('csv')} data-testid="export-visits-csv-btn">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 mt-4">
+                  Note: Exports contain only your own data. JSON format preserves all data structure, CSV is compatible with Excel/Sheets.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
