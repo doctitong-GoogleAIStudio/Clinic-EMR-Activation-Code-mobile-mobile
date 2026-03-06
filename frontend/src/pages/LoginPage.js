@@ -76,8 +76,8 @@ const LoginPage = () => {
 
           <div className="mt-8 p-4 bg-white/60 rounded-xl border border-slate-200">
             <p className="text-sm text-slate-500 font-body">
-              Demo Credentials:<br />
-              <span className="font-mono text-slate-700">admin@clinic.com / admin123</span>
+              New to Private Clinic EMR?<br />
+              <Link to="/signup" className="font-medium text-[#0F766E] hover:underline">Create your account</Link> to get started.
             </p>
           </div>
         </div>

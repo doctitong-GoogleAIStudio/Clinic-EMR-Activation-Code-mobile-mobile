@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -25,6 +26,7 @@ const SignUpPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { loginWithToken } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,9 +47,14 @@ const SignUpPage = () => {
 
     try {
       const { confirmPassword, ...submitData } = formData;
-      await authAPI.register(submitData);
-      toast.success('Account created successfully! Please login.');
-      navigate('/login');
+      const response = await authAPI.register(submitData);
+      
+      // Auto-login after successful registration
+      const { token, user } = response.data;
+      loginWithToken(token, user);
+      
+      toast.success('Account created successfully! Welcome to Private Clinic EMR.');
+      navigate('/');
     } catch (err) {
       const errorMsg = getErrorMessage(err, 'Registration failed. Email may already be in use.');
       setError(errorMsg);

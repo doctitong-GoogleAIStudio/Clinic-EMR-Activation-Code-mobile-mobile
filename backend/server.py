@@ -370,7 +370,7 @@ async def get_owner_id_for_user(current_user: dict) -> str:
     return current_user["id"]
 
 # ============== AUTH ROUTES ==============
-@api_router.post("/auth/register", response_model=UserResponse)
+@api_router.post("/auth/register")
 async def register_user(user: UserCreate):
     existing = await db.users.find_one({"email": user.email})
     if existing:
@@ -383,9 +383,23 @@ async def register_user(user: UserCreate):
     user_dict["is_active"] = True
     
     await db.users.insert_one(user_dict)
-    del user_dict["password"]
-    user_dict.pop("_id", None)
-    return user_dict
+    
+    # Create token for auto-login after registration
+    token = create_token(user_dict["id"], user_dict["role"])
+    
+    return {
+        "token": token,
+        "user": {
+            "id": user_dict["id"],
+            "email": user_dict["email"],
+            "full_name": user_dict["full_name"],
+            "role": user_dict["role"],
+            "license_no": user_dict.get("license_no"),
+            "ptr_no": user_dict.get("ptr_no"),
+            "prc_no": user_dict.get("prc_no"),
+            "specialization": user_dict.get("specialization")
+        }
+    }
 
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin):
@@ -1888,20 +1902,6 @@ async def startup():
     await db.appointments.create_index([("date", 1), ("time", 1)])
     await db.appointments.create_index("owner_id")  # Index for data isolation
     await db.visits.create_index([("patient_id", 1), ("created_at", -1)])
-    
-    # Create default admin if not exists
-    admin = await db.users.find_one({"role": "admin"})
-    if not admin:
-        await db.users.insert_one({
-            "id": str(uuid.uuid4()),
-            "email": "admin@clinic.com",
-            "password": hash_password("admin123"),
-            "full_name": "System Admin",
-            "role": "admin",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "is_active": True
-        })
-        logger.info("Default admin created: admin@clinic.com / admin123")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

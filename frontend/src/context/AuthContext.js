@@ -41,6 +41,13 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const loginWithToken = (newToken, userData) => {
+    localStorage.setItem('emr_token', newToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    setToken(newToken);
+    setUser(userData);
+  };
+
   const logout = () => {
     localStorage.removeItem('emr_token');
     delete axios.defaults.headers.common['Authorization'];
@@ -58,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       token,
       loading,
       login,
+      loginWithToken,
       logout,
       isDoctor,
       isAdmin,
