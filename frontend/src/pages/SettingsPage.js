@@ -1218,10 +1218,15 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="font-medium text-slate-900 flex items-center gap-2">
                         <Stethoscope className="w-4 h-4 text-[#0F766E]" />
-                        Visit Records
+                        Visit Records (SOAP Notes)
                       </h3>
-                      <p className="text-sm text-slate-500 mt-1">Import visit records from a JSON file (will match patients if possible)</p>
+                      <p className="text-sm text-slate-500 mt-1">Import consultation/visit records with SOAP notes</p>
                     </div>
+                  </div>
+                  <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                    <AlertCircle className="w-3 h-3 inline mr-1" />
+                    <strong>Important:</strong> This is for VISIT/CONSULTATION records, NOT patient demographics. 
+                    Patient must exist first. Use "Patient Registry" above to import patients.
                   </div>
                   <div className="mt-4">
                     <Input
@@ -1279,26 +1284,20 @@ const SettingsPage = () => {
                     )}
                   </div>
                   <div className="mt-3 p-3 bg-slate-50 rounded text-xs text-slate-600">
-                    <p className="font-medium mb-1">Expected JSON format:</p>
+                    <p className="font-medium mb-1">Expected JSON format for VISITS:</p>
                     <pre className="bg-slate-100 p-2 rounded overflow-x-auto">{`[
   {
     "patient_name": "Juan Dela Cruz",
-    "patient_id": "P-ABC12345",
-    "soap_subjective": "Patient complaints...",
-    "soap_objective": "Physical exam findings...",
-    "soap_assessment": "Diagnosis...",
-    "soap_plan": "Treatment plan...",
-    "diagnosis_codes": ["J06.9"],
-    "vitals": {
-      "bp_systolic": 120,
-      "bp_diastolic": 80,
-      "heart_rate": 72
-    }
+    "soap_subjective": "Chief complaint: Headache x 2 days",
+    "soap_objective": "BP 120/80, HR 72, Temp 36.5",
+    "soap_assessment": "Tension-type headache",
+    "soap_plan": "Paracetamol 500mg TID x 3 days",
+    "diagnosis_codes": ["G44.2"]
   }
 ]`}</pre>
-                    <p className="mt-2 text-blue-600">
-                      <Info className="w-3 h-3 inline mr-1" />
-                      Matching: Uses <strong>patient_name</strong> (recommended) or <strong>patient_id</strong> (P-XXXX). Import patients first if they don't exist yet.
+                    <p className="mt-2 text-green-600 font-medium">
+                      <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                      Required: <strong>patient_name</strong> must match an existing patient exactly.
                     </p>
                   </div>
                 </div>
