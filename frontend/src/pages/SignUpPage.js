@@ -65,9 +65,10 @@ const SignUpPage = () => {
       toast.success('Account created successfully! Welcome to Private Clinic EMR.');
       navigate('/');
     } catch (err) {
+      console.error('Registration error:', err);
       const errorMsg = getErrorMessage(err, 'Registration failed. Please try again.');
       setError(errorMsg);
-      toast.error('Registration failed');
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
