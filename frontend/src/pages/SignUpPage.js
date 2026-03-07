@@ -152,6 +152,42 @@ const SignUpPage = () => {
                 />
               </div>
 
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+                <p className="text-sm font-medium text-slate-700">Doctor Credentials (for printed forms)</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">S2 No.</Label>
+                    <Input
+                      value={formData.license_no}
+                      onChange={(e) => setFormData({ ...formData, license_no: e.target.value })}
+                      placeholder="S2 No."
+                      className="h-10 bg-white border-slate-200 text-sm"
+                      data-testid="signup-license-input"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">PTR No.</Label>
+                    <Input
+                      value={formData.ptr_no}
+                      onChange={(e) => setFormData({ ...formData, ptr_no: e.target.value })}
+                      placeholder="PTR No."
+                      className="h-10 bg-white border-slate-200 text-sm"
+                      data-testid="signup-ptr-input"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">PRC No.</Label>
+                    <Input
+                      value={formData.prc_no}
+                      onChange={(e) => setFormData({ ...formData, prc_no: e.target.value })}
+                      placeholder="PRC No."
+                      className="h-10 bg-white border-slate-200 text-sm"
+                      data-testid="signup-prc-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <Button
                 type="submit"
                 disabled={loading}
@@ -178,12 +214,6 @@ const SignUpPage = () => {
                 <Link to="/login" className="text-[#0F766E] hover:underline font-medium">
                   Sign in
                 </Link>
-              </p>
-            </div>
-
-            <div className="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <p className="text-xs text-slate-500 text-center">
-                You can add your credentials (S2 No., PTR, PRC) later in Settings
               </p>
             </div>
           </CardContent>
