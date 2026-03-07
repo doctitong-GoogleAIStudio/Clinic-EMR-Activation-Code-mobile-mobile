@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// Always use current window origin for API calls - works on any deployed domain
+// This ensures the frontend always calls the same domain it's served from
+const API = typeof window !== 'undefined' 
+  ? `${window.location.origin}/api`
+  : '/api';
 
 // Auth APIs
 export const authAPI = {
