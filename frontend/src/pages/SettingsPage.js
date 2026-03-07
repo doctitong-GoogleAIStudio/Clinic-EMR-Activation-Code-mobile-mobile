@@ -1450,6 +1450,21 @@ const SettingsPage = () => {
                     <p className="font-medium text-sm text-slate-900">PWA</p>
                     <p className="text-xs text-slate-500">Install on device</p>
                   </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Download className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Data Export</p>
+                    <p className="text-xs text-slate-500">JSON & CSV formats</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <FileUp className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Data Import</p>
+                    <p className="text-xs text-slate-500">Bulk patient & visits</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <BookOpen className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">User Guide</p>
+                    <p className="text-xs text-slate-500">Step-by-step help</p>
+                  </div>
                 </div>
               </div>
 
