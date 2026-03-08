@@ -191,11 +191,20 @@ const PrescriptionPrintSettings = ({
             padding-left: ${settings.leftOffset}px;
             padding-right: ${settings.rightOffset}px;
             padding-bottom: ${settings.bottomOffset}px;
-            position: relative;
+            display: flex;
+            flex-direction: column;
           }
           
           .content-area {
             max-width: ${settings.contentWidth}px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+          }
+          
+          .medicines-list {
+            flex-grow: 1;
+            margin-left: 10px;
           }
           
           /* Header section */
@@ -259,16 +268,20 @@ const PrescriptionPrintSettings = ({
           
           /* Signature section */
           .signature-section {
-            position: absolute;
-            bottom: ${settings.bottomOffset + 20}px;
-            right: ${settings.rightOffset}px;
+            text-align: right;
+            margin-top: auto;
+            padding-top: ${settings.sectionSpacing}px;
+          }
+          
+          .signature-inner {
+            display: inline-block;
             text-align: center;
             min-width: 200px;
           }
           
           .signature-line {
             border-top: 1px solid #333;
-            margin-top: 40px;
+            margin-top: 30px;
             padding-top: 5px;
           }
           
@@ -279,11 +292,9 @@ const PrescriptionPrintSettings = ({
           
           /* Footer */
           .footer-section {
-            position: absolute;
-            bottom: ${settings.bottomOffset}px;
-            left: ${settings.leftOffset}px;
             font-size: ${settings.fontSize - 4}px;
             color: #777;
+            margin-top: ${settings.sectionSpacing}px;
           }
           
           @media print {
@@ -332,14 +343,16 @@ const PrescriptionPrintSettings = ({
             
             ${settings.showSignatureSection ? `
               <div class="signature-section">
-                <div class="signature-line">
-                  ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
-                  ${settings.showLicenseNumber ? `
-                    <div class="license-info">
-                      ${doctor?.license_no ? `Lic. No.: ${doctor.license_no}` : ''}
-                      ${doctor?.ptr_no ? ` | PTR: ${doctor.ptr_no}` : ''}
-                    </div>
-                  ` : ''}
+                <div class="signature-inner">
+                  <div class="signature-line">
+                    ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
+                    ${settings.showLicenseNumber ? `
+                      <div class="license-info">
+                        ${doctor?.license_no ? `Lic. No.: ${doctor.license_no}` : ''}
+                        ${doctor?.ptr_no ? ` | PTR: ${doctor.ptr_no}` : ''}
+                      </div>
+                    ` : ''}
+                  </div>
                 </div>
               </div>
             ` : ''}
@@ -380,7 +393,7 @@ const PrescriptionPrintSettings = ({
           Live Preview
         </h4>
         <div 
-          className="bg-white border shadow-sm mx-auto overflow-hidden"
+          className="bg-white border shadow-sm mx-auto overflow-hidden relative"
           style={{ 
             width: `${Math.min(widthPx, 350)}px`, 
             height: `${Math.min(heightPx, 450)}px`,
@@ -389,10 +402,12 @@ const PrescriptionPrintSettings = ({
           }}
         >
           <div 
+            className="h-full flex flex-col"
             style={{ 
               paddingTop: `${settings.topOffset * previewScale}px`,
               paddingLeft: `${settings.leftOffset * previewScale}px`,
               paddingRight: `${settings.rightOffset * previewScale}px`,
+              paddingBottom: `${settings.bottomOffset * previewScale}px`,
             }}
           >
             {settings.showHeader && (
@@ -422,7 +437,7 @@ const PrescriptionPrintSettings = ({
               <div className="font-bold italic text-lg mb-2">Rx</div>
             )}
             
-            <div className="space-y-1">
+            <div className="space-y-1 flex-grow">
               <div>
                 <div className="font-semibold">1. Amoxicillin 500mg</div>
                 <div className="ml-3 text-slate-600">Sig: 1 cap TID x 7 days {settings.showQuantity && '#21'}</div>
@@ -434,14 +449,16 @@ const PrescriptionPrintSettings = ({
             </div>
             
             {settings.showSignatureSection && (
-              <div className="absolute bottom-4 right-4 text-center" style={{ minWidth: '100px' }}>
-                <div className="border-t border-black pt-1 mt-8">
-                  {settings.showDoctorName && <div>Doctor Name, MD</div>}
-                  {settings.showLicenseNumber && (
-                    <div style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                      Lic. No.: 12345
-                    </div>
-                  )}
+              <div className="text-right mt-auto pt-2">
+                <div className="inline-block text-center" style={{ minWidth: '80px' }}>
+                  <div className="border-t border-black pt-1">
+                    {settings.showDoctorName && <div className="text-xs">Doctor Name, MD</div>}
+                    {settings.showLicenseNumber && (
+                      <div style={{ fontSize: `${Math.max((settings.fontSize - 4) * previewScale, 6)}px` }}>
+                        Lic. No.: 12345
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
