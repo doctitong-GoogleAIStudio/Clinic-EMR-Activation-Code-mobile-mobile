@@ -15,11 +15,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   ArrowLeft, Printer, Activity, FileText, Plus, Trash2,
   Pill, Award, Briefcase, Send, Microscope, FileImage, File,
-  Eye, Download, ZoomIn, ZoomOut, Maximize2, RotateCcw, Edit, Upload
+  Eye, Download, ZoomIn, ZoomOut, Maximize2, RotateCcw, Edit, Upload, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
+import PrintPreviewDialog from '../components/PrintPreviewDialog';
 
 const VisitDetailPage = () => {
   const { visitId } = useParams();
@@ -39,6 +40,10 @@ const VisitDetailPage = () => {
   const [showViewRx, setShowViewRx] = useState(false);
   const [showViewCert, setShowViewCert] = useState(false);
   const [showViewLabReq, setShowViewLabReq] = useState(false);
+  
+  // Print Preview Dialog state
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [printPreviewData, setPrintPreviewData] = useState({ medicines: [], title: 'Print Prescription' });
   
   // Labs & Imaging state
   const [labAttachments, setLabAttachments] = useState([]);
@@ -215,13 +220,16 @@ const VisitDetailPage = () => {
         notes: rxData.notes
       });
       toast.success('Prescription saved');
-      // Close dialog first, then print after a short delay
+      // Close dialog first
       setShowRx(false);
-      // Use setTimeout to ensure the print template is rendered
-      setTimeout(() => {
-        handlePrintRx();
-        fetchData(); // Refresh to show saved form
-      }, 300);
+      // Open print preview dialog
+      setPrintPreviewData({
+        medicines: rxData.medications,
+        title: 'Print Prescription',
+        notes: rxData.notes
+      });
+      setShowPrintPreview(true);
+      fetchData(); // Refresh to show saved form
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save prescription'));
     }
@@ -1281,7 +1289,15 @@ const VisitDetailPage = () => {
                       </div>
                     )}
                     <Button 
-                      onClick={() => { setShowViewRx(false); reprintPrescription(selectedPrescription); }}
+                      onClick={() => { 
+                        setShowViewRx(false); 
+                        setPrintPreviewData({
+                          medicines: selectedPrescription.medications,
+                          title: 'Print Prescription',
+                          notes: selectedPrescription.notes
+                        });
+                        setShowPrintPreview(true);
+                      }}
                       className="w-full bg-[#0F766E] hover:bg-[#115E59]"
                     >
                       <Printer className="w-4 h-4 mr-2" />
@@ -1834,6 +1850,17 @@ const VisitDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Print Preview Dialog */}
+      <PrintPreviewDialog
+        open={showPrintPreview}
+        onOpenChange={setShowPrintPreview}
+        title={printPreviewData.title}
+        patient={patient}
+        doctor={user}
+        clinicSettings={settings}
+        medicines={printPreviewData.medicines}
+      />
     </div>
   );
 };

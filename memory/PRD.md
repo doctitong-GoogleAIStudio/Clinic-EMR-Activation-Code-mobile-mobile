@@ -110,6 +110,11 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
   - Live preview panel
   - Settings persistence via localStorage
   - Modular design for future reuse with other print types
+- **Mar 8, 2026**: **Print Settings Integration with Visit Details** - Integrated PrintPreviewDialog into VisitDetailPage:
+  - Creates prescription → Shows print preview dialog with live settings preview
+  - View saved prescription → "Print Prescription" button opens print preview dialog
+  - Settings tab in dialog allows real-time adjustments before printing
+  - Fixed bug: changed `clinicSettings` prop to correct `settings` variable
 
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
