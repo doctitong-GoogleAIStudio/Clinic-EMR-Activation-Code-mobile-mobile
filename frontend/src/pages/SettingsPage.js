@@ -1472,6 +1472,11 @@ const SettingsPage = () => {
                     <p className="font-medium text-sm text-slate-900">User Guide</p>
                     <p className="text-xs text-slate-500">Step-by-step help</p>
                   </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-center">
+                    <Printer className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Print Settings</p>
+                    <p className="text-xs text-slate-500">Customize all forms</p>
+                  </div>
                 </div>
               </div>
 
