@@ -148,16 +148,24 @@ const PrintPreviewDialog = ({
     // Save settings before printing
     savePrintSettings(settings);
 
-    // Create print window
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Please allow pop-ups to print');
-      return;
-    }
+    // Convert paper size to mm for better browser compatibility
+    const toMM = (value, unit) => {
+      switch (unit) {
+        case 'in': return value * 25.4;
+        case 'cm': return value * 10;
+        case 'mm': return value;
+        default: return value * 25.4;
+      }
+    };
+
+    const paperWidthMM = toMM(settings.paperWidth, settings.paperUnit);
+    const paperHeightMM = toMM(settings.paperHeight, settings.paperUnit);
 
     const paperCSS = {
       width: `${settings.paperWidth}${settings.paperUnit}`,
       height: `${settings.paperHeight}${settings.paperUnit}`,
+      widthMM: `${paperWidthMM}mm`,
+      heightMM: `${paperHeightMM}mm`,
     };
     
     // Generate medicines HTML
@@ -358,16 +366,56 @@ const PrintPreviewDialog = ({
         </div>
         <script>
           window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
+            // Show paper size reminder
+            var paperInfo = 'Paper size: ${paperCSS.width} x ${paperCSS.height} (${Math.round(paperWidthMM)} x ${Math.round(paperHeightMM)} mm)';
+            console.log(paperInfo);
+            
+            // Slight delay to ensure content is rendered
+            setTimeout(function() {
+              window.print();
+            }, 100);
+            
+            window.onafterprint = function() { 
+              window.close(); 
+            };
           };
         </script>
       </body>
       </html>
     `;
 
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
+    // Use iframe method for better print control
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentDocument || printFrame.contentWindow.document;
+    frameDoc.open();
+    frameDoc.write(printHTML);
+    frameDoc.close();
+
+    // Wait for content to load then print
+    printFrame.onload = () => {
+      setTimeout(() => {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        
+        // Clean up after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(printFrame);
+        }, 1000);
+      }, 250);
+    };
+
+    // Show paper size reminder to user
+    toast.info(`Paper size: ${settings.paperWidth}${settings.paperUnit} × ${settings.paperHeight}${settings.paperUnit}. Please select this size in print dialog.`, {
+      duration: 5000,
+    });
     
     if (onPrint) onPrint();
   };
@@ -476,6 +524,16 @@ const PrintPreviewDialog = ({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Paper size reminder */}
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+              <p className="text-amber-800">
+                <strong>Paper Size:</strong> {settings.paperWidth}{settings.paperUnit} × {settings.paperHeight}{settings.paperUnit}
+              </p>
+              <p className="text-amber-700 text-xs mt-1">
+                In the print dialog, select "More settings" → Paper size → Choose matching size or "Custom"
+              </p>
             </div>
 
             <div className="flex gap-2 justify-end">
