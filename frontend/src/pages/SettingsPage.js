@@ -16,6 +16,7 @@ import {
   Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import UserGuidePage from './UserGuidePage';
+import PrescriptionPrintSettings from '../components/PrescriptionPrintSettings';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
@@ -387,6 +388,12 @@ const SettingsPage = () => {
             <BookOpen className="w-4 h-4 mr-2" />
             User Guide
           </TabsTrigger>
+          {(isAdmin || isDoctor) && (
+            <TabsTrigger value="print-settings" data-testid="tab-print-settings">
+              <Printer className="w-4 h-4 mr-2" />
+              Print Settings
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Clinic Settings */}
@@ -1574,6 +1581,13 @@ const SettingsPage = () => {
         <TabsContent value="guide">
           <UserGuidePage />
         </TabsContent>
+
+        {/* Print Settings Tab */}
+        {(isAdmin || isDoctor) && (
+          <TabsContent value="print-settings">
+            <PrescriptionPrintSettings doctor={user} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

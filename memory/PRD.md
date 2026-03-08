@@ -102,6 +102,14 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **Mar 6, 2026**: **Added User Guide Page** - Comprehensive step-by-step user guide added to Settings page with separate guides for Doctors and Receptionists. Includes collapsible sections for Login, Patients, Appointments, SOAP Notes, Prescriptions, Labs, Printing, and Troubleshooting.
 - **Mar 6, 2026**: **Updated User Guide** - Changed "Doctor Guide" to "Doctor's Guide" and "Receptionist Guide" to "Receptionist's Guide". Added Section 11: "Create & Manage Receptionists" with instructions for creating, viewing, editing, and deleting receptionist accounts.
 - **Mar 6, 2026**: **Added Data Import Feature** - New "Imports" tab in Settings for importing Patient Registry and Visit Records from JSON files. Includes validation, error reporting, and format examples. Backend endpoints: POST /api/import/patients, POST /api/import/visits.
+- **Mar 8, 2026**: **Prescription Print Settings** - Added comprehensive print settings panel with:
+  - Paper size customization (presets: 8x4in, 5x3in, A5, A6, custom)
+  - Layout position settings (top/bottom/left/right offsets, content width)
+  - Typography settings (font size, line spacing, section spacing)
+  - Section visibility toggles (header, patient info, Rx label, signature, footer, date, age/sex, quantity, doctor name, license no.)
+  - Live preview panel
+  - Settings persistence via localStorage
+  - Modular design for future reuse with other print types
 
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
