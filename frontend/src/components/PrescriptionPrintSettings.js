@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Printer, Settings, Eye, RotateCcw, Save, FileText, 
-  Ruler, Type, Layout, CheckSquare
+  Ruler, Type, Layout, CheckSquare, Download, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -112,6 +112,49 @@ const PrescriptionPrintSettings = ({
     setSettings(DEFAULT_SETTINGS);
     localStorage.removeItem(STORAGE_KEY);
     toast.info('Settings restored to defaults');
+  };
+
+  // Export settings to JSON file
+  const exportSettings = () => {
+    const dataStr = JSON.stringify(settings, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `print-settings-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Settings exported successfully');
+  };
+
+  // Import settings from JSON file
+  const importSettings = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        // Validate that it has expected keys
+        if (typeof imported.paperWidth === 'number' && typeof imported.paperHeight === 'number') {
+          const mergedSettings = { ...DEFAULT_SETTINGS, ...imported };
+          setSettings(mergedSettings);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
+          toast.success('Settings imported successfully');
+        } else {
+          toast.error('Invalid settings file format');
+        }
+      } catch (err) {
+        toast.error('Failed to parse settings file');
+        console.error('Import error:', err);
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input
+    event.target.value = '';
   };
 
   // Convert units to pixels for preview (approximate)
@@ -691,6 +734,31 @@ const PrescriptionPrintSettings = ({
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Restore Defaults
                 </Button>
+              </div>
+
+              {/* Export/Import Buttons */}
+              <div className="flex gap-2 mt-3">
+                <Button onClick={exportSettings} variant="outline" className="flex-1">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Settings
+                </Button>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={importSettings}
+                    className="hidden"
+                    id="import-settings-input"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => document.getElementById('import-settings-input').click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Settings
+                  </Button>
+                </div>
               </div>
               
               {prescription && (
