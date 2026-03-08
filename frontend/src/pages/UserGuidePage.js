@@ -439,6 +439,79 @@ const UserGuidePage = () => {
               The receptionist will immediately lose access to the system.
             </Warning>
           </SectionHeader>
+
+          {/* 12. Print Settings */}
+          <SectionHeader id="doc-print-settings" icon={Printer} title="12. Print Settings">
+            <h4 className="font-medium text-slate-900 mb-3">Accessing Print Settings</h4>
+            <Step number="1">Click <strong>Settings</strong> in the left sidebar</Step>
+            <Step number="2">Click the <strong>Print Settings</strong> tab</Step>
+            
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Form Types</h4>
+            <p className="text-slate-600 text-sm mb-3">
+              You can customize print settings for each form type independently:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="font-medium text-slate-900">Prescription</p>
+                <p className="text-xs text-slate-600">Default: 8 × 4 inches</p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                <p className="font-medium text-slate-900">Medical Certificate</p>
+                <p className="text-xs text-slate-600">Default: Letter (8.5 × 11 in)</p>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="font-medium text-slate-900">Fit-to-Work</p>
+                <p className="text-xs text-slate-600">Default: Letter (8.5 × 11 in)</p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="font-medium text-slate-900">Referral Letter</p>
+                <p className="text-xs text-slate-600">Default: Letter (8.5 × 11 in)</p>
+              </div>
+              <div className="p-3 bg-rose-50 rounded-lg border border-rose-200">
+                <p className="font-medium text-slate-900">Lab/Imaging Request</p>
+                <p className="text-xs text-slate-600">Default: Letter (8.5 × 11 in)</p>
+              </div>
+            </div>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Available Settings</h4>
+            <Checklist items={[
+              "Paper Size - Choose preset sizes or set custom dimensions",
+              "Layout - Adjust top, bottom, left, right offsets and content width",
+              "Sections - Show/hide header, patient info, signature, footer, date, etc.",
+              "Typography - Set font size, line spacing, and section spacing"
+            ]} />
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Configuring Print Settings</h4>
+            <Step number="1">Select a form type (Prescription, Certificate, etc.)</Step>
+            <Step number="2">Adjust Paper, Layout, Sections, or Text settings</Step>
+            <Step number="3">Preview changes in real-time on the right panel</Step>
+            <Step number="4">Click <Badge variant="outline" className="bg-[#0F766E] text-white">Save Settings</Badge></Step>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Export & Import Settings</h4>
+            <Step number="1">Click <Badge variant="outline">Export All</Badge> to download all print settings as a JSON file</Step>
+            <Step number="2">Click <Badge variant="outline">Import</Badge> to load settings from a previously exported file</Step>
+            
+            <Tip>
+              <strong>Copy Settings:</strong> Use the "Copy Settings To" buttons to quickly apply the same 
+              settings from one form type to another.
+            </Tip>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Print Preview Dialog</h4>
+            <p className="text-slate-600 text-sm mb-3">
+              When printing any form from the Visit Details page, a preview dialog will appear showing:
+            </p>
+            <Checklist items={[
+              "Live preview of the form with your saved settings",
+              "Settings tab to adjust paper size and visibility options",
+              "Paper size reminder to help you select the correct size in the browser print dialog"
+            ]} />
+
+            <Warning>
+              <strong>Browser Print Dialog:</strong> After clicking "Print", you may need to select the correct 
+              paper size in your browser's print dialog. Look for "More settings" → "Paper size" and choose the 
+              matching size or "Custom".
+            </Warning>
+          </SectionHeader>
         </TabsContent>
 
         {/* ============ RECEPTIONIST GUIDE ============ */}
