@@ -182,10 +182,17 @@ const PrintPreviewDialog = ({
           
           @page {
             size: ${paperCSS.width} ${paperCSS.height};
-            margin: 0;
+            margin: 0 !important;
           }
           
-          body {
+          html, body {
+            width: ${paperCSS.width};
+            height: ${paperCSS.height};
+            max-width: ${paperCSS.width};
+            max-height: ${paperCSS.height};
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden;
             font-family: 'Times New Roman', Times, serif;
             font-size: ${settings.fontSize}px;
             line-height: ${settings.lineSpacing};
@@ -195,10 +202,15 @@ const PrintPreviewDialog = ({
           
           .prescription-container {
             width: ${paperCSS.width};
-            min-height: ${paperCSS.height};
+            height: ${paperCSS.height};
+            max-width: ${paperCSS.width};
+            max-height: ${paperCSS.height};
             padding: ${settings.topOffset}px ${settings.rightOffset}px ${settings.bottomOffset}px ${settings.leftOffset}px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            page-break-after: avoid;
+            page-break-inside: avoid;
           }
           
           .content-area {
@@ -206,6 +218,7 @@ const PrintPreviewDialog = ({
             flex: 1;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
           }
           
           .header-section {
@@ -272,7 +285,16 @@ const PrintPreviewDialog = ({
           }
           
           @media print {
-            body { margin: 0; }
+            html, body {
+              width: ${paperCSS.width} !important;
+              height: ${paperCSS.height} !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .prescription-container {
+              width: ${paperCSS.width} !important;
+              height: ${paperCSS.height} !important;
+            }
           }
         </style>
       </head>
