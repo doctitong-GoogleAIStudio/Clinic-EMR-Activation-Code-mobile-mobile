@@ -115,6 +115,15 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
   - View saved prescription → "Print Prescription" button opens print preview dialog
   - Settings tab in dialog allows real-time adjustments before printing
   - Fixed bug: changed `clinicSettings` prop to correct `settings` variable
+- **Mar 8, 2026**: **Extended Print Settings to All Form Types** - Major update to support all form types:
+  - PrintPreviewDialog now supports: Prescription, Medical Certificate, Fit-to-Work, Referral Letter, Lab/Imaging Request
+  - Settings > Print Settings page updated with form type selector (5 tabs with icons)
+  - Each form type has its own dedicated settings stored separately in localStorage
+  - Default paper sizes: Prescription (8x4in), Certificates/Referrals/Lab Requests (Letter 8.5x11in)
+  - "Copy Settings To" feature allows copying settings between form types
+  - "Export All" exports settings for all form types to a single JSON file
+  - Live preview updates based on selected form type
+  - VisitDetailPage now opens print preview dialog for all form types (not just prescriptions)
 
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
@@ -125,5 +134,4 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [ ] Simple inventory management
 - [ ] Billing/OR and receipt printing
 - [ ] Email/SMS appointment reminders
-- [ ] Differentiate print forms for Fit-to-Work vs Referral letters
-- [ ] Refactor: Extract print template logic into reusable components
+- [ ] Refactor: Extract duplicated file upload UI into reusable component

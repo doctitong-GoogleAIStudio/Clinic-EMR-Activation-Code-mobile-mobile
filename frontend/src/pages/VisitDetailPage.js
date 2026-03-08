@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
-import PrintPreviewDialog from '../components/PrintPreviewDialog';
+import PrintPreviewDialog, { FORM_TYPES } from '../components/PrintPreviewDialog';
 
 const VisitDetailPage = () => {
   const { visitId } = useParams();
@@ -41,9 +41,10 @@ const VisitDetailPage = () => {
   const [showViewCert, setShowViewCert] = useState(false);
   const [showViewLabReq, setShowViewLabReq] = useState(false);
   
-  // Print Preview Dialog state
+  // Print Preview Dialog state - now supports multiple form types
   const [showPrintPreview, setShowPrintPreview] = useState(false);
-  const [printPreviewData, setPrintPreviewData] = useState({ medicines: [], title: 'Print Prescription' });
+  const [printPreviewFormType, setPrintPreviewFormType] = useState(FORM_TYPES.PRESCRIPTION);
+  const [printPreviewData, setPrintPreviewData] = useState({});
   
   // Labs & Imaging state
   const [labAttachments, setLabAttachments] = useState([]);
@@ -223,11 +224,8 @@ const VisitDetailPage = () => {
       // Close dialog first
       setShowRx(false);
       // Open print preview dialog
-      setPrintPreviewData({
-        medicines: rxData.medications,
-        title: 'Print Prescription',
-        notes: rxData.notes
-      });
+      setPrintPreviewFormType(FORM_TYPES.PRESCRIPTION);
+      setPrintPreviewData({ medicines: rxData.medications });
       setShowPrintPreview(true);
       fetchData(); // Refresh to show saved form
     } catch (error) {
@@ -248,13 +246,19 @@ const VisitDetailPage = () => {
       setShowMedCert(false);
       setShowFitToWork(false);
       setShowReferral(false);
-      // Then print after a short delay
-      setTimeout(() => {
-        if (type === 'medical_certificate') handlePrintMedCert();
-        else if (type === 'fit_to_work') handlePrintFitToWork();
-        else if (type === 'referral') handlePrintReferral();
-        fetchData(); // Refresh to show saved form
-      }, 300);
+      // Open print preview dialog based on type
+      if (type === 'medical_certificate') {
+        setPrintPreviewFormType(FORM_TYPES.MEDICAL_CERTIFICATE);
+        setPrintPreviewData({ certificateData: data });
+      } else if (type === 'fit_to_work') {
+        setPrintPreviewFormType(FORM_TYPES.FIT_TO_WORK);
+        setPrintPreviewData({ certificateData: data });
+      } else if (type === 'referral') {
+        setPrintPreviewFormType(FORM_TYPES.REFERRAL);
+        setPrintPreviewData({ referralData: data });
+      }
+      setShowPrintPreview(true);
+      fetchData(); // Refresh to show saved form
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save certificate'));
     }
@@ -326,10 +330,11 @@ const VisitDetailPage = () => {
       });
       toast.success('Lab/Imaging request saved');
       setShowLabRequest(false);
-      setTimeout(() => {
-        handlePrintLabRequest();
-        fetchData();
-      }, 300);
+      // Open print preview dialog
+      setPrintPreviewFormType(FORM_TYPES.LAB_REQUEST);
+      setPrintPreviewData({ labRequestData: labRequestData });
+      setShowPrintPreview(true);
+      fetchData();
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save request'));
     }
@@ -1291,10 +1296,9 @@ const VisitDetailPage = () => {
                     <Button 
                       onClick={() => { 
                         setShowViewRx(false); 
+                        setPrintPreviewFormType(FORM_TYPES.PRESCRIPTION);
                         setPrintPreviewData({
-                          medicines: selectedPrescription.medications,
-                          title: 'Print Prescription',
-                          notes: selectedPrescription.notes
+                          medicines: selectedPrescription.medications
                         });
                         setShowPrintPreview(true);
                       }}
@@ -1397,7 +1401,21 @@ const VisitDetailPage = () => {
                     )}
 
                     <Button 
-                      onClick={() => { setShowViewCert(false); reprintCertificate(selectedCertificate); }}
+                      onClick={() => { 
+                        setShowViewCert(false); 
+                        const certType = selectedCertificate.certificate_type;
+                        if (certType === 'medical_certificate') {
+                          setPrintPreviewFormType(FORM_TYPES.MEDICAL_CERTIFICATE);
+                          setPrintPreviewData({ certificateData: selectedCertificate.content });
+                        } else if (certType === 'fit_to_work') {
+                          setPrintPreviewFormType(FORM_TYPES.FIT_TO_WORK);
+                          setPrintPreviewData({ certificateData: selectedCertificate.content });
+                        } else if (certType === 'referral') {
+                          setPrintPreviewFormType(FORM_TYPES.REFERRAL);
+                          setPrintPreviewData({ referralData: selectedCertificate.content });
+                        }
+                        setShowPrintPreview(true);
+                      }}
                       className="w-full bg-[#0F766E] hover:bg-[#115E59]"
                     >
                       <Printer className="w-4 h-4 mr-2" />
@@ -1453,7 +1471,19 @@ const VisitDetailPage = () => {
                       </div>
                     </div>
                     <Button 
-                      onClick={() => { setShowViewLabReq(false); reprintLabRequest(selectedLabRequest); }}
+                      onClick={() => { 
+                        setShowViewLabReq(false); 
+                        setPrintPreviewFormType(FORM_TYPES.LAB_REQUEST);
+                        setPrintPreviewData({ 
+                          labRequestData: {
+                            request_type: selectedLabRequest.request_type,
+                            tests: selectedLabRequest.tests,
+                            clinical_info: selectedLabRequest.clinical_info,
+                            urgency: selectedLabRequest.urgency
+                          }
+                        });
+                        setShowPrintPreview(true);
+                      }}
                       className="w-full bg-[#0F766E] hover:bg-[#115E59]"
                     >
                       <Printer className="w-4 h-4 mr-2" />
@@ -1851,15 +1881,18 @@ const VisitDetailPage = () => {
         )}
       </div>
 
-      {/* Print Preview Dialog */}
+      {/* Print Preview Dialog - supports all form types */}
       <PrintPreviewDialog
         open={showPrintPreview}
         onOpenChange={setShowPrintPreview}
-        title={printPreviewData.title}
+        formType={printPreviewFormType}
         patient={patient}
         doctor={user}
         clinicSettings={settings}
-        medicines={printPreviewData.medicines}
+        medicines={printPreviewData.medicines || []}
+        certificateData={printPreviewData.certificateData || {}}
+        referralData={printPreviewData.referralData || {}}
+        labRequestData={printPreviewData.labRequestData || {}}
       />
     </div>
   );

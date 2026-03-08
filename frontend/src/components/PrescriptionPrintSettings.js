@@ -8,77 +8,103 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Printer, Settings, Eye, RotateCcw, Save, FileText, 
-  Ruler, Type, Layout, CheckSquare, Download, Upload
+  Ruler, Type, Layout, CheckSquare, Download, Upload,
+  Pill, Award, Briefcase, Send, Microscope
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// Default print settings
-const DEFAULT_SETTINGS = {
-  // Paper size
-  paperWidth: 8,
-  paperHeight: 4,
-  paperUnit: 'in',
-  paperPreset: 'custom',
-  
-  // Layout position
-  topOffset: 110,
-  leftOffset: 40,
-  rightOffset: 40,
-  bottomOffset: 20,
-  contentWidth: 720,
-  
-  // Typography
-  fontSize: 16,
-  lineSpacing: 1.4,
-  sectionSpacing: 12,
-  
-  // Section visibility
-  showHeader: false,
-  showPatientInfo: true,
-  showRxLabel: true,
-  showSignatureSection: false,
-  showFooter: false,
-  showDate: true,
-  showAgeSex: true,
-  showQuantity: true,
-  showDoctorName: true,
-  showLicenseNumber: true,
-};
+import { loadPrintSettings, savePrintSettings, FORM_TYPES } from './PrintPreviewDialog';
 
 // Paper presets
 const PAPER_PRESETS = {
-  '8x4': { width: 8, height: 4, unit: 'in', label: '8 × 4 inches' },
+  '8x4': { width: 8, height: 4, unit: 'in', label: '8 × 4 inches (Prescription)' },
   '5x3': { width: 5, height: 3, unit: 'in', label: '5 × 3 inches' },
   'a5': { width: 148, height: 210, unit: 'mm', label: 'A5 (148 × 210 mm)' },
   'a6': { width: 105, height: 148, unit: 'mm', label: 'A6 (105 × 148 mm)' },
   'half-letter': { width: 5.5, height: 8.5, unit: 'in', label: 'Half Letter (5.5 × 8.5 in)' },
+  'letter': { width: 8.5, height: 11, unit: 'in', label: 'Letter (8.5 × 11 in)' },
+  'legal': { width: 8.5, height: 14, unit: 'in', label: 'Legal (8.5 × 14 in)' },
   'custom': { width: 8, height: 4, unit: 'in', label: 'Custom' },
 };
 
-const STORAGE_KEY = 'emr_prescription_print_settings';
+// Form type configuration
+const FORM_TYPE_CONFIG = {
+  prescription: {
+    label: 'Prescription',
+    icon: Pill,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    description: 'Settings for prescription print layout',
+  },
+  medical_certificate: {
+    label: 'Medical Certificate',
+    icon: Award,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    description: 'Settings for medical certificate print layout',
+  },
+  fit_to_work: {
+    label: 'Fit-to-Work',
+    icon: Briefcase,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    description: 'Settings for fit-to-work certificate print layout',
+  },
+  referral: {
+    label: 'Referral Letter',
+    icon: Send,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    description: 'Settings for referral letter print layout',
+  },
+  lab_request: {
+    label: 'Lab/Imaging Request',
+    icon: Microscope,
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-50',
+    description: 'Settings for laboratory and imaging request print layout',
+  },
+};
 
-const PrescriptionPrintSettings = ({ 
-  prescription = null, 
-  patient = null, 
-  doctor = null,
-  onClose = null,
-  isModal = false 
-}) => {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [activeTab, setActiveTab] = useState('paper');
+// Section options per form type
+const getSectionOptions = (formType) => {
+  const common = [
+    { key: 'showHeader', label: 'Show Header' },
+    { key: 'showPatientInfo', label: 'Show Patient Info' },
+    { key: 'showSignatureSection', label: 'Show Signature' },
+    { key: 'showFooter', label: 'Show Footer' },
+    { key: 'showDate', label: 'Show Date' },
+    { key: 'showAgeSex', label: 'Show Age/Sex' },
+    { key: 'showDoctorName', label: 'Show Doctor Name' },
+    { key: 'showLicenseNumber', label: 'Show License No.' },
+  ];
 
-  // Load settings from localStorage on mount
+  if (formType === 'prescription') {
+    return [
+      ...common.slice(0, 2),
+      { key: 'showRxLabel', label: 'Show Rx Label' },
+      ...common.slice(2),
+      { key: 'showQuantity', label: 'Show Quantity' },
+    ];
+  }
+
+  if (formType === 'lab_request') {
+    return [
+      ...common,
+      { key: 'showUrgency', label: 'Show Urgency Badge' },
+    ];
+  }
+
+  return common;
+};
+
+const PrescriptionPrintSettings = ({ doctor = null }) => {
+  const [activeFormType, setActiveFormType] = useState('prescription');
+  const [settings, setSettings] = useState(() => loadPrintSettings('prescription'));
+
+  // Load settings when form type changes
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-      } catch (e) {
-        console.error('Failed to parse saved settings:', e);
-      }
-    }
-  }, []);
+    setSettings(loadPrintSettings(activeFormType));
+  }, [activeFormType]);
 
   // Update setting helper
   const updateSetting = (key, value) => {
@@ -101,35 +127,43 @@ const PrescriptionPrintSettings = ({
     }
   };
 
-  // Save settings to localStorage
-  const saveSettings = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    toast.success('Print settings saved');
+  // Save settings
+  const handleSaveSettings = () => {
+    savePrintSettings(settings, activeFormType);
+    toast.success(`${FORM_TYPE_CONFIG[activeFormType].label} settings saved`);
   };
 
-  // Restore default settings
-  const restoreDefaults = () => {
-    setSettings(DEFAULT_SETTINGS);
-    localStorage.removeItem(STORAGE_KEY);
+  // Restore defaults
+  const handleRestoreDefaults = () => {
+    const defaultSettings = loadPrintSettings(activeFormType);
+    // Clear localStorage for this form type
+    localStorage.removeItem(`emr_print_settings_${activeFormType}`);
+    setSettings(loadPrintSettings(activeFormType));
     toast.info('Settings restored to defaults');
   };
 
-  // Export settings to JSON file
+  // Export settings
   const exportSettings = () => {
-    const dataStr = JSON.stringify(settings, null, 2);
+    // Export all form type settings
+    const allSettings = {};
+    Object.keys(FORM_TYPE_CONFIG).forEach(type => {
+      allSettings[type] = loadPrintSettings(type);
+    });
+    
+    const dataStr = JSON.stringify(allSettings, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `print-settings-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `print-settings-all-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Settings exported successfully');
+    toast.success('All print settings exported');
   };
 
-  // Import settings from JSON file
+  // Import settings
   const importSettings = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -138,12 +172,22 @@ const PrescriptionPrintSettings = ({
     reader.onload = (e) => {
       try {
         const imported = JSON.parse(e.target.result);
-        // Validate that it has expected keys
-        if (typeof imported.paperWidth === 'number' && typeof imported.paperHeight === 'number') {
-          const mergedSettings = { ...DEFAULT_SETTINGS, ...imported };
-          setSettings(mergedSettings);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
-          toast.success('Settings imported successfully');
+        
+        // Check if it's multi-form type format or single form type
+        if (imported.prescription || imported.medical_certificate) {
+          // Multi-form type format
+          Object.keys(imported).forEach(type => {
+            if (FORM_TYPE_CONFIG[type] && imported[type]) {
+              savePrintSettings(imported[type], type);
+            }
+          });
+          setSettings(loadPrintSettings(activeFormType));
+          toast.success('All print settings imported');
+        } else if (typeof imported.paperWidth === 'number') {
+          // Single form type format - import to current form type
+          setSettings(prev => ({ ...prev, ...imported }));
+          savePrintSettings({ ...settings, ...imported }, activeFormType);
+          toast.success(`Settings imported to ${FORM_TYPE_CONFIG[activeFormType].label}`);
         } else {
           toast.error('Invalid settings file format');
         }
@@ -153,11 +197,16 @@ const PrescriptionPrintSettings = ({
       }
     };
     reader.readAsText(file);
-    // Reset file input
     event.target.value = '';
   };
 
-  // Convert units to pixels for preview (approximate)
+  // Copy settings to another form type
+  const copySettingsTo = (targetFormType) => {
+    savePrintSettings(settings, targetFormType);
+    toast.success(`Settings copied to ${FORM_TYPE_CONFIG[targetFormType].label}`);
+  };
+
+  // Convert units to pixels for preview
   const toPixels = (value, unit) => {
     switch (unit) {
       case 'in': return value * 96;
@@ -167,370 +216,160 @@ const PrescriptionPrintSettings = ({
     }
   };
 
-  // Get paper dimensions in CSS
-  const getPaperCSS = () => {
-    return {
-      width: `${settings.paperWidth}${settings.paperUnit}`,
-      height: `${settings.paperHeight}${settings.paperUnit}`,
-    };
-  };
+  // Preview scale
+  const previewScale = 0.35;
+  const widthPx = toPixels(settings.paperWidth, settings.paperUnit) * previewScale;
+  const heightPx = toPixels(settings.paperHeight, settings.paperUnit) * previewScale;
 
-  // Print prescription
-  const handlePrint = () => {
-    if (!prescription || !prescription.medicines || prescription.medicines.length === 0) {
-      toast.error('No prescription to print.');
-      return;
-    }
+  const currentConfig = FORM_TYPE_CONFIG[activeFormType];
+  const IconComponent = currentConfig.icon;
 
-    // Create print window
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Please allow pop-ups to print');
-      return;
-    }
-
-    const paperCSS = getPaperCSS();
+  // Render preview based on form type
+  const renderPreview = () => {
+    const scaledFontSize = settings.fontSize * previewScale;
     
-    // Generate medicines HTML
-    const medicinesHTML = prescription.medicines.map((med, idx) => `
-      <div class="medicine-item" style="margin-bottom: ${settings.sectionSpacing}px;">
-        <div class="medicine-name" style="font-weight: 600;">${idx + 1}. ${med.name} ${med.dosage || ''}</div>
-        <div class="medicine-sig" style="margin-left: 20px; color: #444;">
-          Sig: ${med.sig || med.instructions || 'As directed'}
-          ${settings.showQuantity && med.quantity ? `<span style="margin-left: 20px;">#${med.quantity}</span>` : ''}
-        </div>
-      </div>
-    `).join('');
-
-    // Generate print HTML
-    const printHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Prescription - ${patient?.full_name || 'Patient'}</title>
-        <style>
-          /* Reset */
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          
-          /* Page setup */
-          @page {
-            size: ${paperCSS.width} ${paperCSS.height};
-            margin: 0;
-          }
-          
-          body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: ${settings.fontSize}px;
-            line-height: ${settings.lineSpacing};
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          
-          /* Prescription container */
-          .prescription-print-container {
-            width: ${paperCSS.width};
-            height: ${paperCSS.height};
-            padding-top: ${settings.topOffset}px;
-            padding-left: ${settings.leftOffset}px;
-            padding-right: ${settings.rightOffset}px;
-            padding-bottom: ${settings.bottomOffset}px;
-            display: flex;
-            flex-direction: column;
-          }
-          
-          .content-area {
-            max-width: ${settings.contentWidth}px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-          
-          .medicines-list {
-            flex-grow: 1;
-            margin-left: 10px;
-          }
-          
-          /* Header section */
-          .header-section {
-            text-align: center;
-            margin-bottom: ${settings.sectionSpacing * 2}px;
-            border-bottom: 1px solid #333;
-            padding-bottom: ${settings.sectionSpacing}px;
-          }
-          
-          .clinic-name {
-            font-size: ${settings.fontSize + 4}px;
-            font-weight: bold;
-          }
-          
-          .doctor-name-header {
-            font-size: ${settings.fontSize + 2}px;
-            font-weight: 600;
-          }
-          
-          .clinic-address {
-            font-size: ${settings.fontSize - 2}px;
-            color: #555;
-          }
-          
-          /* Patient info */
-          .patient-info {
-            margin-bottom: ${settings.sectionSpacing * 1.5}px;
-          }
-          
-          .patient-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-          }
-          
-          .patient-name {
-            font-weight: 600;
-          }
-          
-          /* Rx section */
-          .rx-section {
-            margin-bottom: ${settings.sectionSpacing}px;
-          }
-          
-          .rx-symbol {
-            font-size: ${settings.fontSize + 8}px;
-            font-weight: bold;
-            font-style: italic;
-            margin-bottom: ${settings.sectionSpacing}px;
-          }
-          
-          /* Medicines */
-          .medicines-list {
-            margin-left: 10px;
-          }
-          
-          .medicine-item {
-            margin-bottom: ${settings.sectionSpacing}px;
-          }
-          
-          /* Signature section */
-          .signature-section {
-            text-align: right;
-            margin-top: auto;
-            padding-top: ${settings.sectionSpacing}px;
-          }
-          
-          .signature-inner {
-            display: inline-block;
-            text-align: center;
-            min-width: 200px;
-          }
-          
-          .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 30px;
-            padding-top: 5px;
-          }
-          
-          .license-info {
-            font-size: ${settings.fontSize - 2}px;
-            color: #555;
-          }
-          
-          /* Footer */
-          .footer-section {
-            font-size: ${settings.fontSize - 4}px;
-            color: #777;
-            margin-top: ${settings.sectionSpacing}px;
-          }
-          
-          @media print {
-            body { margin: 0; }
-            .prescription-print-container { 
-              page-break-after: always;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="prescription-print-container">
-          <div class="content-area">
-            ${settings.showHeader ? `
-              <div class="header-section">
-                <div class="clinic-name">${doctor?.clinic_name || 'Medical Clinic'}</div>
-                <div class="doctor-name-header">${doctor?.full_name || 'Doctor'}</div>
-                <div class="clinic-address">${doctor?.clinic_address || ''}</div>
-              </div>
-            ` : ''}
-            
-            ${settings.showPatientInfo ? `
-              <div class="patient-info">
-                <div class="patient-row">
-                  <span class="patient-name">${patient?.full_name || 'Patient Name'}</span>
-                  ${settings.showDate ? `<span class="date">Date: ${new Date().toLocaleDateString()}</span>` : ''}
-                </div>
-                ${settings.showAgeSex ? `
-                  <div class="patient-row">
-                    <span>Age: ${patient?.age || 'N/A'} | Sex: ${patient?.sex || 'N/A'}</span>
-                    <span>${patient?.address || ''}</span>
-                  </div>
-                ` : ''}
-              </div>
-            ` : ''}
-            
-            ${settings.showRxLabel ? `
-              <div class="rx-section">
-                <div class="rx-symbol">Rx</div>
-              </div>
-            ` : ''}
-            
-            <div class="medicines-list">
-              ${medicinesHTML}
+    const renderPrescriptionPreview = () => (
+      <>
+        {settings.showPatientInfo && (
+          <div className="mb-2">
+            <div className="flex justify-between">
+              <span className="font-bold">Patient Name</span>
+              {settings.showDate && <span style={{ fontSize: scaledFontSize }}>Date: {new Date().toLocaleDateString()}</span>}
             </div>
-            
-            ${settings.showSignatureSection ? `
-              <div class="signature-section">
-                <div class="signature-inner">
-                  <div class="signature-line">
-                    ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
-                    ${settings.showLicenseNumber ? `
-                      <div class="license-info">
-                        ${doctor?.license_no ? `Lic. No.: ${doctor.license_no}` : ''}
-                        ${doctor?.ptr_no ? ` | PTR: ${doctor.ptr_no}` : ''}
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
-            ` : ''}
-            
-            ${settings.showFooter ? `
-              <div class="footer-section">
-                Printed from Private Clinic EMR
-              </div>
-            ` : ''}
-          </div>
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() {
-              window.close();
-            };
-          };
-        </script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-  };
-
-  // Preview component
-  const PreviewPanel = () => {
-    const previewScale = 0.5;
-    const widthPx = toPixels(settings.paperWidth, settings.paperUnit) * previewScale;
-    const heightPx = toPixels(settings.paperHeight, settings.paperUnit) * previewScale;
-
-    return (
-      <div className="border rounded-lg p-4 bg-slate-50">
-        <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-          <Eye className="w-4 h-4" />
-          Live Preview
-        </h4>
-        <div 
-          className="bg-white border shadow-sm mx-auto overflow-hidden relative"
-          style={{ 
-            width: `${Math.min(widthPx, 350)}px`, 
-            height: `${Math.min(heightPx, 450)}px`,
-            fontSize: `${settings.fontSize * previewScale}px`,
-            lineHeight: settings.lineSpacing,
-          }}
-        >
-          <div 
-            className="h-full flex flex-col"
-            style={{ 
-              paddingTop: `${settings.topOffset * previewScale}px`,
-              paddingLeft: `${settings.leftOffset * previewScale}px`,
-              paddingRight: `${settings.rightOffset * previewScale}px`,
-              paddingBottom: `${settings.bottomOffset * previewScale}px`,
-            }}
-          >
-            {settings.showHeader && (
-              <div className="text-center border-b pb-1 mb-2">
-                <div className="font-bold" style={{ fontSize: `${(settings.fontSize + 2) * previewScale}px` }}>
-                  Medical Clinic
-                </div>
-                <div style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                  Doctor Name, MD
-                </div>
-              </div>
-            )}
-            
-            {settings.showPatientInfo && (
-              <div className="mb-2">
-                <div className="flex justify-between">
-                  <span className="font-semibold">{patient?.full_name || 'Patient Name'}</span>
-                  {settings.showDate && <span>Date: {new Date().toLocaleDateString()}</span>}
-                </div>
-                {settings.showAgeSex && (
-                  <div className="text-slate-600">Age: 35 | Sex: Male</div>
-                )}
-              </div>
-            )}
-            
-            {settings.showRxLabel && (
-              <div className="font-bold italic text-lg mb-2">Rx</div>
-            )}
-            
-            <div className="space-y-1 flex-grow">
-              <div>
-                <div className="font-semibold">1. Amoxicillin 500mg</div>
-                <div className="ml-3 text-slate-600">Sig: 1 cap TID x 7 days {settings.showQuantity && '#21'}</div>
-              </div>
-              <div>
-                <div className="font-semibold">2. Paracetamol 500mg</div>
-                <div className="ml-3 text-slate-600">Sig: 1 tab q4h PRN {settings.showQuantity && '#10'}</div>
-              </div>
-            </div>
-            
-            {settings.showSignatureSection && (
-              <div className="text-right mt-auto pt-2">
-                <div className="inline-block text-center" style={{ minWidth: '80px' }}>
-                  <div className="border-t border-black pt-1">
-                    {settings.showDoctorName && <div className="text-xs">Doctor Name, MD</div>}
-                    {settings.showLicenseNumber && (
-                      <div style={{ fontSize: `${Math.max((settings.fontSize - 4) * previewScale, 6)}px` }}>
-                        Lic. No.: 12345
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+            {settings.showAgeSex && (
+              <div className="text-slate-600" style={{ fontSize: scaledFontSize }}>Age: 35 | Sex: Male</div>
             )}
           </div>
+        )}
+        {settings.showRxLabel && (
+          <div className="font-bold italic mb-1" style={{ fontSize: (settings.fontSize + 6) * previewScale }}>Rx</div>
+        )}
+        <div className="flex-grow space-y-1 ml-2">
+          <div style={{ fontSize: scaledFontSize }}>
+            <div className="font-semibold">1. Sample Medicine 500mg</div>
+            <div className="ml-2 text-slate-600">Sig: 1 tablet 3x daily for 7 days</div>
+          </div>
         </div>
-        <p className="text-xs text-slate-500 text-center mt-2">
-          Preview at {Math.round(previewScale * 100)}% scale
-        </p>
-      </div>
+      </>
     );
+
+    const renderCertificatePreview = () => (
+      <>
+        <div className="text-center font-bold underline mb-2" style={{ fontSize: (settings.fontSize + 2) * previewScale }}>
+          {activeFormType === 'medical_certificate' ? 'MEDICAL CERTIFICATE' : 'FIT-TO-WORK CERTIFICATE'}
+        </div>
+        {settings.showDate && (
+          <div className="text-right mb-2" style={{ fontSize: scaledFontSize }}>Date: {new Date().toLocaleDateString()}</div>
+        )}
+        <div style={{ fontSize: scaledFontSize }} className="space-y-1">
+          <p>To Whom It May Concern:</p>
+          <p className="indent-4">This is to certify that <strong>Patient Name</strong> was examined...</p>
+        </div>
+      </>
+    );
+
+    const renderReferralPreview = () => (
+      <>
+        <div className="text-center font-bold underline mb-2" style={{ fontSize: (settings.fontSize + 2) * previewScale }}>
+          REFERRAL LETTER
+        </div>
+        {settings.showDate && (
+          <div className="text-right mb-2" style={{ fontSize: scaledFontSize }}>Date: {new Date().toLocaleDateString()}</div>
+        )}
+        <div style={{ fontSize: scaledFontSize }} className="space-y-1">
+          <p>Dear Colleague,</p>
+          <p className="indent-4">I am referring <strong>Patient Name</strong> for your expert evaluation...</p>
+        </div>
+      </>
+    );
+
+    const renderLabRequestPreview = () => (
+      <>
+        <div className="text-center font-bold underline mb-2" style={{ fontSize: (settings.fontSize + 2) * previewScale }}>
+          LABORATORY REQUEST
+        </div>
+        {settings.showUrgency && (
+          <div className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 mb-1">
+            URGENT
+          </div>
+        )}
+        <div style={{ fontSize: scaledFontSize }}>
+          <div><strong>Patient:</strong> Patient Name</div>
+          <div className="mt-1"><strong>Tests:</strong></div>
+          <ul className="ml-3">
+            <li>☐ Complete Blood Count</li>
+            <li>☐ Urinalysis</li>
+          </ul>
+        </div>
+      </>
+    );
+
+    switch (activeFormType) {
+      case 'prescription':
+        return renderPrescriptionPreview();
+      case 'medical_certificate':
+      case 'fit_to_work':
+        return renderCertificatePreview();
+      case 'referral':
+        return renderReferralPreview();
+      case 'lab_request':
+        return renderLabRequestPreview();
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className={isModal ? '' : 'space-y-6'}>
-      <Card className="bg-white border-slate-100 shadow-sm">
+    <div className="space-y-6">
+      <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="font-heading flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2">
             <Printer className="w-5 h-5 text-[#0F766E]" />
-            Prescription Print Settings
+            Print Settings
           </CardTitle>
           <CardDescription>
-            Customize paper size, layout, and visibility options for prescription printing
+            Customize print layout for each form type
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid lg:grid-cols-2 gap-6">
+          {/* Form Type Selector */}
+          <div className="mb-6">
+            <Label className="text-sm font-medium mb-3 block">Select Form Type</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {Object.entries(FORM_TYPE_CONFIG).map(([type, config]) => {
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setActiveFormType(type)}
+                    className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                      activeFormType === type 
+                        ? `border-[#0F766E] ${config.bgColor}` 
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 ${activeFormType === type ? config.color : 'text-slate-500'}`} />
+                    <span className={`text-xs mt-1 text-center ${activeFormType === type ? 'font-medium' : ''}`}>
+                      {config.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Settings Panel */}
-            <div>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="space-y-4">
+              <div className={`p-3 rounded-lg ${currentConfig.bgColor} border`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <IconComponent className={`w-4 h-4 ${currentConfig.color}`} />
+                  <span className="font-medium">{currentConfig.label} Settings</span>
+                </div>
+                <p className="text-xs text-slate-600">{currentConfig.description}</p>
+              </div>
+
+              <Tabs defaultValue="paper">
                 <TabsList className="grid grid-cols-4 mb-4">
                   <TabsTrigger value="paper" className="text-xs">
                     <Ruler className="w-3 h-3 mr-1" />
@@ -540,7 +379,7 @@ const PrescriptionPrintSettings = ({
                     <Layout className="w-3 h-3 mr-1" />
                     Layout
                   </TabsTrigger>
-                  <TabsTrigger value="visibility" className="text-xs">
+                  <TabsTrigger value="sections" className="text-xs">
                     <CheckSquare className="w-3 h-3 mr-1" />
                     Sections
                   </TabsTrigger>
@@ -550,7 +389,7 @@ const PrescriptionPrintSettings = ({
                   </TabsTrigger>
                 </TabsList>
 
-                {/* Paper Size Tab */}
+                {/* Paper Settings */}
                 <TabsContent value="paper" className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium">Paper Preset</Label>
@@ -609,7 +448,7 @@ const PrescriptionPrintSettings = ({
                   </div>
                 </TabsContent>
 
-                {/* Layout Tab */}
+                {/* Layout Settings */}
                 <TabsContent value="layout" className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -660,38 +499,23 @@ const PrescriptionPrintSettings = ({
                   </div>
                 </TabsContent>
 
-                {/* Visibility Tab */}
-                <TabsContent value="visibility" className="space-y-3">
+                {/* Section Visibility */}
+                <TabsContent value="sections" className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { key: 'showHeader', label: 'Show Header' },
-                      { key: 'showPatientInfo', label: 'Show Patient Info' },
-                      { key: 'showRxLabel', label: 'Show Rx Label' },
-                      { key: 'showSignatureSection', label: 'Show Signature' },
-                      { key: 'showFooter', label: 'Show Footer' },
-                      { key: 'showDate', label: 'Show Date' },
-                      { key: 'showAgeSex', label: 'Show Age/Sex' },
-                      { key: 'showQuantity', label: 'Show Quantity' },
-                      { key: 'showDoctorName', label: 'Show Doctor Name' },
-                      { key: 'showLicenseNumber', label: 'Show License No.' },
-                    ].map(({ key, label }) => (
+                    {getSectionOptions(activeFormType).map(({ key, label }) => (
                       <div key={key} className="flex items-center space-x-2">
                         <Checkbox
                           id={key}
-                          checked={settings[key]}
+                          checked={settings[key] || false}
                           onCheckedChange={(checked) => updateSetting(key, checked)}
                         />
                         <Label htmlFor={key} className="text-sm cursor-pointer">{label}</Label>
                       </div>
                     ))}
                   </div>
-                  
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 mt-4">
-                    <strong>Tip:</strong> Turn off Header and Signature if your prescription paper already has pre-printed clinic info.
-                  </div>
                 </TabsContent>
 
-                {/* Typography Tab */}
+                {/* Typography Settings */}
                 <TabsContent value="typography" className="space-y-4">
                   <div>
                     <Label className="text-xs">Font Size (px)</Label>
@@ -726,11 +550,11 @@ const PrescriptionPrintSettings = ({
 
               {/* Action Buttons */}
               <div className="flex gap-2 mt-6 pt-4 border-t">
-                <Button onClick={saveSettings} className="flex-1 bg-[#0F766E] hover:bg-[#115E59]">
+                <Button onClick={handleSaveSettings} className="flex-1 bg-[#0F766E] hover:bg-[#115E59]">
                   <Save className="w-4 h-4 mr-2" />
                   Save Settings
                 </Button>
-                <Button onClick={restoreDefaults} variant="outline">
+                <Button onClick={handleRestoreDefaults} variant="outline">
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Restore Defaults
                 </Button>
@@ -740,7 +564,7 @@ const PrescriptionPrintSettings = ({
               <div className="flex gap-2 mt-3">
                 <Button onClick={exportSettings} variant="outline" className="flex-1">
                   <Download className="w-4 h-4 mr-2" />
-                  Export Settings
+                  Export All
                 </Button>
                 <div className="flex-1">
                   <input
@@ -756,21 +580,109 @@ const PrescriptionPrintSettings = ({
                     onClick={() => document.getElementById('import-settings-input').click()}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Import Settings
+                    Import
                   </Button>
                 </div>
               </div>
-              
-              {prescription && (
-                <Button onClick={handlePrint} className="w-full mt-3 bg-blue-600 hover:bg-blue-700">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Prescription
-                </Button>
-              )}
+
+              {/* Copy to other form types */}
+              <div className="pt-4 border-t">
+                <Label className="text-xs font-medium text-slate-500 mb-2 block">Copy Settings To:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(FORM_TYPE_CONFIG)
+                    .filter(([type]) => type !== activeFormType)
+                    .map(([type, config]) => {
+                      const Icon = config.icon;
+                      return (
+                        <Button
+                          key={type}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copySettingsTo(type)}
+                          className="text-xs"
+                        >
+                          <Icon className="w-3 h-3 mr-1" />
+                          {config.label}
+                        </Button>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
 
             {/* Preview Panel */}
-            <PreviewPanel />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="w-4 h-4 text-slate-500" />
+                <span className="text-sm font-medium text-slate-700">Live Preview</span>
+              </div>
+
+              <div className="flex justify-center p-4 bg-slate-100 rounded-lg min-h-[400px] overflow-auto">
+                <div 
+                  className="bg-white border shadow-lg relative"
+                  style={{ 
+                    width: `${Math.min(widthPx, 320)}px`, 
+                    minHeight: `${Math.min(heightPx, 400)}px`,
+                    fontSize: `${settings.fontSize * previewScale}px`,
+                    lineHeight: settings.lineSpacing,
+                  }}
+                >
+                  <div 
+                    className="h-full flex flex-col"
+                    style={{ 
+                      padding: `${settings.topOffset * previewScale}px ${settings.rightOffset * previewScale}px ${settings.bottomOffset * previewScale}px ${settings.leftOffset * previewScale}px`,
+                    }}
+                  >
+                    {settings.showHeader && (
+                      <div className="text-center border-b-2 border-[#0F766E] pb-2 mb-2">
+                        <div className="font-bold text-[#0F766E]" style={{ fontSize: `${(settings.fontSize + 4) * previewScale}px` }}>
+                          Medical Clinic
+                        </div>
+                        <div className="text-slate-500 italic" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                          Healthcare Services
+                        </div>
+                      </div>
+                    )}
+                    
+                    {renderPreview()}
+                    
+                    {settings.showSignatureSection && (
+                      <div className="text-right mt-auto pt-3">
+                        <div className="inline-block text-center" style={{ minWidth: '80px' }}>
+                          <div className="border-t border-black pt-1 mt-4">
+                            {settings.showDoctorName && (
+                              <div style={{ fontSize: `${settings.fontSize * previewScale}px` }}>
+                                {doctor?.full_name || 'Doctor Name'}
+                              </div>
+                            )}
+                            {settings.showLicenseNumber && (
+                              <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                                S2: 12345
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {settings.showFooter && (
+                      <div 
+                        className="text-center text-slate-400 border-t pt-1 mt-2"
+                        style={{ fontSize: `${(settings.fontSize - 4) * previewScale}px` }}
+                      >
+                        Printed from Private Clinic EMR
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                <strong>Paper Size:</strong> {settings.paperWidth}{settings.paperUnit} × {settings.paperHeight}{settings.paperUnit}
+                <br />
+                <strong>Tip:</strong> Changes are applied when you click "Save Settings"
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
