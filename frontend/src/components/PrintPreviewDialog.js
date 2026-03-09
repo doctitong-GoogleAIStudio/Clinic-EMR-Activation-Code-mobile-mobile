@@ -846,9 +846,9 @@ const PrintPreviewDialog = ({
                         <div className="border-t border-black pt-1 mt-4">
                           {settings.showDoctorName && <div style={{ fontSize: `${settings.fontSize * previewScale}px` }}>{doctor?.full_name || 'Doctor Name'}</div>}
                           <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                            {settings.showPrcNo && doctor?.prc_no && <div>PRC: {doctor.prc_no}</div>}
-                            {settings.showPtrNo && doctor?.ptr_no && <div>PTR: {doctor.ptr_no}</div>}
-                            {settings.showS2No && doctor?.license_no && <div>S2: {doctor.license_no}</div>}
+                            {settings.showPrcNo && <div>PRC: {doctor?.prc_no || '(Not set)'}</div>}
+                            {settings.showPtrNo && <div>PTR: {doctor?.ptr_no || '(Not set)'}</div>}
+                            {settings.showS2No && <div>S2: {doctor?.license_no || '(Not set)'}</div>}
                           </div>
                         </div>
                       </div>
