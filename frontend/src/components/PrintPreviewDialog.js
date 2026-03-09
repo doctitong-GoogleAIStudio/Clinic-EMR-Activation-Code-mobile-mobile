@@ -576,9 +576,9 @@ const PrintPreviewDialog = ({
                   <div class="signature-line">
                     ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
                     <div class="license-info">
-                      ${settings.showPrcNo && doctor?.prc_no ? `<div>PRC No: ${doctor.prc_no}</div>` : ''}
-                      ${settings.showPtrNo && doctor?.ptr_no ? `<div>PTR No: ${doctor.ptr_no}</div>` : ''}
-                      ${settings.showS2No && doctor?.license_no ? `<div>S2 No: ${doctor.license_no}</div>` : ''}
+                      ${settings.showPrcNo ? `<div>PRC No: ${doctor?.prc_no || '____________'}</div>` : ''}
+                      ${settings.showPtrNo ? `<div>PTR No: ${doctor?.ptr_no || '____________'}</div>` : ''}
+                      ${settings.showS2No ? `<div>S2 No: ${doctor?.license_no || '____________'}</div>` : ''}
                     </div>
                   </div>
                 </div>
@@ -846,9 +846,9 @@ const PrintPreviewDialog = ({
                         <div className="border-t border-black pt-1 mt-4">
                           {settings.showDoctorName && <div style={{ fontSize: `${settings.fontSize * previewScale}px` }}>{doctor?.full_name || 'Doctor Name'}</div>}
                           <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                            {settings.showPrcNo && <div>PRC: {doctor?.prc_no || '(Not set)'}</div>}
-                            {settings.showPtrNo && <div>PTR: {doctor?.ptr_no || '(Not set)'}</div>}
-                            {settings.showS2No && <div>S2: {doctor?.license_no || '(Not set)'}</div>}
+                            {settings.showPrcNo && <div>PRC: {doctor?.prc_no || '______'}</div>}
+                            {settings.showPtrNo && <div>PTR: {doctor?.ptr_no || '______'}</div>}
+                            {settings.showS2No && <div>S2: {doctor?.license_no || '______'}</div>}
                           </div>
                         </div>
                       </div>
