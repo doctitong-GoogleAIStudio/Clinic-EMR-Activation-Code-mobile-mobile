@@ -31,6 +31,7 @@ const DEFAULT_SETTINGS = {
     showHeader: false, showPatientInfo: true, showRxLabel: true, showSignatureSection: false,
     showFooter: false, showDate: true, showAgeSex: true, showQuantity: true,
     showDoctorName: true, showLicenseNumber: true,
+    showPrcNo: true, showPtrNo: true, showS2No: true,
   },
   medical_certificate: {
     paperWidth: 8.5, paperHeight: 11, paperUnit: 'in', paperPreset: 'letter',
@@ -39,6 +40,7 @@ const DEFAULT_SETTINGS = {
     showHeader: true, showPatientInfo: true, showSignatureSection: true,
     showFooter: true, showDate: true, showAgeSex: true,
     showDoctorName: true, showLicenseNumber: true,
+    showPrcNo: true, showPtrNo: true, showS2No: true,
   },
   fit_to_work: {
     paperWidth: 8.5, paperHeight: 11, paperUnit: 'in', paperPreset: 'letter',
@@ -47,6 +49,7 @@ const DEFAULT_SETTINGS = {
     showHeader: true, showPatientInfo: true, showSignatureSection: true,
     showFooter: true, showDate: true, showAgeSex: true,
     showDoctorName: true, showLicenseNumber: true,
+    showPrcNo: true, showPtrNo: true, showS2No: true,
   },
   referral: {
     paperWidth: 8.5, paperHeight: 11, paperUnit: 'in', paperPreset: 'letter',
@@ -55,6 +58,7 @@ const DEFAULT_SETTINGS = {
     showHeader: true, showPatientInfo: true, showSignatureSection: true,
     showFooter: true, showDate: true, showAgeSex: true,
     showDoctorName: true, showLicenseNumber: true,
+    showPrcNo: true, showPtrNo: true, showS2No: true,
   },
   lab_request: {
     paperWidth: 8.5, paperHeight: 11, paperUnit: 'in', paperPreset: 'letter',
@@ -63,6 +67,7 @@ const DEFAULT_SETTINGS = {
     showHeader: true, showPatientInfo: true, showSignatureSection: true,
     showFooter: false, showDate: true, showAgeSex: true,
     showDoctorName: true, showLicenseNumber: true, showUrgency: true,
+    showPrcNo: true, showPtrNo: true, showS2No: true,
   },
 };
 
@@ -570,12 +575,11 @@ const PrintPreviewDialog = ({
                 <div class="signature-inner">
                   <div class="signature-line">
                     ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
-                    ${settings.showLicenseNumber ? `
-                      <div class="license-info">
-                        ${doctor?.license_no ? `S2 No: ${doctor.license_no}` : ''}
-                        ${doctor?.ptr_no ? ` | PTR: ${doctor.ptr_no}` : ''}
-                      </div>
-                    ` : ''}
+                    <div class="license-info">
+                      ${settings.showPrcNo && doctor?.prc_no ? `<div>PRC No: ${doctor.prc_no}</div>` : ''}
+                      ${settings.showPtrNo && doctor?.ptr_no ? `<div>PTR No: ${doctor.ptr_no}</div>` : ''}
+                      ${settings.showS2No && doctor?.license_no ? `<div>S2 No: ${doctor.license_no}</div>` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -750,6 +754,9 @@ const PrintPreviewDialog = ({
       { key: 'showHeader', label: 'Show Header' },
       { key: 'showPatientInfo', label: 'Show Patient Info' },
       { key: 'showSignatureSection', label: 'Show Signature' },
+      { key: 'showPrcNo', label: 'Show PRC No.' },
+      { key: 'showPtrNo', label: 'Show PTR No.' },
+      { key: 'showS2No', label: 'Show S2 No.' },
       { key: 'showFooter', label: 'Show Footer' },
       { key: 'showDate', label: 'Show Date' },
       { key: 'showAgeSex', label: 'Show Age/Sex' },
@@ -838,11 +845,11 @@ const PrintPreviewDialog = ({
                       <div className="inline-block text-center" style={{ minWidth: '80px' }}>
                         <div className="border-t border-black pt-1 mt-4">
                           {settings.showDoctorName && <div style={{ fontSize: `${settings.fontSize * previewScale}px` }}>{doctor?.full_name || 'Doctor Name'}</div>}
-                          {settings.showLicenseNumber && doctor?.license_no && (
-                            <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                              S2: {doctor.license_no}
-                            </div>
-                          )}
+                          <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                            {settings.showPrcNo && doctor?.prc_no && <div>PRC: {doctor.prc_no}</div>}
+                            {settings.showPtrNo && doctor?.ptr_no && <div>PTR: {doctor.ptr_no}</div>}
+                            {settings.showS2No && doctor?.license_no && <div>S2: {doctor.license_no}</div>}
+                          </div>
                         </div>
                       </div>
                     </div>

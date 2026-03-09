@@ -71,6 +71,9 @@ const getSectionOptions = (formType) => {
     { key: 'showHeader', label: 'Show Header' },
     { key: 'showPatientInfo', label: 'Show Patient Info' },
     { key: 'showSignatureSection', label: 'Show Signature' },
+    { key: 'showPrcNo', label: 'Show PRC No.' },
+    { key: 'showPtrNo', label: 'Show PTR No.' },
+    { key: 'showS2No', label: 'Show S2 No.' },
     { key: 'showFooter', label: 'Show Footer' },
     { key: 'showDate', label: 'Show Date' },
     { key: 'showAgeSex', label: 'Show Age/Sex' },
@@ -655,11 +658,11 @@ const PrescriptionPrintSettings = ({ doctor = null }) => {
                                 {doctor?.full_name || 'Doctor Name'}
                               </div>
                             )}
-                            {settings.showLicenseNumber && (
-                              <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                                S2: 12345
-                              </div>
-                            )}
+                            <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                              {settings.showPrcNo && <div>PRC: {doctor?.prc_no || '12345'}</div>}
+                              {settings.showPtrNo && <div>PTR: {doctor?.ptr_no || '67890'}</div>}
+                              {settings.showS2No && <div>S2: {doctor?.license_no || '11111'}</div>}
+                            </div>
                           </div>
                         </div>
                       </div>
