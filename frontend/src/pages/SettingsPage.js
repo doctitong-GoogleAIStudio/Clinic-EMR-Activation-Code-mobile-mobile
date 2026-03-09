@@ -22,7 +22,7 @@ import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
 
 const SettingsPage = () => {
-  const { user, isAdmin, isDoctor } = useAuth();
+  const { user, isAdmin, isDoctor, refreshUser } = useAuth();
   const [receptionistForm, setReceptionistForm] = useState({ full_name: '', email: '', password: '' });
   const [creatingReceptionist, setCreatingReceptionist] = useState(false);
   const [myReceptionists, setMyReceptionists] = useState([]);
@@ -99,6 +99,10 @@ const SettingsPage = () => {
   const handleSaveSettings = async () => {
     try {
       await settingsAPI.update(settings);
+      // Refresh user data to ensure auth context has updated credentials
+      if (refreshUser) {
+        await refreshUser();
+      }
       toast.success('Settings saved');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save settings'));

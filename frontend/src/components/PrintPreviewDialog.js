@@ -586,9 +586,9 @@ const PrintPreviewDialog = ({
                   <div class="signature-line">
                     ${settings.showDoctorName !== false ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
                     <div class="license-info">
-                      ${(settings.showPrcNo === true || settings.showPrcNo === undefined) ? `<div>PRC No: ${doctor?.prc_no || '____________'}</div>` : ''}
-                      ${(settings.showPtrNo === true || settings.showPtrNo === undefined) ? `<div>PTR No: ${doctor?.ptr_no || '____________'}</div>` : ''}
-                      ${(settings.showS2No === true || settings.showS2No === undefined) ? `<div>S2 No: ${doctor?.license_no || '____________'}</div>` : ''}
+                      ${(settings.showPrcNo === true || settings.showPrcNo === undefined) ? `<div>PRC No: ${clinicSettings?.prc_no || doctor?.prc_no || '____________'}</div>` : ''}
+                      ${(settings.showPtrNo === true || settings.showPtrNo === undefined) ? `<div>PTR No: ${clinicSettings?.ptr_no || doctor?.ptr_no || '____________'}</div>` : ''}
+                      ${(settings.showS2No === true || settings.showS2No === undefined) ? `<div>S2 No: ${clinicSettings?.license_no || doctor?.license_no || '____________'}</div>` : ''}
                     </div>
                   </div>
                 </div>
@@ -856,9 +856,9 @@ const PrintPreviewDialog = ({
                         <div className="border-t border-black pt-1 mt-4">
                           {settings.showDoctorName && <div style={{ fontSize: `${settings.fontSize * previewScale}px` }}>{doctor?.full_name || 'Doctor Name'}</div>}
                           <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                            {settings.showPrcNo && <div>PRC: {doctor?.prc_no || '______'}</div>}
-                            {settings.showPtrNo && <div>PTR: {doctor?.ptr_no || '______'}</div>}
-                            {settings.showS2No && <div>S2: {doctor?.license_no || '______'}</div>}
+                            {settings.showPrcNo && <div>PRC: {clinicSettings?.prc_no || doctor?.prc_no || '______'}</div>}
+                            {settings.showPtrNo && <div>PTR: {clinicSettings?.ptr_no || doctor?.ptr_no || '______'}</div>}
+                            {settings.showS2No && <div>S2: {clinicSettings?.license_no || doctor?.license_no || '______'}</div>}
                           </div>
                         </div>
                       </div>

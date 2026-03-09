@@ -70,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       login,
       loginWithToken,
       logout,
+      refreshUser: fetchUser,
       isDoctor,
       isAdmin,
       isReceptionist,
