@@ -88,15 +88,25 @@ const getStorageKey = (formType) => `emr_print_settings_${formType}`;
 
 // Load print settings from localStorage
 export const loadPrintSettings = (formType = 'prescription') => {
+  const defaults = DEFAULT_SETTINGS[formType] || DEFAULT_SETTINGS.prescription;
   try {
     const saved = localStorage.getItem(getStorageKey(formType));
     if (saved) {
-      return { ...DEFAULT_SETTINGS[formType], ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      // Merge saved settings with defaults, ensuring all default keys exist
+      // This handles cases where new settings keys are added after user saved settings
+      const merged = { ...defaults };
+      Object.keys(parsed).forEach(key => {
+        if (parsed[key] !== undefined) {
+          merged[key] = parsed[key];
+        }
+      });
+      return merged;
     }
   } catch (e) {
     console.error('Failed to load print settings:', e);
   }
-  return DEFAULT_SETTINGS[formType] || DEFAULT_SETTINGS.prescription;
+  return defaults;
 };
 
 // Save print settings to localStorage
@@ -574,11 +584,11 @@ const PrintPreviewDialog = ({
               <div class="signature-section">
                 <div class="signature-inner">
                   <div class="signature-line">
-                    ${settings.showDoctorName ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
+                    ${settings.showDoctorName !== false ? `<div>${doctor?.full_name || 'Doctor Name'}</div>` : ''}
                     <div class="license-info">
-                      ${settings.showPrcNo ? `<div>PRC No: ${doctor?.prc_no || '____________'}</div>` : ''}
-                      ${settings.showPtrNo ? `<div>PTR No: ${doctor?.ptr_no || '____________'}</div>` : ''}
-                      ${settings.showS2No ? `<div>S2 No: ${doctor?.license_no || '____________'}</div>` : ''}
+                      ${(settings.showPrcNo === true || settings.showPrcNo === undefined) ? `<div>PRC No: ${doctor?.prc_no || '____________'}</div>` : ''}
+                      ${(settings.showPtrNo === true || settings.showPtrNo === undefined) ? `<div>PTR No: ${doctor?.ptr_no || '____________'}</div>` : ''}
+                      ${(settings.showS2No === true || settings.showS2No === undefined) ? `<div>S2 No: ${doctor?.license_no || '____________'}</div>` : ''}
                     </div>
                   </div>
                 </div>
