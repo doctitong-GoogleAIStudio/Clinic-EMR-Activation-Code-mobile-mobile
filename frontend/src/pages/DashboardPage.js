@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { dashboardAPI, appointmentAPI, patientAPI } from '../lib/api';
+import { dashboardAPI, appointmentAPI, patientAPI, exportAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -11,7 +11,7 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { 
   Users, Calendar, Clock, Activity, Search, Plus, 
-  Phone, Play, CheckCircle, XCircle, UserPlus, Stethoscope
+  Phone, Play, CheckCircle, XCircle, UserPlus, Stethoscope, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -100,6 +100,64 @@ const DashboardPage = () => {
     }
   };
 
+  // Backup data function
+  const handleBackupNow = async () => {
+    try {
+      toast.info('Starting backup...', { duration: 2000 });
+      
+      const [patientsRes, visitsRes] = await Promise.all([
+        exportAPI.patients(),
+        exportAPI.visits({})
+      ]);
+      
+      const patients = patientsRes.data?.data || patientsRes.data || [];
+      const visits = visitsRes.data?.data || visitsRes.data || [];
+      
+      if (patients.length === 0 && visits.length === 0) {
+        toast.info('No data to backup');
+        return;
+      }
+      
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        exportType: 'manual_backup',
+        patientsCount: patients.length,
+        visitsCount: visits.length,
+        patients: patients,
+        visits: visits
+      };
+      
+      // Create and download file
+      const jsonString = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const time = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const filename = `EMR_Backup_${date}_${time}.json`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Record backup time for the reminder system
+      localStorage.setItem('emr_last_auto_export', Date.now().toString());
+      
+      toast.success(`Backup complete: ${patients.length} patients, ${visits.length} visits`, {
+        duration: 5000,
+        description: `Downloaded: ${filename}`
+      });
+    } catch (error) {
+      console.error('Backup failed:', error);
+      toast.error('Backup failed: ' + getErrorMessage(error));
+    }
+  };
+
   const statusColors = {
     waiting: 'bg-amber-100 text-amber-800 border-amber-200',
     in_consultation: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -135,6 +193,7 @@ const DashboardPage = () => {
               className="pl-10 h-11 bg-white border-slate-200"
               data-testid="patient-search-input"
             />
+
             {searchResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 z-50">
                 {searchResults.map((patient) => (
@@ -160,6 +219,15 @@ const DashboardPage = () => {
               </div>
             )}
           </div>
+          <Button
+            variant="outline"
+            className="border-[#0F766E] text-[#0F766E] hover:bg-[#0F766E]/10 h-11 px-4"
+            onClick={handleBackupNow}
+            data-testid="backup-now-btn"
+          >
+            <Download className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Backup</span>
+          </Button>
           <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
             <DialogTrigger asChild>
               <Button className="bg-[#F97316] hover:bg-[#EA580C] text-white shadow-md h-11 px-4" data-testid="quick-add-patient-btn">

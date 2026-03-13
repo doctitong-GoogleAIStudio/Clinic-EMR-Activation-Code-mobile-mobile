@@ -4,7 +4,7 @@ import json
 from datetime import datetime, date, timedelta
 
 class ClinicEMRAPITester:
-    def __init__(self, base_url="https://clinic-emr-preview.preview.emergentagent.com"):
+    def __init__(self, base_url="https://patient-data-export.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.token = None
         self.user_id = None

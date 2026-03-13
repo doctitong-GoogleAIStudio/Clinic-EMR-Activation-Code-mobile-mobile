@@ -61,7 +61,7 @@ const generateFilename = (type) => {
 export const exportPatients = async () => {
   try {
     const response = await exportAPI.patients();
-    return response.data;
+    return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Failed to export patients:', error);
     return null;
@@ -72,7 +72,7 @@ export const exportPatients = async () => {
 export const exportVisits = async () => {
   try {
     const response = await exportAPI.visits({});
-    return response.data;
+    return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Failed to export visits:', error);
     return null;
