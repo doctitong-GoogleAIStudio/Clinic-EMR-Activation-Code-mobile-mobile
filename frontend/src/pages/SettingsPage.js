@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import UserGuidePage from './UserGuidePage';
 import PrescriptionPrintSettings from '../components/PrescriptionPrintSettings';
+import RestoreBackupDialog from '../components/RestoreBackupDialog';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
@@ -61,6 +62,7 @@ const SettingsPage = () => {
   const [importingPatients, setImportingPatients] = useState(false);
   const [importingVisits, setImportingVisits] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [showRestore, setShowRestore] = useState(false);
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -1318,6 +1320,32 @@ const SettingsPage = () => {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Restore Backup Card */}
+            <Card className="bg-white border-slate-100 shadow-sm mt-6">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-blue-600" />
+                  Restore Backup
+                </CardTitle>
+                <CardDescription>Restore patient and visit data from a backup JSON file with merge or replace options</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => setShowRestore(true)}
+                  data-testid="settings-restore-btn"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Restore from Backup File
+                </Button>
+              </CardContent>
+            </Card>
+
+            <RestoreBackupDialog
+              open={showRestore}
+              onOpenChange={setShowRestore}
+            />
           </TabsContent>
         )}
 

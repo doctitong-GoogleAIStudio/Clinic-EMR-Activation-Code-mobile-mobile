@@ -12,12 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Users, Calendar, Clock, Activity, Search, Plus, 
   Phone, Play, CheckCircle, XCircle, UserPlus, Stethoscope, Download,
-  ShieldAlert
+  ShieldAlert, RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
 import VitalsTooltip from '../components/VitalsTooltip';
+import RestoreBackupDialog from '../components/RestoreBackupDialog';
 
 const DashboardPage = () => {
   const { user, isDoctor } = useAuth();
@@ -28,6 +29,7 @@ const DashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showRestore, setShowRestore] = useState(false);
   const [newPatient, setNewPatient] = useState({ full_name: '', birthdate: '', sex: 'male', mobile: '' });
   const [loading, setLoading] = useState(true);
   const [backupOverdue, setBackupOverdue] = useState(false);
@@ -262,6 +264,15 @@ const DashboardPage = () => {
           >
             <Download className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Backup</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="border-blue-500 text-blue-600 hover:bg-blue-50 h-11 px-4"
+            onClick={() => setShowRestore(true)}
+            data-testid="restore-backup-btn"
+          >
+            <RotateCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Restore</span>
           </Button>
           <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
             <DialogTrigger asChild>
@@ -582,6 +593,12 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <RestoreBackupDialog
+        open={showRestore}
+        onOpenChange={setShowRestore}
+        onRestoreComplete={fetchDashboardData}
+      />
     </div>
   );
 };

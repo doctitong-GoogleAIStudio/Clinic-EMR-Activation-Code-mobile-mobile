@@ -1834,7 +1834,7 @@ async def import_visits(
             if not patient and patient_id_from_data:
                 patient = patient_internal_id_map.get(patient_id_from_data)
                 if patient:
-                    logger.info(f"  Matched by internal UUID")
+                    logger.info("  Matched by internal UUID")
             
             # Method 4: Match by patient_name (case-insensitive, trimmed)
             if not patient and patient_name_from_data:
@@ -1905,6 +1905,152 @@ async def import_visits(
             result["errors"].append(f"Row {i+1}: {str(e)}")
             result["failed"] += 1
     
+    return result
+
+# ============== RESTORE BACKUP ==============
+class RestoreRequest(BaseModel):
+    patients: Optional[List[dict]] = None
+    visits: Optional[List[dict]] = None
+    mode: str = "merge"  # "merge" or "replace"
+    restore_type: str = "both"  # "patients", "visits", or "both"
+
+@api_router.post("/restore")
+async def restore_backup(
+    request: RestoreRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Restore backup data. Supports merge (add new, skip duplicates) and replace (wipe & reimport) modes."""
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors and admins can restore backups")
+
+    user_id = current_user["id"]
+    result = {
+        "patients_restored": 0, "patients_skipped": 0, "patients_failed": 0,
+        "visits_restored": 0, "visits_skipped": 0, "visits_failed": 0,
+        "patients_deleted": 0, "visits_deleted": 0,
+        "errors": [], "warnings": []
+    }
+
+    # --- RESTORE PATIENTS ---
+    if request.restore_type in ["patients", "both"] and request.patients:
+        if request.mode == "replace":
+            # Delete all existing patients and their related data
+            owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1}).to_list(100000)
+            owned_ids = [p["id"] for p in owned_patients]
+            del_patients = await db.patients.delete_many({"owner_id": user_id})
+            result["patients_deleted"] = del_patients.deleted_count
+            if owned_ids:
+                del_visits = await db.visits.delete_many({"patient_id": {"$in": owned_ids}})
+                result["visits_deleted"] = del_visits.deleted_count
+                await db.prescriptions.delete_many({"patient_id": {"$in": owned_ids}})
+                await db.certificates.delete_many({"patient_id": {"$in": owned_ids}})
+                await db.lab_requests.delete_many({"patient_id": {"$in": owned_ids}})
+                await db.appointments.delete_many({"owner_id": user_id})
+
+        # Build existing name set for merge dedup
+        existing_names = set()
+        if request.mode == "merge":
+            existing = await db.patients.find({"owner_id": user_id}, {"_id": 0, "full_name": 1, "birthdate": 1}).to_list(100000)
+            existing_names = {(p["full_name"].strip().lower(), p.get("birthdate", "")) for p in existing}
+
+        for i, p in enumerate(request.patients):
+            try:
+                if not p.get("full_name") or not p.get("birthdate") or not p.get("sex"):
+                    result["errors"].append(f"Patient row {i+1}: Missing required field (full_name, birthdate, or sex)")
+                    result["patients_failed"] += 1
+                    continue
+
+                key = (p["full_name"].strip().lower(), p.get("birthdate", ""))
+                if request.mode == "merge" and key in existing_names:
+                    result["patients_skipped"] += 1
+                    continue
+
+                new_id = str(uuid.uuid4())
+                patient_id = f"P-{str(uuid.uuid4())[:8].upper()}"
+                now = datetime.now(timezone.utc).isoformat()
+                new_patient = {
+                    "id": new_id,
+                    "patient_id": patient_id,
+                    "full_name": p["full_name"],
+                    "birthdate": p["birthdate"],
+                    "sex": p["sex"],
+                    "address": p.get("address"),
+                    "mobile": p.get("mobile"),
+                    "email": p.get("email"),
+                    "emergency_contact_name": p.get("emergency_contact_name"),
+                    "emergency_contact_phone": p.get("emergency_contact_phone"),
+                    "allergies": p.get("allergies", []),
+                    "chronic_conditions": p.get("chronic_conditions", []),
+                    "owner_id": user_id,
+                    "created_by": user_id,
+                    "created_at": p.get("created_at", now),
+                    "updated_at": now
+                }
+                await db.patients.insert_one(new_patient)
+                existing_names.add(key)
+                result["patients_restored"] += 1
+            except Exception as e:
+                result["errors"].append(f"Patient row {i+1}: {str(e)}")
+                result["patients_failed"] += 1
+
+    # --- RESTORE VISITS ---
+    if request.restore_type in ["visits", "both"] and request.visits:
+        # Build patient lookup map from current DB state
+        owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1, "patient_id": 1, "full_name": 1}).to_list(100000)
+        name_map = {p["full_name"].strip().lower(): p for p in owned_patients}
+        pid_map = {p["patient_id"]: p for p in owned_patients}
+        id_map = {p["id"]: p for p in owned_patients}
+
+        if request.mode == "replace" and request.restore_type == "visits":
+            owned_ids = [p["id"] for p in owned_patients]
+            if owned_ids:
+                del_visits = await db.visits.delete_many({"patient_id": {"$in": owned_ids}})
+                result["visits_deleted"] = del_visits.deleted_count
+
+        for i, v in enumerate(request.visits):
+            try:
+                # Resolve patient
+                patient = None
+                pname = (v.get("patient_name") or v.get("full_name") or "").strip()
+                pid = (v.get("patient_id") or "").strip()
+
+                if pid:
+                    patient = pid_map.get(pid) or id_map.get(pid)
+                if not patient and pname:
+                    patient = name_map.get(pname.lower())
+
+                if not patient:
+                    result["warnings"].append(f"Visit row {i+1}: Patient '{pname or pid}' not found, skipped")
+                    result["visits_skipped"] += 1
+                    continue
+
+                new_id = str(uuid.uuid4())
+                now = datetime.now(timezone.utc).isoformat()
+                new_visit = {
+                    "id": new_id,
+                    "patient_id": patient["id"],
+                    "patient_name_imported": patient["full_name"],
+                    "vitals": v.get("vitals"),
+                    "soap_subjective": v.get("soap_subjective"),
+                    "soap_objective": v.get("soap_objective"),
+                    "soap_assessment": v.get("soap_assessment"),
+                    "soap_plan": v.get("soap_plan"),
+                    "diagnosis_codes": v.get("diagnosis_codes", []),
+                    "follow_up_date": v.get("follow_up_date"),
+                    "patient_instructions": v.get("patient_instructions"),
+                    "warning_signs": v.get("warning_signs"),
+                    "created_by": user_id,
+                    "created_by_name": current_user["full_name"],
+                    "owner_id": user_id,
+                    "created_at": v.get("created_at", now),
+                    "updated_at": now
+                }
+                await db.visits.insert_one(new_visit)
+                result["visits_restored"] += 1
+            except Exception as e:
+                result["errors"].append(f"Visit row {i+1}: {str(e)}")
+                result["visits_failed"] += 1
+
     return result
 
 # ============== DASHBOARD STATS ==============

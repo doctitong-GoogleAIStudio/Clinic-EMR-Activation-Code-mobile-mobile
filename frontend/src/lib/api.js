@@ -147,6 +147,11 @@ export const importAPI = {
   visits: (data) => axios.post(`${API}/import/visits`, data),
 };
 
+// Restore Backup API
+export const restoreAPI = {
+  restore: (data) => axios.post(`${API}/restore`, data),
+};
+
 // Audit Log APIs
 export const auditAPI = {
   getAll: (limit) => axios.get(`${API}/audit-logs`, { params: { limit } }),
