@@ -140,7 +140,14 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **Mar 9, 2026**: **Added PRC/PTR/S2 Number Settings** - Added Show PRC No., Show PTR No., and Show S2 No. checkboxes to print settings (below Show Signature). These credentials are now loaded from clinic settings and displayed in print preview and print output.
 - **Mar 9, 2026**: **Fixed Credentials Auto-Load** - Print preview now loads PRC/PTR/S2 numbers from clinic settings (Settings page) instead of just user profile, ensuring credentials appear in print output.
 - **Mar 9, 2026**: **Added refreshUser to AuthContext** - Settings page now refreshes user data after saving, ensuring auth context has updated credentials.
-- **Mar 13, 2026**: **Data Backup Feature (Complete)** - Reliable manual backup system:
+- **Mar 13, 2026**: **Restore Backup Feature (Complete)** - Full backup restore system:
+  - Restore button on Dashboard header and Settings > Imports tab
+  - RestoreBackupDialog: file upload, preview (patient/visit counts), type & mode selection
+  - Merge mode: adds new records, skips duplicates by name+birthdate
+  - Replace mode: deletes all existing data then imports from backup (with confirmation dialog)
+  - Restore type: Patients only, Visits only, or Both
+  - Replace cascade-deletes related visits, prescriptions, certificates, lab requests, appointments
+  - Backend: POST /api/restore endpoint with data isolation (owner_id)
   - "Backup Now" button on Dashboard header triggers JSON download of all patient and visit data
   - Non-dismissible red banner on Dashboard when last backup >3 days ago (or never)
   - Banner disappears only after a successful backup

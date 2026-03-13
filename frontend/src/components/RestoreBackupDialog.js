@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { restoreAPI } from '../lib/api';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -97,6 +97,7 @@ const RestoreBackupDialog = ({ open, onOpenChange, onRestoreComplete }) => {
               <RotateCcw className="w-5 h-5 text-[#0F766E]" />
               Restore Backup
             </DialogTitle>
+            <DialogDescription>Upload a backup JSON file to restore patient and visit data</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 mt-2">
