@@ -24,24 +24,37 @@ const shouldExport = () => {
   return Date.now() - lastExport > EXPORT_INTERVAL_MS;
 };
 
-// Download JSON data as file
-const downloadJSON = (data, filename) => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+// Reliable download function - ensures file appears in Downloads folder
+const downloadFile = (data, filename) => {
+  const jsonString = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+  
+  // Create download link
+  const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
+  link.style.display = 'none';
   link.href = url;
-  link.download = filename;
+  link.setAttribute('download', filename);
+  
+  // Append to body, click, and cleanup
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  
+  // Cleanup after a short delay to ensure download starts
+  setTimeout(() => {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, 100);
+  
+  return true;
 };
 
 // Generate filename with timestamp
 const generateFilename = (type) => {
-  const date = new Date().toISOString().split('T')[0];
-  const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-  return `emr_backup_${type}_${date}_${time}.json`;
+  const now = new Date();
+  const date = now.toISOString().split('T')[0];
+  const time = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+  return `EMR_${type}_${date}_${time}.json`;
 };
 
 // Export patients data
@@ -79,14 +92,14 @@ export const performAutoExport = async (showNotification = true) => {
     // Export patients
     const patients = await exportPatients();
     if (patients && patients.length > 0) {
-      downloadJSON(patients, generateFilename('patients'));
+      downloadFile(patients, generateFilename('Patients'));
       console.log(`Auto-exported ${patients.length} patients`);
     }
 
     // Export visits
     const visits = await exportVisits();
     if (visits && visits.length > 0) {
-      downloadJSON(visits, generateFilename('visits'));
+      downloadFile(visits, generateFilename('Visits'));
       console.log(`Auto-exported ${visits.length} visits`);
     }
 
@@ -174,7 +187,7 @@ export const exportAllDataNow = async () => {
       visits: visits || []
     };
     
-    downloadJSON(allData, generateFilename('full_backup'));
+    downloadFile(allData, generateFilename('Full_Backup'));
     
     return {
       success: true,

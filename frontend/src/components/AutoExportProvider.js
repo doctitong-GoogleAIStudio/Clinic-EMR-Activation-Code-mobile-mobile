@@ -3,6 +3,29 @@ import { useAuth } from '../context/AuthContext';
 import { setupBeforeUnloadExport, performSilentBackup } from '../utils/autoExport';
 import { toast } from 'sonner';
 
+// Reliable download function that ensures file appears in Downloads
+const downloadFile = (data, filename) => {
+  const jsonString = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+  
+  // Create download link
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.style.display = 'none';
+  link.href = url;
+  link.setAttribute('download', filename);
+  
+  // Append to body, click, and cleanup
+  document.body.appendChild(link);
+  link.click();
+  
+  // Cleanup after a short delay to ensure download starts
+  setTimeout(() => {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, 100);
+};
+
 const AutoExportProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   const hasExportedOnLogin = useRef(false);
@@ -33,25 +56,25 @@ const AutoExportProvider = ({ children }) => {
               visits: visits || []
             };
             
-            // Download the backup
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            const date = new Date().toISOString().split('T')[0];
-            link.href = url;
-            link.download = `emr_auto_backup_${date}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            // Generate filename with date and time
+            const now = new Date();
+            const date = now.toISOString().split('T')[0];
+            const time = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            const filename = `EMR_Backup_${date}_${time}.json`;
             
-            toast.success(`Auto-backup complete: ${patients?.length || 0} patients, ${visits?.length || 0} visits`, {
+            // Download the backup file
+            downloadFile(backup, filename);
+            
+            toast.success(`Auto-backup downloaded: ${patients?.length || 0} patients, ${visits?.length || 0} visits`, {
               duration: 5000,
-              description: 'Your data has been automatically backed up'
+              description: `Saved as ${filename}`
             });
           }
         } catch (error) {
           console.error('Auto-export failed:', error);
+          toast.error('Auto-backup failed', {
+            description: 'Please manually export your data from Settings'
+          });
         }
       }, 3000); // Wait 3 seconds after login
 
