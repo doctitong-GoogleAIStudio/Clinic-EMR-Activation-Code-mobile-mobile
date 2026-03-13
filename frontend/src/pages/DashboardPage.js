@@ -11,7 +11,8 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { 
   Users, Calendar, Clock, Activity, Search, Plus, 
-  Phone, Play, CheckCircle, XCircle, UserPlus, Stethoscope, Download
+  Phone, Play, CheckCircle, XCircle, UserPlus, Stethoscope, Download,
+  ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -29,6 +30,16 @@ const DashboardPage = () => {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [newPatient, setNewPatient] = useState({ full_name: '', birthdate: '', sex: 'male', mobile: '' });
   const [loading, setLoading] = useState(true);
+  const [backupOverdue, setBackupOverdue] = useState(false);
+  const [daysSinceBackup, setDaysSinceBackup] = useState(null);
+
+  // Check if backup is overdue (>3 days or never)
+  useEffect(() => {
+    const lastExport = parseInt(localStorage.getItem('emr_last_auto_export') || '0', 10);
+    const daysSince = lastExport === 0 ? null : Math.floor((Date.now() - lastExport) / (1000 * 60 * 60 * 24));
+    setDaysSinceBackup(daysSince);
+    setBackupOverdue(lastExport === 0 || daysSince >= 3);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -147,6 +158,8 @@ const DashboardPage = () => {
       
       // Record backup time for the reminder system
       localStorage.setItem('emr_last_auto_export', Date.now().toString());
+      setBackupOverdue(false);
+      setDaysSinceBackup(0);
       
       toast.success(`Backup complete: ${patients.length} patients, ${visits.length} visits`, {
         duration: 5000,
@@ -175,6 +188,28 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
+      {/* Non-dismissible backup reminder banner */}
+      {backupOverdue && (
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-red-50 border border-red-200" data-testid="backup-overdue-banner">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 font-medium">
+              {daysSinceBackup === null
+                ? "You have never backed up your data. Please back up now to protect your patient records."
+                : `Your last backup was ${daysSinceBackup} days ago. Back up now to keep your data safe.`}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 text-white shrink-0"
+            onClick={handleBackupNow}
+            data-testid="backup-overdue-btn"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Backup Now
+          </Button>
+        </div>
+      )}
       {/* Header with Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>

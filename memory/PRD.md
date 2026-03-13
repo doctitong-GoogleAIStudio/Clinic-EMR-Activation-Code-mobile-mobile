@@ -142,7 +142,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **Mar 9, 2026**: **Added refreshUser to AuthContext** - Settings page now refreshes user data after saving, ensuring auth context has updated credentials.
 - **Mar 13, 2026**: **Data Backup Feature (Complete)** - Reliable manual backup system:
   - "Backup Now" button on Dashboard header triggers JSON download of all patient and visit data
-  - Toast reminder on login if last backup was >24 hours ago (or never)
+  - Non-dismissible red banner on Dashboard when last backup >3 days ago (or never)
+  - Banner disappears only after a successful backup
+  - Toast reminder on login if backup is overdue
   - Silent backup to localStorage every 5 minutes while logged in
   - Silent backup on tab switch and before browser close
   - Fixed export API response parsing (paginated response handling)

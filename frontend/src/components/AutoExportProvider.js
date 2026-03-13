@@ -17,7 +17,7 @@ const AutoExportProvider = ({ children }) => {
       const lastExport = parseInt(localStorage.getItem(AUTO_EXPORT_KEY) || '0', 10);
       const hoursSince = (Date.now() - lastExport) / (1000 * 60 * 60);
 
-      if (lastExport === 0 || hoursSince > 24) {
+      if (lastExport === 0 || hoursSince > 72) {
         const msg = lastExport === 0
           ? "You haven't backed up your data yet."
           : `Last backup was ${Math.floor(hoursSince)} hours ago.`;
