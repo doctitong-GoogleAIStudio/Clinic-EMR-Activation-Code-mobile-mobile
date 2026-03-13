@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from './components/ui/sonner';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import OfflineIndicator from './components/OfflineIndicator';
+import AutoExportProvider from './components/AutoExportProvider';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -84,10 +85,12 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <OfflineIndicator />
-        <AppRoutes />
-        <Toaster position="top-right" richColors closeButton />
-        <PWAInstallPrompt />
+        <AutoExportProvider>
+          <OfflineIndicator />
+          <AppRoutes />
+          <Toaster position="top-right" richColors closeButton />
+          <PWAInstallPrompt />
+        </AutoExportProvider>
       </AuthProvider>
     </BrowserRouter>
   );

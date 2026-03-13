@@ -135,3 +135,16 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - [ ] Billing/OR and receipt printing
 - [ ] Email/SMS appointment reminders
 - [ ] Refactor: Extract duplicated file upload UI into reusable component
+
+## Recent Changes (Mar 9-13, 2026)
+- **Mar 9, 2026**: **Added PRC/PTR/S2 Number Settings** - Added Show PRC No., Show PTR No., and Show S2 No. checkboxes to print settings (below Show Signature). These credentials are now loaded from clinic settings and displayed in print preview and print output.
+- **Mar 9, 2026**: **Fixed Credentials Auto-Load** - Print preview now loads PRC/PTR/S2 numbers from clinic settings (Settings page) instead of just user profile, ensuring credentials appear in print output.
+- **Mar 9, 2026**: **Added refreshUser to AuthContext** - Settings page now refreshes user data after saving, ensuring auth context has updated credentials.
+- **Mar 13, 2026**: **Added Auto-Export Feature** - Automatic data backup system:
+  - Auto-exports Patient Registry and Visit Records as JSON on login (3 second delay)
+  - Silent backup to localStorage every 5 minutes while logged in
+  - Silent backup when user switches tabs or minimizes browser
+  - Silent backup before browser/tab close (beforeunload event)
+  - Toast notification shows backup status (X patients, Y visits exported)
+  - Files saved as `emr_auto_backup_YYYY-MM-DD.json`
+
