@@ -92,6 +92,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
   - Route: /patients/:patientId/ai-consultation
   - Backend: POST /api/dictation/sessions, /transcribe, /structure, /audit
   - DB: dictation_sessions, dictation_audit_logs collections
+  - **Demo Mode**: 7 pre-loaded sample dictations (pneumonia, hypertension, gastroenteritis, Rx-only, orders-only, dermatology, uncertain medication) for testing without microphone
 - **Mar 13, 2026**: **Restore Backup Feature** - Restore from backup JSON with merge/replace modes
 - **Mar 13, 2026**: **Data Backup Feature** - Backup Now button, 3-day overdue banner, toast reminders
 - **Mar 5, 2026**: **Added Change Password Feature** - Doctors can change their password from Settings. Includes: password strength meter (Weak to Very Strong), show/hide eye icons, match validation, rate limiting (5 attempts then 10 min lockout), prevents reusing current password
