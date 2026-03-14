@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2
+  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2, Mic, RotateCcw, ShieldCheck
 } from 'lucide-react';
 import UserGuidePage from './UserGuidePage';
 import PrescriptionPrintSettings from '../components/PrescriptionPrintSettings';
@@ -1509,6 +1509,21 @@ const SettingsPage = () => {
                     <p className="font-medium text-sm text-slate-900">Print Settings</p>
                     <p className="text-xs text-slate-500">Customize all forms</p>
                   </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 text-center border border-emerald-100">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Data Backup</p>
+                    <p className="text-xs text-slate-500">One-click JSON backup</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 text-center border border-blue-100">
+                    <RotateCcw className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">Restore Backup</p>
+                    <p className="text-xs text-slate-500">Merge or replace data</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 text-center border border-indigo-100">
+                    <Mic className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
+                    <p className="font-medium text-sm text-slate-900">AI Dictation</p>
+                    <p className="text-xs text-slate-500">Voice-to-SOAP with AI</p>
+                  </div>
                 </div>
               </div>
 
@@ -1519,6 +1534,22 @@ const SettingsPage = () => {
                   What's New
                 </h3>
                 <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <div className="flex gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-indigo-500"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">AI Doctor Dictation</p>
+                      <p className="text-xs text-slate-600">Voice-to-SOAP dictation with AI structuring. Record doctor speech, auto-transcribe via Whisper, and generate structured SOAP notes, prescriptions, orders, instructions, and ICD-10 suggestions. 8 dictation modes with demo samples for testing</p>
+                      <p className="text-xs text-slate-400 mt-1">Mar 14, 2026</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100">
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-emerald-500"></div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Data Backup & Restore</p>
+                      <p className="text-xs text-slate-600">One-click backup of all patient and visit data to JSON. Restore from backup with merge (add new, skip duplicates) or replace (wipe and reimport) modes. 3-day overdue backup reminder banner on dashboard</p>
+                      <p className="text-xs text-slate-400 mt-1">Mar 13, 2026</p>
+                    </div>
+                  </div>
                   <div className="flex gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100">
                     <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-purple-500"></div>
                     <div>

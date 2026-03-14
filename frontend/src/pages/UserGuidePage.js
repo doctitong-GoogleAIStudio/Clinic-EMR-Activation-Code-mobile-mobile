@@ -6,7 +6,7 @@ import {
   BookOpen, User, UserCog, CheckCircle, AlertTriangle, Lightbulb, 
   LogIn, Users, Calendar, FileText, Stethoscope, Pill, Microscope, 
   Printer, Edit, Database, HelpCircle, Search, Clock, Shield,
-  ChevronRight, ChevronDown, Phone, Mail, UserPlus
+  ChevronRight, ChevronDown, Phone, Mail, UserPlus, Download, RotateCcw, Mic
 } from 'lucide-react';
 
 const UserGuidePage = () => {
@@ -510,6 +510,69 @@ const UserGuidePage = () => {
               <strong>Browser Print Dialog:</strong> After clicking "Print", you may need to select the correct 
               paper size in your browser's print dialog. Look for "More settings" → "Paper size" and choose the 
               matching size or "Custom".
+            </Warning>
+          </SectionHeader>
+
+          {/* 13. Data Backup */}
+          <SectionHeader id="doc-backup" icon={Download} title="13. Data Backup">
+            <h4 className="font-medium text-slate-900 mb-3">Backing Up Your Data</h4>
+            <Step number="1">On the Dashboard, click the <strong>Backup</strong> button (green outline) in the top-right</Step>
+            <Step number="2">A JSON file will download containing all your patients and visit records</Step>
+            <Step number="3">The file is named <code>EMR_Backup_YYYY-MM-DD_HH-MM-SS.json</code></Step>
+            <Tips items={[
+              "If you haven't backed up in 3+ days, a red warning banner appears on the Dashboard",
+              "The banner disappears only after you complete a backup",
+              "A toast reminder also appears on login when your backup is overdue",
+              "Keep backup files in a safe location (cloud drive, USB, etc.)"
+            ]} />
+            <Warning>
+              <strong>Back up regularly!</strong> Your patient data is critical. Make it a habit to back up at least weekly.
+            </Warning>
+          </SectionHeader>
+
+          {/* 14. Restore Backup */}
+          <SectionHeader id="doc-restore" icon={RotateCcw} title="14. Restore Backup">
+            <h4 className="font-medium text-slate-900 mb-3">Restoring from a Backup File</h4>
+            <Step number="1">Click the <strong>Restore</strong> button on the Dashboard, or go to Settings → Imports → Restore from Backup File</Step>
+            <Step number="2">Select your backup JSON file</Step>
+            <Step number="3">Review the file preview (patient and visit counts)</Step>
+            <Step number="4">Choose what to restore: <strong>Patients only</strong>, <strong>Visits only</strong>, or <strong>Both</strong></Step>
+            <Step number="5">Choose a mode:</Step>
+            <Tips items={[
+              "Merge — adds new records, skips duplicates (safe, no data loss)",
+              "Replace — deletes ALL existing data first, then imports from backup (use with caution!)"
+            ]} />
+            <Warning>
+              <strong>Replace mode is destructive!</strong> It permanently deletes your existing patients, visits, prescriptions, and certificates before importing. Always create a fresh backup before using Replace.
+            </Warning>
+          </SectionHeader>
+
+          {/* 15. AI Doctor Dictation */}
+          <SectionHeader id="doc-dictation" icon={Mic} title="15. AI Doctor Dictation">
+            <h4 className="font-medium text-slate-900 mb-3">Using Voice Dictation</h4>
+            <Step number="1">Open a patient's profile and click the <strong>AI Dictation</strong> button (purple mic icon)</Step>
+            <Step number="2">The AI Consultation page opens with a 3-column layout: Patient Info | SOAP Editor | Dictation Panel</Step>
+            <Step number="3">Select a dictation mode (Full Consultation, Subjective, Objective, Assessment, Plan, Prescription, Orders, or Instructions)</Step>
+            <Step number="4">Click the red microphone button to start recording</Step>
+            <Step number="5">Speak your clinical notes. You can Pause/Resume as needed</Step>
+            <Step number="6">Click Stop — the system will transcribe (Whisper) then structure (AI) your dictation</Step>
+            <Step number="7">Review the AI-generated SOAP, prescriptions, orders, and instructions</Step>
+            <Step number="8">Click <strong>Insert</strong> buttons to add content to the chart (with Append/Replace options)</Step>
+            <Step number="9">Edit any field as needed, then click <strong>Save Visit</strong></Step>
+
+            <h4 className="font-medium text-slate-900 mt-6 mb-3">Demo Mode</h4>
+            <Step number="1">Toggle <strong>Demo Mode</strong> on in the dictation panel</Step>
+            <Step number="2">Select a sample dictation (e.g., Respiratory Infection, Hypertension, etc.)</Step>
+            <Step number="3">The AI will process the sample text and show structured output — no microphone needed!</Step>
+            <Tips items={[
+              "The AI preserves important negatives (e.g., 'no chest pain')",
+              "Uncertain medications are flagged with review warnings",
+              "ICD-10 suggestions are for reference only — never auto-finalized",
+              "Demo Mode is great for training and demonstrations",
+              "All dictation sessions are tracked with a full audit trail"
+            ]} />
+            <Warning>
+              <strong>Always review AI output before saving.</strong> The AI assists documentation but the physician must verify and approve all clinical content.
             </Warning>
           </SectionHeader>
         </TabsContent>
