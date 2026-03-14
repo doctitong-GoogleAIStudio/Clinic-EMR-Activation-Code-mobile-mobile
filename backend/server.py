@@ -2053,6 +2053,354 @@ async def restore_backup(
 
     return result
 
+# ============== DICTATION MODULE ==============
+
+DICTATION_UPLOADS = ROOT_DIR / 'dictation_audio'
+DICTATION_UPLOADS.mkdir(exist_ok=True)
+
+class DictationSessionCreate(BaseModel):
+    patient_id: str
+    visit_id: Optional[str] = None
+    dictation_mode: str = "full_consultation"
+    language: str = "en"
+
+class DictationSessionUpdate(BaseModel):
+    status: Optional[str] = None
+    raw_transcript: Optional[str] = None
+    cleaned_transcript: Optional[str] = None
+    ai_structured_json: Optional[Dict[str, Any]] = None
+    review_flags_json: Optional[List[str]] = None
+    physician_reviewed: Optional[bool] = None
+    inserted_sections_json: Optional[Dict[str, Any]] = None
+    duration_seconds: Optional[float] = None
+
+@api_router.post("/dictation/sessions")
+async def create_dictation_session(
+    data: DictationSessionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors can create dictation sessions")
+    now = datetime.now(timezone.utc).isoformat()
+    session = {
+        "id": str(uuid.uuid4()),
+        "patient_id": data.patient_id,
+        "visit_id": data.visit_id,
+        "provider_id": current_user["id"],
+        "provider_name": current_user["full_name"],
+        "dictation_mode": data.dictation_mode,
+        "language": data.language,
+        "status": "recording",
+        "raw_transcript": None,
+        "cleaned_transcript": None,
+        "ai_structured_json": None,
+        "review_flags_json": [],
+        "physician_reviewed": False,
+        "physician_reviewed_at": None,
+        "inserted_sections_json": {},
+        "duration_seconds": 0,
+        "created_at": now,
+        "updated_at": now
+    }
+    await db.dictation_sessions.insert_one(session)
+    # Audit log
+    await db.dictation_audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "dictation_session_id": session["id"],
+        "action_type": "recording_started",
+        "action_by": current_user["id"],
+        "action_timestamp": now,
+        "notes": f"Mode: {data.dictation_mode}"
+    })
+    session.pop("_id", None)
+    return session
+
+@api_router.get("/dictation/sessions")
+async def list_dictation_sessions(
+    patient_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {"provider_id": current_user["id"]}
+    if patient_id:
+        query["patient_id"] = patient_id
+    sessions = await db.dictation_sessions.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return sessions
+
+@api_router.get("/dictation/sessions/{session_id}")
+async def get_dictation_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    session = await db.dictation_sessions.find_one({"id": session_id, "provider_id": current_user["id"]}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+@api_router.put("/dictation/sessions/{session_id}")
+async def update_dictation_session(
+    session_id: str,
+    data: DictationSessionUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    session = await db.dictation_sessions.find_one({"id": session_id, "provider_id": current_user["id"]})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if data.physician_reviewed:
+        updates["physician_reviewed_at"] = updates["updated_at"]
+    await db.dictation_sessions.update_one({"id": session_id}, {"$set": updates})
+    # Audit
+    action = "session_updated"
+    if data.status:
+        action = f"recording_{data.status}"
+    if data.physician_reviewed:
+        action = "physician_reviewed"
+    await db.dictation_audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "dictation_session_id": session_id,
+        "action_type": action,
+        "action_by": current_user["id"],
+        "action_timestamp": updates["updated_at"],
+        "notes": None
+    })
+    updated = await db.dictation_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
+
+@api_router.post("/dictation/transcribe")
+async def transcribe_audio(
+    audio: UploadFile = File(...),
+    session_id: str = Form(""),
+    language: str = Form("en"),
+    prompt: str = Form(""),
+    current_user: dict = Depends(get_current_user)
+):
+    """Transcribe audio using OpenAI Whisper via Emergent LLM Key"""
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors can use transcription")
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="AI service not configured")
+
+    try:
+        from emergentintegrations.llm.openai import OpenAISpeechToText
+
+        # Save audio temporarily
+        audio_bytes = await audio.read()
+        temp_path = DICTATION_UPLOADS / f"{uuid.uuid4()}.webm"
+        async with aiofiles.open(temp_path, 'wb') as f:
+            await f.write(audio_bytes)
+
+        stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+        with open(temp_path, "rb") as audio_file:
+            response = await stt.transcribe(
+                file=audio_file,
+                model="whisper-1",
+                response_format="verbose_json",
+                language=language if language else None,
+                prompt=prompt if prompt else "Medical clinic consultation dictation. Doctor speaking about patient symptoms, diagnosis, medications, and treatment plan.",
+                temperature=0.0
+            )
+
+        transcript = response.text if hasattr(response, 'text') else str(response)
+        confidence = 1.0
+        segments = []
+        if hasattr(response, 'segments'):
+            segments = [{"start": s.start, "end": s.end, "text": s.text} for s in response.segments]
+            # Estimate confidence from no_speech_prob if available
+            if segments:
+                confidence = 0.95
+
+        # Update session if provided
+        if session_id:
+            now = datetime.now(timezone.utc).isoformat()
+            existing = await db.dictation_sessions.find_one({"id": session_id})
+            old_transcript = existing.get("raw_transcript", "") if existing else ""
+            new_transcript = (old_transcript + " " + transcript).strip() if old_transcript else transcript
+            await db.dictation_sessions.update_one(
+                {"id": session_id},
+                {"$set": {"raw_transcript": new_transcript, "status": "transcribed", "updated_at": now}}
+            )
+            await db.dictation_audit_logs.insert_one({
+                "id": str(uuid.uuid4()),
+                "dictation_session_id": session_id,
+                "action_type": "transcript_generated",
+                "action_by": current_user["id"],
+                "action_timestamp": now,
+                "notes": f"Length: {len(transcript)} chars"
+            })
+
+        # Cleanup temp file
+        try:
+            temp_path.unlink()
+        except Exception:
+            pass
+
+        return {
+            "transcript": transcript,
+            "confidence": confidence,
+            "segments": segments,
+            "language": language
+        }
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+@api_router.post("/dictation/structure")
+async def structure_transcript(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """AI-structure a clinical transcript into SOAP, Rx, Orders, etc."""
+    if current_user["role"] not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors can use AI structuring")
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="AI service not configured")
+
+    transcript = data.get("transcript", "")
+    mode = data.get("mode", "full_consultation")
+    patient_context = data.get("patient_context", {})
+    session_id = data.get("session_id", "")
+
+    if not transcript.strip():
+        raise HTTPException(status_code=400, detail="Transcript is empty")
+
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+        system_message = """You are a clinical documentation assistant for a physician using a private clinic EMR.
+Convert raw doctor dictation into structured medical documentation.
+
+Rules:
+- Do not invent data. If information is missing, leave the field blank or empty.
+- Preserve important negatives (e.g., "no chest pain", "no dyspnea").
+- Keep wording concise and clinically useful.
+- Separate Subjective, Objective, Assessment, and Plan correctly.
+- Extract prescriptions when mentioned with drug, dose, frequency, duration.
+- Extract orders (labs, imaging) when mentioned.
+- Extract patient instructions and follow-up details when mentioned.
+- Suggest ICD-10 codes only if directly supported by the dictation.
+- If uncertain about any medication name, dosage, or finding, add it to uncertainties and review_flags.
+- Flag ambiguous or incomplete medication instructions.
+
+Return ONLY valid JSON (no markdown, no code fences) in this exact structure:
+{
+  "subjective": {"chief_complaint": "", "hpi": "", "ros": []},
+  "objective": {"vitals": {"bp": "", "hr": "", "rr": "", "temp": "", "spo2": "", "weight": "", "height": ""}, "physical_exam": "", "diagnostics": []},
+  "assessment": [],
+  "plan": [],
+  "prescriptions": [{"drug": "", "generic_name": "", "brand_name": "", "strength": "", "dose": "", "route": "oral", "frequency": "", "duration": "", "quantity": "", "prn": false, "indication": "", "notes": "", "confidence": "high"}],
+  "orders": [{"type": "lab", "name": "", "details": "", "priority": "routine", "confidence": "high"}],
+  "patient_instructions": [],
+  "follow_up": "",
+  "icd10_suggestions": [{"code": "", "label": "", "basis": ""}],
+  "uncertainties": [],
+  "review_flags": []
+}"""
+
+        mode_prompts = {
+            "full_consultation": "Process this full consultation dictation. Extract all clinical information into the structured format.",
+            "subjective": "Focus on extracting Subjective information (chief complaint, HPI, ROS). Leave other sections empty.",
+            "objective": "Focus on extracting Objective findings (vitals, physical exam, diagnostics). Leave other sections empty.",
+            "assessment": "Focus on extracting Assessment (diagnoses, impressions). Leave other sections empty.",
+            "plan": "Focus on extracting Plan (treatment, medications, follow-up). Leave other sections empty.",
+            "prescription": "Focus on extracting medication prescriptions into the prescriptions array. Leave other clinical sections empty.",
+            "orders": "Focus on extracting lab and imaging orders into the orders array. Leave other clinical sections empty.",
+            "instructions": "Focus on extracting patient instructions and follow-up advice. Leave other sections empty."
+        }
+
+        prompt = mode_prompts.get(mode, mode_prompts["full_consultation"])
+        prompt += f"\n\nRaw Dictation:\n{transcript}"
+
+        if patient_context:
+            ctx_parts = []
+            if patient_context.get("name"):
+                ctx_parts.append(f"Name: {patient_context['name']}")
+            if patient_context.get("age"):
+                ctx_parts.append(f"Age: {patient_context['age']}")
+            if patient_context.get("sex"):
+                ctx_parts.append(f"Sex: {patient_context['sex']}")
+            if patient_context.get("allergies"):
+                ctx_parts.append(f"Allergies: {', '.join(patient_context['allergies'])}")
+            if patient_context.get("chronic_conditions"):
+                ctx_parts.append(f"Conditions: {', '.join(patient_context['chronic_conditions'])}")
+            if ctx_parts:
+                prompt += "\n\nPatient Context:\n" + "\n".join(ctx_parts)
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"dictation-{current_user['id']}-{datetime.now().timestamp()}",
+            system_message=system_message
+        ).with_model("openai", "gpt-5.2")
+
+        response = await chat.send_message(UserMessage(text=prompt))
+
+        # Parse JSON from response
+        import json as json_lib
+        response_text = response.strip()
+        # Remove markdown code fences if present
+        if response_text.startswith("```"):
+            response_text = response_text.split("\n", 1)[1] if "\n" in response_text else response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            if response_text.startswith("json"):
+                response_text = response_text[4:].strip()
+
+        structured = json_lib.loads(response_text)
+
+        # Update session
+        if session_id:
+            now = datetime.now(timezone.utc).isoformat()
+            await db.dictation_sessions.update_one(
+                {"id": session_id},
+                {"$set": {
+                    "ai_structured_json": structured,
+                    "review_flags_json": structured.get("review_flags", []),
+                    "status": "ai_processed",
+                    "updated_at": now
+                }}
+            )
+            await db.dictation_audit_logs.insert_one({
+                "id": str(uuid.uuid4()),
+                "dictation_session_id": session_id,
+                "action_type": "ai_processed",
+                "action_by": current_user["id"],
+                "action_timestamp": now,
+                "notes": f"Mode: {mode}"
+            })
+
+        return {"structured": structured, "mode": mode}
+
+    except json_lib.JSONDecodeError:
+        logger.error(f"AI returned non-JSON: {response_text[:200]}")
+        return {"structured": None, "raw_response": response_text, "error": "AI returned non-JSON. Review the raw response.", "mode": mode}
+    except Exception as e:
+        logger.error(f"Structure error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI structuring failed: {str(e)}")
+
+@api_router.post("/dictation/audit")
+async def log_dictation_audit(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Log a dictation audit event"""
+    now = datetime.now(timezone.utc).isoformat()
+    log_entry = {
+        "id": str(uuid.uuid4()),
+        "dictation_session_id": data.get("session_id", ""),
+        "action_type": data.get("action_type", "unknown"),
+        "action_by": current_user["id"],
+        "action_timestamp": now,
+        "notes": data.get("notes")
+    }
+    await db.dictation_audit_logs.insert_one(log_entry)
+    log_entry.pop("_id", None)
+    return log_entry
+
+@api_router.get("/dictation/audit/{session_id}")
+async def get_dictation_audit(session_id: str, current_user: dict = Depends(get_current_user)):
+    logs = await db.dictation_audit_logs.find(
+        {"dictation_session_id": session_id}, {"_id": 0}
+    ).sort("action_timestamp", 1).to_list(500)
+    return logs
+
 # ============== DASHBOARD STATS ==============
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(

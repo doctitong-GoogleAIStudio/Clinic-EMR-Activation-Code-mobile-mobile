@@ -1,0 +1,811 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { patientAPI, visitAPI, dictationAPI, settingsAPI } from '../lib/api';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import { ScrollArea } from '../components/ui/scroll-area';
+import {
+  Mic, MicOff, Pause, Play, Square, Trash2, RotateCcw, Wand2,
+  ChevronLeft, ChevronDown, ChevronUp, User, AlertTriangle,
+  FileText, Pill, ClipboardList, MessageSquare, CalendarCheck,
+  Loader2, Copy, Check, ArrowDownToLine, Stethoscope, Activity,
+  Save, Send
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { getErrorMessage } from '../lib/utils';
+
+// Format seconds to mm:ss
+const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+// Status badge config
+const STATUS_CONFIG = {
+  idle: { label: 'Ready', color: 'bg-slate-100 text-slate-700', dot: 'bg-slate-400' },
+  recording: { label: 'Recording', color: 'bg-red-100 text-red-700', dot: 'bg-red-500 animate-pulse' },
+  paused: { label: 'Paused', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+  stopped: { label: 'Stopped', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  transcribing: { label: 'Transcribing', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500 animate-pulse' },
+  ai_processing: { label: 'AI Processing', color: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500 animate-pulse' },
+  review: { label: 'Review Required', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+  error: { label: 'Error', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
+};
+
+const DICTATION_MODES = [
+  { value: 'full_consultation', label: 'Full Consultation', icon: FileText },
+  { value: 'subjective', label: 'Subjective', icon: MessageSquare },
+  { value: 'objective', label: 'Objective', icon: Activity },
+  { value: 'assessment', label: 'Assessment', icon: Stethoscope },
+  { value: 'plan', label: 'Plan', icon: ClipboardList },
+  { value: 'prescription', label: 'Prescription', icon: Pill },
+  { value: 'orders', label: 'Orders', icon: ClipboardList },
+  { value: 'instructions', label: 'Instructions', icon: MessageSquare },
+];
+
+export default function AIConsultationPage() {
+  const { patientId } = useParams();
+  const [searchParams] = useSearchParams();
+  const visitId = searchParams.get('visit');
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Data state
+  const [patient, setPatient] = useState(null);
+  const [visits, setVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // SOAP editor state
+  const [soap, setSoap] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
+  const [prescriptions, setPrescriptions] = useState('');
+  const [orders, setOrders] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [followUp, setFollowUp] = useState('');
+
+  // Dictation state
+  const [dictMode, setDictMode] = useState('full_consultation');
+  const [pipelineStatus, setPipelineStatus] = useState('idle');
+  const [sessionId, setSessionId] = useState(null);
+  const [transcript, setTranscript] = useState('');
+  const [structured, setStructured] = useState(null);
+  const [reviewFlags, setReviewFlags] = useState([]);
+  const [uncertainties, setUncertainties] = useState([]);
+
+  // UI state
+  const [expandTranscript, setExpandTranscript] = useState(true);
+  const [expandOutput, setExpandOutput] = useState(true);
+  const [insertDialog, setInsertDialog] = useState(null); // { target, content }
+  const [saving, setSaving] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
+
+  const recorder = useAudioRecorder();
+  const transcriptEndRef = useRef(null);
+
+  // Load patient data
+  useEffect(() => {
+    async function load() {
+      try {
+        const [pRes, vRes] = await Promise.all([
+          patientAPI.getOne(patientId),
+          visitAPI.getAll({ patient_id: patientId, limit: 5 })
+        ]);
+        setPatient(pRes.data);
+        setVisits(Array.isArray(vRes.data) ? vRes.data : vRes.data?.data || []);
+
+        // If editing an existing visit, pre-fill SOAP
+        if (visitId) {
+          const vDetail = await visitAPI.getOne(visitId);
+          const v = vDetail.data;
+          setSoap({
+            subjective: v.soap_subjective || '',
+            objective: v.soap_objective || '',
+            assessment: v.soap_assessment || '',
+            plan: v.soap_plan || '',
+          });
+          setInstructions(v.patient_instructions || '');
+          setFollowUp(v.follow_up_date || '');
+        }
+      } catch (e) {
+        toast.error(getErrorMessage(e, 'Failed to load patient'));
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [patientId, visitId]);
+
+  // Calculate age
+  const calcAge = (bd) => {
+    if (!bd) return '';
+    const diff = Date.now() - new Date(bd).getTime();
+    return Math.floor(diff / 31557600000);
+  };
+
+  // ─── RECORDING CONTROLS ───
+  const handleStart = async () => {
+    try {
+      // Create dictation session
+      const res = await dictationAPI.createSession({
+        patient_id: patientId,
+        visit_id: visitId,
+        dictation_mode: dictMode,
+      });
+      setSessionId(res.data.id);
+      setTranscript('');
+      setStructured(null);
+      setReviewFlags([]);
+      setUncertainties([]);
+      setPipelineStatus('recording');
+      await recorder.startRecording();
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to start recording'));
+      setPipelineStatus('error');
+    }
+  };
+
+  const handlePause = () => {
+    recorder.pauseRecording();
+    setPipelineStatus('paused');
+    if (sessionId) dictationAPI.updateSession(sessionId, { status: 'paused' }).catch(() => {});
+  };
+
+  const handleResume = () => {
+    recorder.resumeRecording();
+    setPipelineStatus('recording');
+    if (sessionId) dictationAPI.updateSession(sessionId, { status: 'recording' }).catch(() => {});
+  };
+
+  const handleStop = async () => {
+    const blob = await recorder.stopRecording();
+    if (!blob) return;
+    setPipelineStatus('transcribing');
+
+    try {
+      // Transcribe
+      const formData = new FormData();
+      formData.append('audio', blob, 'recording.webm');
+      formData.append('session_id', sessionId || '');
+      formData.append('language', 'en');
+      formData.append('prompt', 'Medical clinic consultation. Doctor dictating patient encounter notes, medications, diagnoses, and treatment plans.');
+
+      const tRes = await dictationAPI.transcribe(formData);
+      const newTranscript = tRes.data.transcript || '';
+      setTranscript(newTranscript);
+
+      if (!newTranscript.trim()) {
+        toast.warning('No speech detected');
+        setPipelineStatus('idle');
+        return;
+      }
+
+      // AI Structure
+      setPipelineStatus('ai_processing');
+      const sRes = await dictationAPI.structure({
+        transcript: newTranscript,
+        mode: dictMode,
+        session_id: sessionId,
+        patient_context: patient ? {
+          name: patient.full_name,
+          age: calcAge(patient.birthdate),
+          sex: patient.sex,
+          allergies: patient.allergies || [],
+          chronic_conditions: patient.chronic_conditions || [],
+        } : {},
+      });
+
+      if (sRes.data.structured) {
+        setStructured(sRes.data.structured);
+        setReviewFlags(sRes.data.structured.review_flags || []);
+        setUncertainties(sRes.data.structured.uncertainties || []);
+        setPipelineStatus('review');
+        toast.success('AI processing complete — review the output');
+      } else {
+        toast.warning('AI returned unstructured response');
+        setPipelineStatus('review');
+      }
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Processing failed'));
+      setPipelineStatus('error');
+    }
+  };
+
+  const handleClear = () => {
+    recorder.clearRecording();
+    setTranscript('');
+    setStructured(null);
+    setReviewFlags([]);
+    setUncertainties([]);
+    setPipelineStatus('idle');
+    setSessionId(null);
+  };
+
+  const handleReprocess = async () => {
+    if (!transcript.trim()) return;
+    setPipelineStatus('ai_processing');
+    try {
+      const sRes = await dictationAPI.structure({
+        transcript,
+        mode: dictMode,
+        session_id: sessionId,
+        patient_context: patient ? {
+          name: patient.full_name,
+          age: calcAge(patient.birthdate),
+          sex: patient.sex,
+          allergies: patient.allergies || [],
+          chronic_conditions: patient.chronic_conditions || [],
+        } : {},
+      });
+      if (sRes.data.structured) {
+        setStructured(sRes.data.structured);
+        setReviewFlags(sRes.data.structured.review_flags || []);
+        setUncertainties(sRes.data.structured.uncertainties || []);
+        setPipelineStatus('review');
+        toast.success('Reprocessed successfully');
+      }
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Reprocess failed'));
+      setPipelineStatus('error');
+    }
+  };
+
+  // ─── INSERT LOGIC ───
+  const requestInsert = (target, content) => {
+    const currentVal = target === 'subjective' ? soap.subjective
+      : target === 'objective' ? soap.objective
+      : target === 'assessment' ? soap.assessment
+      : target === 'plan' ? soap.plan
+      : target === 'prescriptions' ? prescriptions
+      : target === 'orders' ? orders
+      : target === 'instructions' ? instructions : '';
+
+    if (currentVal.trim()) {
+      setInsertDialog({ target, content, existing: currentVal });
+    } else {
+      doInsert(target, content, 'replace');
+    }
+  };
+
+  const doInsert = (target, content, action) => {
+    const update = (field, setter) => {
+      if (action === 'replace') setter(content);
+      else if (action === 'append') setter(prev => prev + '\n\n' + content);
+    };
+
+    if (target === 'subjective') update('subjective', v => setSoap(s => ({ ...s, subjective: action === 'replace' ? content : s.subjective + '\n\n' + content })));
+    else if (target === 'objective') setSoap(s => ({ ...s, objective: action === 'replace' ? content : s.objective + '\n\n' + content }));
+    else if (target === 'assessment') setSoap(s => ({ ...s, assessment: action === 'replace' ? content : s.assessment + '\n\n' + content }));
+    else if (target === 'plan') setSoap(s => ({ ...s, plan: action === 'replace' ? content : s.plan + '\n\n' + content }));
+    else if (target === 'prescriptions') action === 'replace' ? setPrescriptions(content) : setPrescriptions(p => p + '\n\n' + content);
+    else if (target === 'orders') action === 'replace' ? setOrders(content) : setOrders(o => o + '\n\n' + content);
+    else if (target === 'instructions') action === 'replace' ? setInstructions(content) : setInstructions(i => i + '\n\n' + content);
+
+    // Audit
+    if (sessionId) {
+      dictationAPI.logAudit({ session_id: sessionId, action_type: action === 'replace' ? 'section_overwritten' : 'section_inserted', notes: target });
+    }
+    setInsertDialog(null);
+    toast.success(`Inserted into ${target}`);
+  };
+
+  const insertFullSOAP = () => {
+    if (!structured) return;
+    const s = structured;
+    const subj = [s.subjective?.chief_complaint, s.subjective?.hpi, ...(s.subjective?.ros || [])].filter(Boolean).join('\n');
+    const obj = [s.objective?.physical_exam, ...(s.objective?.diagnostics || [])].filter(Boolean).join('\n');
+    const vitals = s.objective?.vitals;
+    let objText = '';
+    if (vitals) {
+      const vParts = Object.entries(vitals).filter(([, v]) => v).map(([k, v]) => `${k.toUpperCase()}: ${v}`);
+      if (vParts.length) objText += vParts.join(', ') + '\n';
+    }
+    objText += obj;
+    const assess = (s.assessment || []).join('\n');
+    const plan = (s.plan || []).join('\n');
+
+    setSoap({ subjective: subj, objective: objText, assessment: assess, plan: plan });
+
+    if (s.prescriptions?.length) {
+      setPrescriptions(s.prescriptions.map(rx =>
+        `${rx.drug || rx.generic_name || ''} ${rx.strength || ''} — ${rx.dose || ''} ${rx.route || ''} ${rx.frequency || ''} x ${rx.duration || ''} ${rx.prn ? '(PRN)' : ''} ${rx.notes || ''}`.trim()
+      ).join('\n'));
+    }
+    if (s.orders?.length) {
+      setOrders(s.orders.map(o => `${o.type?.toUpperCase() || ''}: ${o.name} ${o.details || ''} [${o.priority || 'routine'}]`.trim()).join('\n'));
+    }
+    if (s.patient_instructions?.length) {
+      setInstructions(s.patient_instructions.join('\n'));
+    }
+    if (s.follow_up) setFollowUp(s.follow_up);
+
+    if (sessionId) dictationAPI.logAudit({ session_id: sessionId, action_type: 'section_inserted', notes: 'full_soap' });
+    toast.success('Full SOAP inserted into chart');
+  };
+
+  // ─── SAVE VISIT ───
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const visitData = {
+        patient_id: patientId,
+        soap_subjective: soap.subjective,
+        soap_objective: soap.objective,
+        soap_assessment: soap.assessment,
+        soap_plan: soap.plan,
+        patient_instructions: instructions,
+        follow_up_date: followUp || null,
+      };
+
+      let savedVisit;
+      if (visitId) {
+        savedVisit = await visitAPI.update(visitId, visitData);
+      } else {
+        savedVisit = await visitAPI.create(visitData);
+      }
+
+      if (sessionId) {
+        await dictationAPI.updateSession(sessionId, {
+          status: 'saved_to_chart',
+          physician_reviewed: true,
+          visit_id: savedVisit.data?.id || visitId,
+        });
+        dictationAPI.logAudit({ session_id: sessionId, action_type: 'saved_to_chart', notes: `Visit: ${savedVisit.data?.id || visitId}` });
+      }
+
+      toast.success(visitId ? 'Visit updated' : 'Visit saved');
+      navigate(`/visits/${savedVisit.data?.id || visitId}`);
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Failed to save'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Copy helper
+  const copyText = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const statusCfg = STATUS_CONFIG[pipelineStatus] || STATUS_CONFIG.idle;
+  const isRecording = recorder.state === 'recording';
+  const isPaused = recorder.state === 'paused';
+  const isBusy = pipelineStatus === 'transcribing' || pipelineStatus === 'ai_processing';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#0F766E]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[calc(100vh-4rem)] flex flex-col" data-testid="ai-consultation-page">
+      {/* Top Bar */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white shrink-0">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} data-testid="back-btn">
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Stethoscope className="w-5 h-5 text-[#0F766E] shrink-0" />
+          <h1 className="font-heading font-bold text-slate-900 truncate">AI Consultation</h1>
+          {patient && <span className="text-sm text-slate-500 truncate">— {patient.full_name}</span>}
+        </div>
+        <Badge className={`${statusCfg.color} gap-1.5`} data-testid="pipeline-status">
+          <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
+          {statusCfg.label}
+        </Badge>
+        <Button onClick={handleSave} disabled={saving} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-visit-btn">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          {visitId ? 'Update Visit' : 'Save Visit'}
+        </Button>
+      </div>
+
+      {/* 3 Column Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT: Patient Snapshot */}
+        <aside className="w-64 border-r border-slate-200 bg-slate-50 overflow-y-auto shrink-0 hidden lg:block" data-testid="patient-snapshot">
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#0F766E]/10 flex items-center justify-center">
+                <User className="w-6 h-6 text-[#0F766E]" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900 truncate text-sm">{patient?.full_name}</p>
+                <p className="text-xs text-slate-500">{calcAge(patient?.birthdate)}yo {patient?.sex} &middot; {patient?.patient_id}</p>
+              </div>
+            </div>
+
+            {patient?.allergies?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">Allergies</p>
+                <div className="flex flex-wrap gap-1">
+                  {patient.allergies.map((a, i) => <Badge key={i} variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">{a}</Badge>)}
+                </div>
+              </div>
+            )}
+
+            {patient?.chronic_conditions?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">Conditions</p>
+                <div className="flex flex-wrap gap-1">
+                  {patient.chronic_conditions.map((c, i) => <Badge key={i} variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">{c}</Badge>)}
+                </div>
+              </div>
+            )}
+
+            {visits.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recent Visits</p>
+                <div className="space-y-1">
+                  {visits.slice(0, 3).map(v => (
+                    <button key={v.id} onClick={() => navigate(`/visits/${v.id}`)}
+                      className="w-full text-left p-2 rounded-lg bg-white border border-slate-100 hover:border-[#0F766E]/30 text-xs transition-colors">
+                      <p className="font-medium text-slate-700 truncate">{v.soap_assessment || 'No assessment'}</p>
+                      <p className="text-slate-400">{v.created_at?.split('T')[0]}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* CENTER: SOAP Editor */}
+        <main className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="soap-editor">
+          {/* SOAP Sections */}
+          {[
+            { key: 'subjective', label: 'Subjective', placeholder: 'Chief complaint, HPI, ROS...' },
+            { key: 'objective', label: 'Objective', placeholder: 'Vitals, physical exam findings...' },
+            { key: 'assessment', label: 'Assessment', placeholder: 'Diagnoses, impressions...' },
+            { key: 'plan', label: 'Plan', placeholder: 'Treatment plan, medications, follow-up...' },
+          ].map(({ key, label, placeholder }) => (
+            <div key={key}>
+              <Label className="text-sm font-semibold text-slate-700">{label}</Label>
+              <Textarea
+                value={soap[key]}
+                onChange={(e) => setSoap(s => ({ ...s, [key]: e.target.value }))}
+                placeholder={placeholder}
+                className="mt-1 min-h-[100px] font-mono text-sm bg-white"
+                data-testid={`soap-${key}`}
+              />
+            </div>
+          ))}
+
+          {/* Prescriptions */}
+          <div>
+            <Label className="text-sm font-semibold text-slate-700">Prescriptions</Label>
+            <Textarea
+              value={prescriptions}
+              onChange={(e) => setPrescriptions(e.target.value)}
+              placeholder="Medication details..."
+              className="mt-1 min-h-[80px] font-mono text-sm bg-white"
+              data-testid="soap-prescriptions"
+            />
+          </div>
+
+          {/* Orders */}
+          <div>
+            <Label className="text-sm font-semibold text-slate-700">Orders (Labs / Imaging)</Label>
+            <Textarea
+              value={orders}
+              onChange={(e) => setOrders(e.target.value)}
+              placeholder="Lab and imaging orders..."
+              className="mt-1 min-h-[60px] font-mono text-sm bg-white"
+              data-testid="soap-orders"
+            />
+          </div>
+
+          {/* Patient Instructions */}
+          <div>
+            <Label className="text-sm font-semibold text-slate-700">Patient Instructions</Label>
+            <Textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Discharge instructions, return precautions..."
+              className="mt-1 min-h-[60px] font-mono text-sm bg-white"
+              data-testid="soap-instructions"
+            />
+          </div>
+
+          {/* Follow-up */}
+          <div>
+            <Label className="text-sm font-semibold text-slate-700">Follow-up</Label>
+            <Input
+              value={followUp}
+              onChange={(e) => setFollowUp(e.target.value)}
+              placeholder="e.g., Return in 3 days, Follow up in 2 weeks"
+              className="mt-1 bg-white"
+              data-testid="soap-followup"
+            />
+          </div>
+        </main>
+
+        {/* RIGHT: AI Dictation Panel */}
+        <aside className="w-96 border-l border-slate-200 bg-white overflow-y-auto shrink-0 hidden md:flex flex-col" data-testid="dictation-panel">
+          <div className="p-4 space-y-4 flex-1">
+            {/* Mode Selector */}
+            <div>
+              <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dictation Mode</Label>
+              <Select value={dictMode} onValueChange={setDictMode} disabled={isRecording || isPaused}>
+                <SelectTrigger className="mt-1" data-testid="dictation-mode-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DICTATION_MODES.map(m => (
+                    <SelectItem key={m.value} value={m.value}>
+                      <span className="flex items-center gap-2"><m.icon className="w-3.5 h-3.5" />{m.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Mic Device Selector */}
+            {recorder.devices.length > 1 && (
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Microphone</Label>
+                <Select value={recorder.selectedDevice} onValueChange={recorder.setSelectedDevice} disabled={isRecording}>
+                  <SelectTrigger className="mt-1 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recorder.devices.map(d => (
+                      <SelectItem key={d.deviceId} value={d.deviceId}>{d.label || 'Microphone'}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Recording Controls */}
+            <Card className="border-slate-200">
+              <CardContent className="p-4 space-y-3">
+                {/* Audio Level Meter */}
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all duration-100 rounded-full"
+                    style={{ width: `${recorder.audioLevel * 100}%` }}
+                    data-testid="audio-level-meter"
+                  />
+                </div>
+
+                {/* Timer */}
+                <div className="text-center">
+                  <span className="font-mono text-3xl font-bold text-slate-900" data-testid="recording-timer">
+                    {fmtTime(recorder.duration)}
+                  </span>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex items-center justify-center gap-3">
+                  {pipelineStatus === 'idle' || pipelineStatus === 'error' || pipelineStatus === 'review' ? (
+                    <Button
+                      size="lg"
+                      className="bg-red-500 hover:bg-red-600 text-white rounded-full w-16 h-16 p-0"
+                      onClick={handleStart}
+                      disabled={isBusy}
+                      data-testid="start-dictation-btn"
+                    >
+                      <Mic className="w-7 h-7" />
+                    </Button>
+                  ) : isRecording ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={handlePause} className="rounded-full w-12 h-12 p-0" data-testid="pause-btn">
+                        <Pause className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        className="bg-slate-800 hover:bg-slate-900 text-white rounded-full w-16 h-16 p-0"
+                        onClick={handleStop}
+                        data-testid="stop-btn"
+                      >
+                        <Square className="w-6 h-6" />
+                      </Button>
+                    </>
+                  ) : isPaused ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={handleResume} className="rounded-full w-12 h-12 p-0 border-green-300 text-green-600" data-testid="resume-btn">
+                        <Play className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        className="bg-slate-800 hover:bg-slate-900 text-white rounded-full w-16 h-16 p-0"
+                        onClick={handleStop}
+                        data-testid="stop-btn"
+                      >
+                        <Square className="w-6 h-6" />
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+
+                {isBusy && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-indigo-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {pipelineStatus === 'transcribing' ? 'Transcribing audio...' : 'AI processing...'}
+                  </div>
+                )}
+
+                {/* Secondary actions */}
+                {(transcript || structured) && (
+                  <div className="flex gap-2 justify-center pt-1">
+                    <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs text-slate-500" data-testid="clear-btn">
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Clear
+                    </Button>
+                    {transcript && (
+                      <Button variant="ghost" size="sm" onClick={handleReprocess} disabled={isBusy} className="text-xs text-indigo-600" data-testid="reprocess-btn">
+                        <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {recorder.error && (
+                  <p className="text-xs text-red-600 text-center">{recorder.error}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Transcript */}
+            {transcript && (
+              <div>
+                <button onClick={() => setExpandTranscript(!expandTranscript)}
+                  className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider w-full">
+                  {expandTranscript ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                  Transcript
+                  <Button variant="ghost" size="sm" className="ml-auto h-6 px-1.5" onClick={(e) => { e.stopPropagation(); copyText(transcript, 'transcript'); }}>
+                    {copiedField === 'transcript' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                  </Button>
+                </button>
+                {expandTranscript && (
+                  <div className="mt-1 p-3 bg-slate-50 rounded-lg border border-slate-200 max-h-40 overflow-y-auto text-sm text-slate-700 leading-relaxed" data-testid="transcript-panel">
+                    {transcript}
+                    <div ref={transcriptEndRef} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Review Flags & Uncertainties */}
+            {(reviewFlags.length > 0 || uncertainties.length > 0) && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1">
+                <p className="text-xs font-semibold text-amber-700 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Review Required
+                </p>
+                {reviewFlags.map((f, i) => <p key={`rf-${i}`} className="text-xs text-amber-600">- {f}</p>)}
+                {uncertainties.map((u, i) => <p key={`uc-${i}`} className="text-xs text-amber-600">- {u}</p>)}
+              </div>
+            )}
+
+            {/* Structured Output */}
+            {structured && (
+              <div>
+                <button onClick={() => setExpandOutput(!expandOutput)}
+                  className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider w-full">
+                  {expandOutput ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                  AI Structured Output
+                </button>
+                {expandOutput && (
+                  <div className="mt-1 space-y-2" data-testid="structured-output">
+                    {/* Insert Full SOAP */}
+                    <Button size="sm" className="w-full bg-[#0F766E] hover:bg-[#115E59] text-xs" onClick={insertFullSOAP} data-testid="insert-full-soap">
+                      <ArrowDownToLine className="w-3.5 h-3.5 mr-1" /> Insert Full SOAP
+                    </Button>
+
+                    {/* Subjective */}
+                    {(structured.subjective?.chief_complaint || structured.subjective?.hpi) && (
+                      <OutputCard title="Subjective" target="subjective"
+                        content={[structured.subjective.chief_complaint, structured.subjective.hpi, ...(structured.subjective.ros || [])].filter(Boolean).join('\n')}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Objective */}
+                    {structured.objective?.physical_exam && (
+                      <OutputCard title="Objective" target="objective"
+                        content={structured.objective.physical_exam}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Assessment */}
+                    {structured.assessment?.length > 0 && (
+                      <OutputCard title="Assessment" target="assessment"
+                        content={structured.assessment.join('\n')}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Plan */}
+                    {structured.plan?.length > 0 && (
+                      <OutputCard title="Plan" target="plan"
+                        content={structured.plan.join('\n')}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Prescriptions */}
+                    {structured.prescriptions?.length > 0 && (
+                      <OutputCard title="Prescriptions" target="prescriptions"
+                        content={structured.prescriptions.map(rx =>
+                          `${rx.drug || rx.generic_name || ''} ${rx.strength || ''} — ${rx.dose || ''} ${rx.route || ''} ${rx.frequency || ''} x ${rx.duration || ''} ${rx.prn ? '(PRN)' : ''} ${rx.confidence === 'low' ? '[REVIEW]' : ''}`.trim()
+                        ).join('\n')}
+                        onInsert={requestInsert}
+                        warn={structured.prescriptions.some(rx => rx.confidence === 'low')} />
+                    )}
+                    {/* Orders */}
+                    {structured.orders?.length > 0 && (
+                      <OutputCard title="Orders" target="orders"
+                        content={structured.orders.map(o => `${o.type?.toUpperCase()}: ${o.name} ${o.details || ''} [${o.priority}]`.trim()).join('\n')}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Instructions */}
+                    {structured.patient_instructions?.length > 0 && (
+                      <OutputCard title="Patient Instructions" target="instructions"
+                        content={structured.patient_instructions.join('\n')}
+                        onInsert={requestInsert} />
+                    )}
+                    {/* Follow-up */}
+                    {structured.follow_up && (
+                      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+                        <p className="font-semibold text-blue-700">Follow-up: {structured.follow_up}</p>
+                      </div>
+                    )}
+                    {/* ICD-10 Suggestions */}
+                    {structured.icd10_suggestions?.length > 0 && (
+                      <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                        <p className="text-xs font-semibold text-slate-500 mb-1">ICD-10 Suggestions (for reference only)</p>
+                        {structured.icd10_suggestions.map((c, i) => (
+                          <p key={i} className="text-xs text-slate-600"><span className="font-mono font-medium">{c.code}</span> — {c.label}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* Insert Confirmation Dialog */}
+      <Dialog open={!!insertDialog} onOpenChange={() => setInsertDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Insert into {insertDialog?.target}</DialogTitle>
+            <DialogDescription>This section already has content. How would you like to proceed?</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="p-2 bg-slate-50 rounded text-xs text-slate-600 max-h-24 overflow-y-auto">
+              <p className="font-semibold mb-1">Existing:</p>
+              {insertDialog?.existing?.substring(0, 200)}{insertDialog?.existing?.length > 200 ? '...' : ''}
+            </div>
+            <div className="p-2 bg-blue-50 rounded text-xs text-blue-700 max-h-24 overflow-y-auto">
+              <p className="font-semibold mb-1">New content:</p>
+              {insertDialog?.content?.substring(0, 200)}{insertDialog?.content?.length > 200 ? '...' : ''}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setInsertDialog(null)} data-testid="insert-cancel">Cancel</Button>
+            <Button variant="outline" className="border-blue-300 text-blue-700" onClick={() => doInsert(insertDialog.target, insertDialog.content, 'append')} data-testid="insert-append">Append</Button>
+            <Button className="bg-red-500 hover:bg-red-600" onClick={() => doInsert(insertDialog.target, insertDialog.content, 'replace')} data-testid="insert-replace">Replace</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Output Card Component ───
+function OutputCard({ title, target, content, onInsert, warn }) {
+  return (
+    <div className={`p-2.5 rounded-lg border text-xs ${warn ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'}`}>
+      <div className="flex items-center justify-between mb-1">
+        <span className={`font-semibold ${warn ? 'text-amber-700' : 'text-slate-700'}`}>
+          {warn && <AlertTriangle className="w-3 h-3 inline mr-1" />}{title}
+        </span>
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-[#0F766E] text-xs" onClick={() => onInsert(target, content)} data-testid={`insert-${target}`}>
+          <ArrowDownToLine className="w-3 h-3 mr-1" /> Insert
+        </Button>
+      </div>
+      <p className="text-slate-600 whitespace-pre-wrap leading-relaxed">{content}</p>
+    </div>
+  );
+}

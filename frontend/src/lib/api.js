@@ -156,3 +156,18 @@ export const restoreAPI = {
 export const auditAPI = {
   getAll: (limit) => axios.get(`${API}/audit-logs`, { params: { limit } }),
 };
+
+// Dictation APIs
+export const dictationAPI = {
+  createSession: (data) => axios.post(`${API}/dictation/sessions`, data),
+  getSessions: (patientId) => axios.get(`${API}/dictation/sessions`, { params: { patient_id: patientId } }),
+  getSession: (id) => axios.get(`${API}/dictation/sessions/${id}`),
+  updateSession: (id, data) => axios.put(`${API}/dictation/sessions/${id}`, data),
+  transcribe: (formData) => axios.post(`${API}/dictation/transcribe`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  }),
+  structure: (data) => axios.post(`${API}/dictation/structure`, data),
+  logAudit: (data) => axios.post(`${API}/dictation/audit`, data),
+  getAudit: (sessionId) => axios.get(`${API}/dictation/audit/${sessionId}`),
+};

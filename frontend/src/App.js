@@ -15,6 +15,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import NewPatientPage from './pages/NewPatientPage';
 import NewVisitPage from './pages/NewVisitPage';
 import VisitDetailPage from './pages/VisitDetailPage';
+import AIConsultationPage from './pages/AIConsultationPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
@@ -57,6 +58,20 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Full screen protected route (no max-width constraint)
+const FullScreenRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-4 border-[#0F766E]/30 border-t-[#0F766E] rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return children;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -71,6 +86,7 @@ function AppRoutes() {
       <Route path="/patients/:patientId" element={<ProtectedRoute><PatientProfilePage /></ProtectedRoute>} />
       <Route path="/visits/new" element={<ProtectedRoute><NewVisitPage /></ProtectedRoute>} />
       <Route path="/visits/:visitId" element={<ProtectedRoute><VisitDetailPage /></ProtectedRoute>} />
+      <Route path="/patients/:patientId/ai-consultation" element={<FullScreenRoute><AIConsultationPage /></FullScreenRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 

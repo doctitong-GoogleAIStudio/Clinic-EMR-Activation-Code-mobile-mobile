@@ -16,7 +16,8 @@ import {
   User, Phone, Mail, MapPin, Calendar, Heart, AlertTriangle, 
   Edit, Save, Plus, FileText, Image, Upload, Trash2, 
   Stethoscope, Clock, ArrowLeft, Paperclip, X, Pill, Award, Briefcase, Send, Printer, AlertCircle,
-  Microscope, Download, Eye, FileImage, File, ZoomIn, ZoomOut, Maximize2, RotateCcw, Activity, Thermometer
+  Microscope, Download, Eye, FileImage, File, ZoomIn, ZoomOut, Maximize2, RotateCcw, Activity, Thermometer,
+  Mic
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -546,6 +547,12 @@ const PatientProfilePage = () => {
             <Button className="bg-[#F97316] hover:bg-[#EA580C]" onClick={() => navigate(`/visits/new?patient=${patientId}`)} data-testid="new-visit-btn">
               <Stethoscope className="w-4 h-4 mr-2" />
               New Visit
+            </Button>
+          )}
+          {isDoctor && (
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => navigate(`/patients/${patientId}/ai-consultation`)} data-testid="ai-consultation-btn">
+              <Mic className="w-4 h-4 mr-2" />
+              AI Dictation
             </Button>
           )}
           {(isDoctor || isAdmin) && (
