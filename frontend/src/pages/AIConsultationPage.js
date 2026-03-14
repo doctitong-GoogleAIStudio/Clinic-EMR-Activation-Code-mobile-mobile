@@ -388,18 +388,18 @@ export default function AIConsultationPage() {
   };
 
   const doInsert = (target, content, action) => {
-    const update = (field, setter) => {
-      if (action === 'replace') setter(content);
-      else if (action === 'append') setter(prev => prev + '\n\n' + content);
-    };
-
-    if (target === 'subjective') update('subjective', v => setSoap(s => ({ ...s, subjective: action === 'replace' ? content : s.subjective + '\n\n' + content })));
-    else if (target === 'objective') setSoap(s => ({ ...s, objective: action === 'replace' ? content : s.objective + '\n\n' + content }));
-    else if (target === 'assessment') setSoap(s => ({ ...s, assessment: action === 'replace' ? content : s.assessment + '\n\n' + content }));
-    else if (target === 'plan') setSoap(s => ({ ...s, plan: action === 'replace' ? content : s.plan + '\n\n' + content }));
-    else if (target === 'prescriptions') action === 'replace' ? setPrescriptions(content) : setPrescriptions(p => p + '\n\n' + content);
-    else if (target === 'orders') action === 'replace' ? setOrders(content) : setOrders(o => o + '\n\n' + content);
-    else if (target === 'instructions') action === 'replace' ? setInstructions(content) : setInstructions(i => i + '\n\n' + content);
+    if (['subjective', 'objective', 'assessment', 'plan'].includes(target)) {
+      setSoap(s => ({
+        ...s,
+        [target]: action === 'replace' ? content : (s[target] + '\n\n' + content),
+      }));
+    } else if (target === 'prescriptions') {
+      setPrescriptions(prev => action === 'replace' ? content : prev + '\n\n' + content);
+    } else if (target === 'orders') {
+      setOrders(prev => action === 'replace' ? content : prev + '\n\n' + content);
+    } else if (target === 'instructions') {
+      setInstructions(prev => action === 'replace' ? content : prev + '\n\n' + content);
+    }
 
     // Audit
     if (sessionId) {
