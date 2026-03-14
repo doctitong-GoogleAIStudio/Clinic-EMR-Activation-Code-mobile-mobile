@@ -2199,14 +2199,17 @@ async def transcribe_audio(
                 temperature=0.0
             )
 
-        transcript = response.text if hasattr(response, 'text') else str(response)
+        transcript = response.text if hasattr(response, 'text') else (response.get('text', str(response)) if isinstance(response, dict) else str(response))
         confidence = 1.0
         segments = []
-        if hasattr(response, 'segments'):
-            segments = [{"start": s.start, "end": s.end, "text": s.text} for s in response.segments]
-            # Estimate confidence from no_speech_prob if available
-            if segments:
-                confidence = 0.95
+        raw_segments = response.segments if hasattr(response, 'segments') else (response.get('segments', []) if isinstance(response, dict) else [])
+        if raw_segments:
+            for s in raw_segments:
+                if isinstance(s, dict):
+                    segments.append({"start": s.get("start", 0), "end": s.get("end", 0), "text": s.get("text", "")})
+                else:
+                    segments.append({"start": getattr(s, 'start', 0), "end": getattr(s, 'end', 0), "text": getattr(s, 'text', '')})
+            confidence = 0.95
 
         # Update session if provided
         if session_id:
