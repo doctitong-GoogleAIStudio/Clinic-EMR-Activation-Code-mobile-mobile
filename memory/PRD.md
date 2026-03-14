@@ -51,6 +51,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
 - **lab_requests**: `{id, patient_id, visit_id, request_type, tests, clinical_info, urgency, created_by, created_at}`
 - **ai_drafts**: `{id, patient_id, owner_id, clinical_notes, ai_result, red_flags, created_by_name, created_at}` - Persisted AI consultation drafts
+- **dictation_sessions**: `{id, patient_id, visit_id, provider_id, provider_name, dictation_mode, language, status, raw_transcript, cleaned_transcript, ai_structured_json, review_flags_json, physician_reviewed, inserted_sections_json, duration_seconds, created_at, updated_at}`
+- **dictation_audit_logs**: `{id, dictation_session_id, action_type, action_by, action_timestamp, notes}`
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login`
@@ -66,11 +68,32 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
 - `DELETE /api/ai/drafts/{draft_id}` - Delete specific draft
 - `DELETE /api/ai/drafts/patient/{patient_id}` - Clear all drafts for a patient
 - `GET/PUT /api/settings` (per-user) | `POST /api/ai/assist`
+- `POST/GET/PUT /api/dictation/sessions` | `GET /api/dictation/sessions/{id}` - Dictation session CRUD
+- `POST /api/dictation/transcribe` - Whisper speech-to-text (multipart audio upload)
+- `POST /api/dictation/structure` - GPT-5.2 clinical structuring (transcript → SOAP JSON)
+- `POST /api/dictation/audit` | `GET /api/dictation/audit/{session_id}` - Audit logging
+- `POST /api/restore` - Restore backup with merge/replace modes
 
 ## Credentials
 - Admin: admin@clinic.com / admin123
 
 ## Recent Changes
+- **Mar 14, 2026**: **AI Doctor Assistant Dictation System (Phase 1 Complete)** - Production-grade voice dictation module:
+  - New 3-column AI Consultation page (Patient Snapshot | SOAP Editor | AI Dictation Panel)
+  - Voice recording controls (Start/Pause/Resume/Stop) with audio level meter and timer
+  - Speech-to-text via OpenAI Whisper (Emergent LLM Key)
+  - AI clinical structuring via GPT-5.2 — converts transcript into structured SOAP, Rx, Orders, Instructions, ICD-10 suggestions
+  - 8 dictation modes (Full Consultation, Subjective, Objective, Assessment, Plan, Prescription, Orders, Instructions)
+  - Insert-to-chart with Append/Replace/Cancel confirmation dialogs
+  - Structured output preview with review flags and uncertainty highlighting
+  - Full audit trail (recording_started, transcript_generated, ai_processed, section_inserted, saved_to_chart)
+  - Dictation session management (CRUD) with provider isolation
+  - Accessible from Patient Profile page via "AI Dictation" button
+  - Route: /patients/:patientId/ai-consultation
+  - Backend: POST /api/dictation/sessions, /transcribe, /structure, /audit
+  - DB: dictation_sessions, dictation_audit_logs collections
+- **Mar 13, 2026**: **Restore Backup Feature** - Restore from backup JSON with merge/replace modes
+- **Mar 13, 2026**: **Data Backup Feature** - Backup Now button, 3-day overdue banner, toast reminders
 - **Mar 5, 2026**: **Added Change Password Feature** - Doctors can change their password from Settings. Includes: password strength meter (Weak to Very Strong), show/hide eye icons, match validation, rate limiting (5 attempts then 10 min lockout), prevents reusing current password
 - **Mar 5, 2026**: **Added Receptionist Account Management** - Doctors can now view list of their receptionists, edit account details (name, email, password), and delete receptionist accounts from the Settings page
 - **Mar 5, 2026**: **Added Print Header Customization** - New section in Settings to customize printed form headers with: Header Title, Subtitle/Tagline, Logo Upload (from local file), and Additional Text. Includes live preview
