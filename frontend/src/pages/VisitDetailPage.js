@@ -663,7 +663,10 @@ const VisitDetailPage = () => {
               )}
               {visit.follow_up_date && (
                 <div className="pt-4 border-t">
-                  <p className="text-sm text-slate-500">Follow-up: {format(parseISO(visit.follow_up_date), 'MMMM d, yyyy')}</p>
+                  <p className="text-sm text-slate-500">Follow-up: {(() => {
+                    try { return format(parseISO(visit.follow_up_date), 'MMMM d, yyyy'); }
+                    catch { return visit.follow_up_date; }
+                  })()}</p>
                 </div>
               )}
             </CardContent>
