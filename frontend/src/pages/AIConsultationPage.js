@@ -17,7 +17,7 @@ import {
   ChevronLeft, ChevronDown, ChevronUp, User, AlertTriangle,
   FileText, Pill, ClipboardList, MessageSquare, CalendarCheck,
   Loader2, Copy, Check, ArrowDownToLine, Stethoscope, Activity,
-  Save, Send
+  Save, Send, FlaskConical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/utils';
@@ -46,6 +46,65 @@ const DICTATION_MODES = [
   { value: 'prescription', label: 'Prescription', icon: Pill },
   { value: 'orders', label: 'Orders', icon: ClipboardList },
   { value: 'instructions', label: 'Instructions', icon: MessageSquare },
+];
+
+const DEMO_SAMPLES = [
+  {
+    id: 'pneumonia',
+    label: 'Respiratory Infection',
+    mode: 'full_consultation',
+    badge: 'Full SOAP',
+    color: 'text-blue-700 bg-blue-50 border-blue-200',
+    text: 'Patient came in for cough for five days with fever. No chest pain, no dyspnea. Temperature thirty eight degrees Celsius. Crackles heard at the right lower lung field. Impression community acquired pneumonia. Start amoxicillin clavulanate six hundred twenty five milligrams one tablet three times daily for seven days. Advise increase oral fluids. Request chest x ray if not improving. Follow up in three days.',
+  },
+  {
+    id: 'hypertension',
+    label: 'Hypertension Follow-up',
+    mode: 'full_consultation',
+    badge: 'Full SOAP',
+    color: 'text-red-700 bg-red-50 border-red-200',
+    text: 'Follow up for hypertension. No headache, no dizziness, no chest pain. Blood pressure one hundred fifty over ninety. Patient admits poor compliance with medications. Continue amlodipine five milligrams once daily. Advise low salt diet and home blood pressure monitoring. Return in two weeks.',
+  },
+  {
+    id: 'gastroenteritis',
+    label: 'Acute Gastroenteritis',
+    mode: 'full_consultation',
+    badge: 'Full SOAP',
+    color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    text: 'Patient with vomiting and loose stools since yesterday. No blood in stool. Mild dehydration noted. Abdomen soft, no rebound tenderness. Impression acute gastroenteritis. Start oral rehydration solution and zinc. May take ondansetron as needed for vomiting. Return immediately if unable to tolerate fluids or if symptoms worsen.',
+  },
+  {
+    id: 'prescription',
+    label: 'Prescription Only',
+    mode: 'prescription',
+    badge: 'Rx Mode',
+    color: 'text-purple-700 bg-purple-50 border-purple-200',
+    text: 'Azithromycin five hundred milligrams tablet, take one tablet once daily for three days.',
+  },
+  {
+    id: 'orders',
+    label: 'Lab Orders',
+    mode: 'orders',
+    badge: 'Orders Mode',
+    color: 'text-amber-700 bg-amber-50 border-amber-200',
+    text: 'Request CBC, urinalysis, fasting blood sugar, lipid profile, chest x ray PA view.',
+  },
+  {
+    id: 'dermatology',
+    label: 'Dermatology Follow-up',
+    mode: 'full_consultation',
+    badge: 'Full SOAP',
+    color: 'text-pink-700 bg-pink-50 border-pink-200',
+    text: 'Follow up for pruritic erythematous rash on both forearms, improving with treatment. No fever. Continue cetirizine and topical steroid for five more days.',
+  },
+  {
+    id: 'uncertain',
+    label: 'Uncertain Medication',
+    mode: 'full_consultation',
+    badge: 'Review Flags',
+    color: 'text-orange-700 bg-orange-50 border-orange-200',
+    text: 'Start something like co amoxiclav six twenty five one tablet three times a day for one week.',
+  },
 ];
 
 export default function AIConsultationPage() {
@@ -79,9 +138,10 @@ export default function AIConsultationPage() {
   // UI state
   const [expandTranscript, setExpandTranscript] = useState(true);
   const [expandOutput, setExpandOutput] = useState(true);
-  const [insertDialog, setInsertDialog] = useState(null); // { target, content }
+  const [insertDialog, setInsertDialog] = useState(null);
   const [saving, setSaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   const recorder = useAudioRecorder();
   const transcriptEndRef = useRef(null);
@@ -249,6 +309,63 @@ export default function AIConsultationPage() {
       }
     } catch (e) {
       toast.error(getErrorMessage(e, 'Reprocess failed'));
+      setPipelineStatus('error');
+    }
+  };
+
+  // ─── DEMO MODE ───
+  const handleDemoSelect = async (sample) => {
+    // Set the mode to match the sample
+    setDictMode(sample.mode);
+    setTranscript(sample.text);
+    setStructured(null);
+    setReviewFlags([]);
+    setUncertainties([]);
+    setPipelineStatus('ai_processing');
+    toast.info(`Demo: ${sample.label} — processing...`);
+
+    try {
+      // Create a session for audit trail
+      const sessRes = await dictationAPI.createSession({
+        patient_id: patientId,
+        visit_id: visitId,
+        dictation_mode: sample.mode,
+      });
+      const demoSessionId = sessRes.data.id;
+      setSessionId(demoSessionId);
+
+      // Update session with the demo transcript
+      await dictationAPI.updateSession(demoSessionId, {
+        raw_transcript: sample.text,
+        status: 'transcribed',
+      });
+
+      // AI Structure
+      const sRes = await dictationAPI.structure({
+        transcript: sample.text,
+        mode: sample.mode,
+        session_id: demoSessionId,
+        patient_context: patient ? {
+          name: patient.full_name,
+          age: calcAge(patient.birthdate),
+          sex: patient.sex,
+          allergies: patient.allergies || [],
+          chronic_conditions: patient.chronic_conditions || [],
+        } : {},
+      });
+
+      if (sRes.data.structured) {
+        setStructured(sRes.data.structured);
+        setReviewFlags(sRes.data.structured.review_flags || []);
+        setUncertainties(sRes.data.structured.uncertainties || []);
+        setPipelineStatus('review');
+        toast.success(`Demo complete — review the AI output`);
+      } else {
+        toast.warning('AI returned unstructured response');
+        setPipelineStatus('review');
+      }
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Demo processing failed'));
       setPipelineStatus('error');
     }
   };
@@ -547,8 +664,41 @@ export default function AIConsultationPage() {
               </Select>
             </div>
 
+            {/* Demo Mode Toggle */}
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Demo Mode</Label>
+              <button
+                onClick={() => { setDemoMode(!demoMode); if (demoMode) handleClear(); }}
+                className={`relative w-10 h-5 rounded-full transition-colors ${demoMode ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                data-testid="demo-mode-toggle"
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${demoMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+
+            {/* Demo Sample Cards */}
+            {demoMode && !isBusy && pipelineStatus !== 'review' && (
+              <div className="space-y-2" data-testid="demo-samples">
+                <p className="text-xs text-slate-500">Select a sample dictation to test the AI pipeline:</p>
+                {DEMO_SAMPLES.map((sample) => (
+                  <button
+                    key={sample.id}
+                    onClick={() => handleDemoSelect(sample)}
+                    className={`w-full text-left p-2.5 rounded-lg border transition-all hover:shadow-sm ${sample.color}`}
+                    data-testid={`demo-sample-${sample.id}`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-semibold">{sample.label}</span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{sample.badge}</Badge>
+                    </div>
+                    <p className="text-[11px] opacity-75 line-clamp-2">{sample.text}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Mic Device Selector */}
-            {recorder.devices.length > 1 && (
+            {recorder.devices.length > 1 && !demoMode && (
               <div>
                 <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Microphone</Label>
                 <Select value={recorder.selectedDevice} onValueChange={recorder.setSelectedDevice} disabled={isRecording}>
@@ -564,7 +714,8 @@ export default function AIConsultationPage() {
               </div>
             )}
 
-            {/* Recording Controls */}
+            {/* Recording Controls - hidden in demo mode */}
+            {!demoMode && (
             <Card className="border-slate-200">
               <CardContent className="p-4 space-y-3">
                 {/* Audio Level Meter */}
@@ -650,6 +801,34 @@ export default function AIConsultationPage() {
                 )}
               </CardContent>
             </Card>
+            )}
+
+            {/* Demo mode: processing indicator */}
+            {demoMode && isBusy && (
+              <Card className="border-indigo-200 bg-indigo-50">
+                <CardContent className="p-4 flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                  <p className="text-sm font-medium text-indigo-700">
+                    {pipelineStatus === 'ai_processing' ? 'AI structuring transcript...' : 'Processing...'}
+                  </p>
+                  <p className="text-xs text-indigo-500">This may take 10-20 seconds</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Demo mode: clear & reprocess for demo results */}
+            {demoMode && (transcript || structured) && !isBusy && (
+              <div className="flex gap-2 justify-center">
+                <Button variant="ghost" size="sm" onClick={() => { handleClear(); }} className="text-xs text-slate-500" data-testid="demo-clear-btn">
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Clear
+                </Button>
+                {transcript && (
+                  <Button variant="ghost" size="sm" onClick={handleReprocess} className="text-xs text-indigo-600" data-testid="demo-reprocess-btn">
+                    <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Transcript */}
             {transcript && (

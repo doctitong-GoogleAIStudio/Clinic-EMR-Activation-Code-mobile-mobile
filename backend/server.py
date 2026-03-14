@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import json
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
@@ -2332,7 +2333,7 @@ Return ONLY valid JSON (no markdown, no code fences) in this exact structure:
         response = await chat.send_message(UserMessage(text=prompt))
 
         # Parse JSON from response
-        import json as json_lib
+        import json as json_lib_internal
         response_text = response.strip()
         # Remove markdown code fences if present
         if response_text.startswith("```"):
@@ -2343,7 +2344,7 @@ Return ONLY valid JSON (no markdown, no code fences) in this exact structure:
             if response_text.startswith("json"):
                 response_text = response_text[4:].strip()
 
-        structured = json_lib.loads(response_text)
+        structured = json_lib_internal.loads(response_text)
 
         # Update session
         if session_id:
@@ -2368,7 +2369,7 @@ Return ONLY valid JSON (no markdown, no code fences) in this exact structure:
 
         return {"structured": structured, "mode": mode}
 
-    except json_lib.JSONDecodeError:
+    except json.JSONDecodeError:
         logger.error(f"AI returned non-JSON: {response_text[:200]}")
         return {"structured": None, "raw_response": response_text, "error": "AI returned non-JSON. Review the raw response.", "mode": mode}
     except Exception as e:
