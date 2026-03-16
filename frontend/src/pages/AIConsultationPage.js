@@ -447,13 +447,28 @@ export default function AIConsultationPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Combine plan with prescriptions and orders
+      let fullPlan = soap.plan || '';
+      if (prescriptions.trim()) {
+        fullPlan += (fullPlan ? '\n\n' : '') + '--- Prescriptions ---\n' + prescriptions.trim();
+      }
+      if (orders.trim()) {
+        fullPlan += (fullPlan ? '\n\n' : '') + '--- Orders ---\n' + orders.trim();
+      }
+
+      // Combine instructions with follow-up
+      let fullInstructions = instructions || '';
+      if (followUp.trim()) {
+        fullInstructions += (fullInstructions ? '\n\n' : '') + 'Follow-up: ' + followUp.trim();
+      }
+
       const visitData = {
         patient_id: patientId,
         soap_subjective: soap.subjective,
         soap_objective: soap.objective,
         soap_assessment: soap.assessment,
-        soap_plan: soap.plan,
-        patient_instructions: instructions,
+        soap_plan: fullPlan,
+        patient_instructions: fullInstructions,
         follow_up_date: followUp || null,
       };
 
