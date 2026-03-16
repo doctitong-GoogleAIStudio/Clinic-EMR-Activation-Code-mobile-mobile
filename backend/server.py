@@ -632,7 +632,7 @@ async def create_patient(patient: PatientCreate, current_user: dict = Depends(ge
 @api_router.get("/patients", response_model=List[PatientResponse])
 async def get_patients(
     search: Optional[str] = None,
-    limit: int = Query(default=100, le=500),
+    limit: int = Query(default=10000, le=10000),
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
