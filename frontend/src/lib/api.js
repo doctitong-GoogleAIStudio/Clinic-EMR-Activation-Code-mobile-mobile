@@ -26,7 +26,7 @@ export const userAPI = {
 
 // Patient APIs
 export const patientAPI = {
-  getAll: (search) => axios.get(`${API}/patients`, { params: { search } }),
+  getAll: (search) => axios.get(`${API}/patients`, { params: { search, limit: 500 } }),
   getOne: (id) => axios.get(`${API}/patients/${id}`),
   create: (data) => axios.post(`${API}/patients`, data),
   update: (id, data) => axios.put(`${API}/patients/${id}`, data),
