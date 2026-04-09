@@ -149,6 +149,15 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application.
   - Live preview updates based on selected form type
   - VisitDetailPage now opens print preview dialog for all form types (not just prescriptions)
 
+## Recent Changes (Apr 9, 2026)
+- **Apr 9, 2026**: **OpenAI API Key for Voice Dictation (Complete)** - Users can now save their own OpenAI API key in Settings > Clinic > "Voice Dictation (AI Transcription)" section. The key is used for Whisper speech-to-text on the AI Consultation page. Features:
+  - Masked password input with show/hide toggle
+  - Green "API key configured" indicator when key is set
+  - Link to platform.openai.com/api-keys for getting a key
+  - Backend validates key presence before attempting transcription
+  - Clear error messages: "API key not configured" (400) and "Invalid API key" (401)
+  - AI Consultation `handleStop` sends audio blob to backend `/api/dictation/transcribe` for Whisper transcription, with fallback to browser Web Speech API
+
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups
 - [ ] Attachment tagging/filtering in "Labs & Imaging" section
