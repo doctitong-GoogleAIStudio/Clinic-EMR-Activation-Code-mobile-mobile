@@ -142,8 +142,6 @@ export default function AIConsultationPage() {
   const [saving, setSaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [demoMode, setDemoMode] = useState(false);
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualText, setManualText] = useState('');
 
   const recorder = useAudioRecorder();
   const transcriptEndRef = useRef(null);
@@ -224,24 +222,20 @@ export default function AIConsultationPage() {
 
   const handleStop = async () => {
     await recorder.stopRecording();
-
-    // Wait briefly for final speech results to flush
+    // Wait for final speech results
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Stop speech recognition after results are captured
     recorder.stopSpeechRecognition?.();
 
     const browserTranscript = recorder.getTranscript();
-    if (!browserTranscript) {
-      // Show manual transcript input instead of failing
-      setShowManualInput(true);
-      setPipelineStatus('stopped');
-      toast.info('Speech not captured — type or paste your dictation below');
-      return;
+    if (browserTranscript) {
+      setTranscript(browserTranscript);
+      // Auto-process if we got text from speech
+      processTranscript(browserTranscript);
+    } else {
+      // Text area is already visible — user can type and click "Process with AI"
+      setPipelineStatus('idle');
+      toast.info('Type or paste your dictation in the text area, then click "Process with AI"');
     }
-
-    setTranscript(browserTranscript);
-    processTranscript(browserTranscript);
   };
 
   // Process transcript through AI (shared by live recording and manual input)
@@ -283,14 +277,6 @@ export default function AIConsultationPage() {
     }
   };
 
-  // Handle manual transcript submission
-  const handleManualSubmit = () => {
-    if (!manualText.trim()) return;
-    setTranscript(manualText.trim());
-    setShowManualInput(false);
-    processTranscript(manualText.trim());
-  };
-
   const handleClear = () => {
     recorder.clearRecording();
     setTranscript('');
@@ -299,8 +285,6 @@ export default function AIConsultationPage() {
     setUncertainties([]);
     setPipelineStatus('idle');
     setSessionId(null);
-    setShowManualInput(false);
-    setManualText('');
   };
 
   const handleReprocess = async () => {
@@ -748,93 +732,88 @@ export default function AIConsultationPage() {
               </div>
             )}
 
-            {/* Recording Controls - hidden in demo mode */}
+            {/* === DICTATION INPUT (always visible when not in demo mode) === */}
             {!demoMode && (
-            <Card className="border-slate-200">
-              <CardContent className="p-4 space-y-3">
-                {/* Audio Level Meter */}
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all duration-100 rounded-full"
-                    style={{ width: `${recorder.audioLevel * 100}%` }}
-                    data-testid="audio-level-meter"
+              <div className="space-y-3">
+                {/* Voice Recording Bar */}
+                <Card className="border-slate-200">
+                  <CardContent className="p-3 space-y-2">
+                    {/* Audio Level + Timer row */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all duration-100 rounded-full" style={{ width: `${recorder.audioLevel * 100}%` }} data-testid="audio-level-meter" />
+                      </div>
+                      <span className="font-mono text-sm font-bold text-slate-700 w-12 text-right" data-testid="recording-timer">{fmtTime(recorder.duration)}</span>
+                    </div>
+                    {/* Control Buttons */}
+                    <div className="flex items-center justify-center gap-2">
+                      {(!isRecording && !isPaused) ? (
+                        <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0" onClick={handleStart} disabled={isBusy} data-testid="start-dictation-btn">
+                          <Mic className="w-5 h-5" />
+                        </Button>
+                      ) : isRecording ? (
+                        <>
+                          <Button variant="outline" size="sm" onClick={handlePause} className="rounded-full h-9 w-9 p-0" data-testid="pause-btn"><Pause className="w-4 h-4" /></Button>
+                          <Button size="sm" className="bg-slate-800 hover:bg-slate-900 text-white rounded-full h-10 w-10 p-0" onClick={handleStop} data-testid="stop-btn"><Square className="w-4 h-4" /></Button>
+                        </>
+                      ) : isPaused ? (
+                        <>
+                          <Button variant="outline" size="sm" onClick={handleResume} className="rounded-full h-9 w-9 p-0 border-green-300 text-green-600" data-testid="resume-btn"><Play className="w-4 h-4" /></Button>
+                          <Button size="sm" className="bg-slate-800 hover:bg-slate-900 text-white rounded-full h-10 w-10 p-0" onClick={handleStop} data-testid="stop-btn"><Square className="w-4 h-4" /></Button>
+                        </>
+                      ) : null}
+                    </div>
+                    {recorder.error && <p className="text-xs text-red-600 text-center">{recorder.error}</p>}
+                  </CardContent>
+                </Card>
+
+                {/* Live Transcript (during recording) */}
+                {(isRecording || isPaused) && (recorder.liveTranscript || recorder.interimText) && (
+                  <div className="p-3 bg-red-50/50 rounded-lg border border-red-200 max-h-28 overflow-y-auto text-sm text-slate-700 leading-relaxed" data-testid="live-transcript-panel">
+                    <p className="text-xs font-semibold text-red-500 mb-1 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Live</p>
+                    {recorder.liveTranscript}
+                    {recorder.interimText && <span className="text-slate-400 italic"> {recorder.interimText}</span>}
+                  </div>
+                )}
+
+                {/* Dictation Text Area (always visible) */}
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dictation Text</Label>
+                  <Textarea
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    placeholder="Speak using the mic above, or type/paste your clinical dictation here..."
+                    className="mt-1 min-h-[100px] text-sm bg-white"
+                    data-testid="dictation-text-area"
                   />
                 </div>
 
-                {/* Timer */}
-                <div className="text-center">
-                  <span className="font-mono text-3xl font-bold text-slate-900" data-testid="recording-timer">
-                    {fmtTime(recorder.duration)}
-                  </span>
-                </div>
-
-                {/* Buttons */}
-                <div className="flex items-center justify-center gap-3">
-                  {pipelineStatus === 'idle' || pipelineStatus === 'error' || pipelineStatus === 'review' ? (
-                    <Button
-                      size="lg"
-                      className="bg-red-500 hover:bg-red-600 text-white rounded-full w-16 h-16 p-0"
-                      onClick={handleStart}
-                      disabled={isBusy}
-                      data-testid="start-dictation-btn"
-                    >
-                      <Mic className="w-7 h-7" />
+                {/* Process / Clear buttons */}
+                <div className="flex gap-2">
+                  {transcript.trim() && !isBusy && (
+                    <Button className="flex-1 bg-[#0F766E] hover:bg-[#115E59] text-xs" onClick={() => processTranscript(transcript.trim())} data-testid="process-ai-btn">
+                      <Wand2 className="w-3.5 h-3.5 mr-1" /> Process with AI
                     </Button>
-                  ) : isRecording ? (
+                  )}
+                  {isBusy && (
+                    <div className="flex-1 flex items-center justify-center gap-2 py-2 text-sm text-indigo-600">
+                      <Loader2 className="w-4 h-4 animate-spin" /> AI processing...
+                    </div>
+                  )}
+                  {(transcript || structured) && !isBusy && (
                     <>
-                      <Button variant="outline" size="sm" onClick={handlePause} className="rounded-full w-12 h-12 p-0" data-testid="pause-btn">
-                        <Pause className="w-5 h-5" />
+                      <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs text-slate-500" data-testid="clear-btn">
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Clear
                       </Button>
-                      <Button
-                        className="bg-slate-800 hover:bg-slate-900 text-white rounded-full w-16 h-16 p-0"
-                        onClick={handleStop}
-                        data-testid="stop-btn"
-                      >
-                        <Square className="w-6 h-6" />
-                      </Button>
+                      {transcript && structured && (
+                        <Button variant="ghost" size="sm" onClick={handleReprocess} className="text-xs text-indigo-600" data-testid="reprocess-btn">
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
+                        </Button>
+                      )}
                     </>
-                  ) : isPaused ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={handleResume} className="rounded-full w-12 h-12 p-0 border-green-300 text-green-600" data-testid="resume-btn">
-                        <Play className="w-5 h-5" />
-                      </Button>
-                      <Button
-                        className="bg-slate-800 hover:bg-slate-900 text-white rounded-full w-16 h-16 p-0"
-                        onClick={handleStop}
-                        data-testid="stop-btn"
-                      >
-                        <Square className="w-6 h-6" />
-                      </Button>
-                    </>
-                  ) : null}
+                  )}
                 </div>
-
-                {isBusy && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-indigo-600">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {pipelineStatus === 'transcribing' ? 'Transcribing audio...' : 'AI processing...'}
-                  </div>
-                )}
-
-                {/* Secondary actions */}
-                {(transcript || structured) && (
-                  <div className="flex gap-2 justify-center pt-1">
-                    <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs text-slate-500" data-testid="clear-btn">
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Clear
-                    </Button>
-                    {transcript && (
-                      <Button variant="ghost" size="sm" onClick={handleReprocess} disabled={isBusy} className="text-xs text-indigo-600" data-testid="reprocess-btn">
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {recorder.error && (
-                  <p className="text-xs text-red-600 text-center">{recorder.error}</p>
-                )}
-              </CardContent>
-            </Card>
+              </div>
             )}
 
             {/* Demo mode: processing indicator */}
@@ -860,62 +839,6 @@ export default function AIConsultationPage() {
                   <Button variant="ghost" size="sm" onClick={handleReprocess} className="text-xs text-indigo-600" data-testid="demo-reprocess-btn">
                     <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
                   </Button>
-                )}
-              </div>
-            )}
-
-            {/* Manual Transcript Input (fallback when speech recognition fails) */}
-            {showManualInput && (
-              <Card className="border-amber-200 bg-amber-50" data-testid="manual-input-card">
-                <CardContent className="p-4 space-y-3">
-                  <p className="text-xs font-semibold text-amber-700">Speech not captured. Type or paste your dictation:</p>
-                  <Textarea
-                    value={manualText}
-                    onChange={(e) => setManualText(e.target.value)}
-                    placeholder="Type or paste your clinical dictation here..."
-                    className="min-h-[100px] text-sm bg-white border-amber-300 focus:border-amber-500"
-                    data-testid="manual-transcript-input"
-                  />
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setShowManualInput(false); setPipelineStatus('idle'); }} className="text-xs">Cancel</Button>
-                    <Button size="sm" className="bg-[#0F766E] hover:bg-[#115E59] text-xs flex-1" onClick={handleManualSubmit} disabled={!manualText.trim()} data-testid="manual-submit-btn">
-                      <Wand2 className="w-3.5 h-3.5 mr-1" /> Process with AI
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Live Transcript (during recording) */}
-            {(isRecording || isPaused) && (recorder.liveTranscript || recorder.interimText) && (
-              <div>
-                <p className="text-xs font-semibold text-red-500 uppercase tracking-wider flex items-center gap-1 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  Live Transcript
-                </p>
-                <div className="p-3 bg-red-50/50 rounded-lg border border-red-200 max-h-40 overflow-y-auto text-sm text-slate-700 leading-relaxed" data-testid="live-transcript-panel">
-                  {recorder.liveTranscript}
-                  {recorder.interimText && <span className="text-slate-400 italic"> {recorder.interimText}</span>}
-                </div>
-              </div>
-            )}
-
-            {/* Transcript */}
-            {transcript && (
-              <div>
-                <button onClick={() => setExpandTranscript(!expandTranscript)}
-                  className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider w-full">
-                  {expandTranscript ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-                  Transcript
-                  <Button variant="ghost" size="sm" className="ml-auto h-6 px-1.5" onClick={(e) => { e.stopPropagation(); copyText(transcript, 'transcript'); }}>
-                    {copiedField === 'transcript' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                  </Button>
-                </button>
-                {expandTranscript && (
-                  <div className="mt-1 p-3 bg-slate-50 rounded-lg border border-slate-200 max-h-40 overflow-y-auto text-sm text-slate-700 leading-relaxed" data-testid="transcript-panel">
-                    {transcript}
-                    <div ref={transcriptEndRef} />
-                  </div>
                 )}
               </div>
             )}
