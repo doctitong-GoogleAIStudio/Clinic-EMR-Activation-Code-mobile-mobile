@@ -6,7 +6,7 @@ import {
   BookOpen, User, UserCog, CheckCircle, AlertTriangle, Lightbulb, 
   LogIn, Users, Calendar, FileText, Stethoscope, Pill, Microscope, 
   Printer, Edit, Database, HelpCircle, Search, Clock, Shield,
-  ChevronRight, ChevronDown, Phone, Mail, UserPlus, Download, RotateCcw, Mic
+  ChevronRight, ChevronDown, Phone, Mail, UserPlus, Download, RotateCcw, Mic, Info
 } from 'lucide-react';
 
 const UserGuidePage = () => {
@@ -71,6 +71,17 @@ const UserGuidePage = () => {
       {items.map((item, index) => (
         <li key={index} className="flex items-start gap-2">
           <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+          <span className="text-slate-700 text-sm">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  const Tips = ({ items }) => (
+    <ul className="space-y-2 mt-2 mb-2">
+      {items.map((item, index) => (
+        <li key={index} className="flex items-start gap-2">
+          <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
           <span className="text-slate-700 text-sm">{item}</span>
         </li>
       ))}
