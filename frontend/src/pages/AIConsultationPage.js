@@ -221,18 +221,47 @@ export default function AIConsultationPage() {
   };
 
   const handleStop = async () => {
-    await recorder.stopRecording();
+    const audioBlob = await recorder.stopRecording();
     // Wait for final speech results
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     recorder.stopSpeechRecognition?.();
 
     const browserTranscript = recorder.getTranscript();
+
+    // Try backend Whisper transcription first (if we have audio)
+    if (audioBlob && audioBlob.size > 1000) {
+      setPipelineStatus('transcribing');
+      try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        formData.append('session_id', sessionId || '');
+        formData.append('language', 'en');
+        formData.append('prompt', 'Medical clinic consultation dictation.');
+
+        const res = await dictationAPI.transcribe(formData);
+        const whisperText = res.data?.transcript;
+        if (whisperText && whisperText.trim()) {
+          setTranscript(whisperText.trim());
+          processTranscript(whisperText.trim());
+          return;
+        }
+      } catch (err) {
+        const errMsg = err?.response?.data?.detail || '';
+        if (errMsg.includes('API key not configured')) {
+          // Fall through to browser transcript or manual
+          console.warn('OpenAI key not configured, falling back to browser transcript');
+        } else {
+          console.warn('Whisper transcription failed:', errMsg);
+          toast.warning('Server transcription failed — using browser speech or manual input');
+        }
+      }
+    }
+
+    // Fallback: use browser Web Speech API transcript
     if (browserTranscript) {
       setTranscript(browserTranscript);
-      // Auto-process if we got text from speech
       processTranscript(browserTranscript);
     } else {
-      // Text area is already visible — user can type and click "Process with AI"
       setPipelineStatus('idle');
       toast.info('Type or paste your dictation in the text area, then click "Process with AI"');
     }

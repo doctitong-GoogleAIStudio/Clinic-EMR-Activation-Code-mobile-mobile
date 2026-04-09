@@ -39,6 +39,7 @@ const SettingsPage = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOpenAIKey, setShowOpenAIKey] = useState(false);
   const [settings, setSettings] = useState({
     clinic_name: '',
     address: '',
@@ -619,6 +620,58 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* OpenAI API Key for Voice Dictation */}
+          {(isDoctor || isAdmin) && (
+            <Card className="bg-white border-slate-100 shadow-sm mt-6">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <Mic className="w-5 h-5 text-[#0F766E]" />
+                  Voice Dictation (AI Transcription)
+                </CardTitle>
+                <CardDescription>
+                  Add your own OpenAI API key to enable Whisper voice-to-text in AI Consultation.
+                  Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">platform.openai.com/api-keys</a>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-w-md space-y-3">
+                  <div className="space-y-2">
+                    <Label>OpenAI API Key</Label>
+                    <div className="relative">
+                      <Input
+                        type={showOpenAIKey ? 'text' : 'password'}
+                        value={settings.openai_api_key || ''}
+                        onChange={(e) => setSettings({ ...settings, openai_api_key: e.target.value })}
+                        placeholder="sk-..."
+                        data-testid="openai-api-key-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOpenAIKey(!showOpenAIKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      This key is used only for Whisper speech-to-text. It is stored securely in your account settings.
+                    </p>
+                  </div>
+                  {settings.openai_api_key && (
+                    <div className="flex items-center gap-2 text-xs text-green-600">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      API key configured
+                    </div>
+                  )}
+                  <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-openai-key-btn">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save API Key
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Change Password Section */}
           <Card className="bg-white border-slate-100 shadow-sm mt-6">

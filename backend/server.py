@@ -264,6 +264,8 @@ class ClinicSettings(BaseModel):
     print_header_subtitle: str = ""
     print_header_logo: str = ""
     print_header_extra: str = ""
+    # OpenAI API Key for Whisper transcription
+    openai_api_key: Optional[str] = None
 
 class AIRequest(BaseModel):
     text: str
@@ -2173,14 +2175,19 @@ async def transcribe_audio(
     prompt: str = Form(""),
     current_user: dict = Depends(get_current_user)
 ):
-    """Transcribe audio using OpenAI Whisper via Emergent LLM Key"""
+    """Transcribe audio using OpenAI Whisper"""
     if current_user["role"] not in ["doctor", "admin"]:
         raise HTTPException(status_code=403, detail="Only doctors can use transcription")
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(status_code=500, detail="AI service not configured")
+
+    # Get user's OpenAI key from settings
+    user_settings = await db.settings.find_one({"owner_id": current_user["id"]}, {"_id": 0})
+    user_openai_key = user_settings.get("openai_api_key") if user_settings else None
+
+    if not user_openai_key:
+        raise HTTPException(status_code=400, detail="OpenAI API key not configured. Go to Settings > Dictation to add your key.")
 
     try:
-        from emergentintegrations.llm.openai import OpenAISpeechToText
+        import openai as openai_sdk
 
         # Save audio temporarily
         audio_bytes = await audio.read()
@@ -2188,9 +2195,9 @@ async def transcribe_audio(
         async with aiofiles.open(temp_path, 'wb') as f:
             await f.write(audio_bytes)
 
-        stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+        client = openai_sdk.AsyncOpenAI(api_key=user_openai_key)
         with open(temp_path, "rb") as audio_file:
-            response = await stt.transcribe(
+            response = await client.audio.transcriptions.create(
                 file=audio_file,
                 model="whisper-1",
                 response_format="verbose_json",
@@ -2244,7 +2251,10 @@ async def transcribe_audio(
         }
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+        err_str = str(e)
+        if "401" in err_str or "invalid_api_key" in err_str:
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key. Please check your key in Settings > Voice Dictation.")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {err_str}")
 
 @api_router.post("/dictation/structure")
 async def structure_transcript(
