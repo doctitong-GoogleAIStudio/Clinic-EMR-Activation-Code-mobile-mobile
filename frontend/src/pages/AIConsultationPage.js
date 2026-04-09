@@ -142,6 +142,8 @@ export default function AIConsultationPage() {
   const [saving, setSaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [demoMode, setDemoMode] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualText, setManualText] = useState('');
 
   const recorder = useAudioRecorder();
   const transcriptEndRef = useRef(null);
@@ -223,27 +225,37 @@ export default function AIConsultationPage() {
   const handleStop = async () => {
     await recorder.stopRecording();
 
-    // Use getTranscript() to get latest value (avoids stale closure)
+    // Wait briefly for final speech results to flush
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Stop speech recognition after results are captured
+    recorder.stopSpeechRecognition?.();
+
     const browserTranscript = recorder.getTranscript();
     if (!browserTranscript) {
-      toast.warning('No speech detected — please try again');
-      setPipelineStatus('idle');
+      // Show manual transcript input instead of failing
+      setShowManualInput(true);
+      setPipelineStatus('stopped');
+      toast.info('Speech not captured — type or paste your dictation below');
       return;
     }
 
     setTranscript(browserTranscript);
+    processTranscript(browserTranscript);
+  };
+
+  // Process transcript through AI (shared by live recording and manual input)
+  const processTranscript = async (text) => {
     setPipelineStatus('ai_processing');
 
-    // Save transcript to session
     if (sessionId) {
-      dictationAPI.updateSession(sessionId, { raw_transcript: browserTranscript, status: 'transcribed' }).catch(() => {});
-      dictationAPI.logAudit({ session_id: sessionId, action_type: 'transcript_generated', notes: `Browser speech recognition, ${browserTranscript.length} chars` }).catch(() => {});
+      dictationAPI.updateSession(sessionId, { raw_transcript: text, status: 'transcribed' }).catch(() => {});
+      dictationAPI.logAudit({ session_id: sessionId, action_type: 'transcript_generated', notes: `${text.length} chars` }).catch(() => {});
     }
 
     try {
-      // AI Structure
       const sRes = await dictationAPI.structure({
-        transcript: browserTranscript,
+        transcript: text,
         mode: dictMode,
         session_id: sessionId,
         patient_context: patient ? {
@@ -271,6 +283,14 @@ export default function AIConsultationPage() {
     }
   };
 
+  // Handle manual transcript submission
+  const handleManualSubmit = () => {
+    if (!manualText.trim()) return;
+    setTranscript(manualText.trim());
+    setShowManualInput(false);
+    processTranscript(manualText.trim());
+  };
+
   const handleClear = () => {
     recorder.clearRecording();
     setTranscript('');
@@ -279,6 +299,8 @@ export default function AIConsultationPage() {
     setUncertainties([]);
     setPipelineStatus('idle');
     setSessionId(null);
+    setShowManualInput(false);
+    setManualText('');
   };
 
   const handleReprocess = async () => {
@@ -840,6 +862,28 @@ export default function AIConsultationPage() {
                   </Button>
                 )}
               </div>
+            )}
+
+            {/* Manual Transcript Input (fallback when speech recognition fails) */}
+            {showManualInput && (
+              <Card className="border-amber-200 bg-amber-50" data-testid="manual-input-card">
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-xs font-semibold text-amber-700">Speech not captured. Type or paste your dictation:</p>
+                  <Textarea
+                    value={manualText}
+                    onChange={(e) => setManualText(e.target.value)}
+                    placeholder="Type or paste your clinical dictation here..."
+                    className="min-h-[100px] text-sm bg-white border-amber-300 focus:border-amber-500"
+                    data-testid="manual-transcript-input"
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setShowManualInput(false); setPipelineStatus('idle'); }} className="text-xs">Cancel</Button>
+                    <Button size="sm" className="bg-[#0F766E] hover:bg-[#115E59] text-xs flex-1" onClick={handleManualSubmit} disabled={!manualText.trim()} data-testid="manual-submit-btn">
+                      <Wand2 className="w-3.5 h-3.5 mr-1" /> Process with AI
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Live Transcript (during recording) */}

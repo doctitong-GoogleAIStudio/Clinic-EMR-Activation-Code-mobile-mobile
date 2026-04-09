@@ -188,7 +188,7 @@ export function useAudioRecorder() {
   const stopRecording = useCallback(() => {
     return new Promise((resolve) => {
       isRecordingRef.current = false;
-      stopSpeechRecognition();
+      // DON'T stop speech recognition here - let handleStop control timing
       if (!mediaRecorder.current || mediaRecorder.current.state === 'inactive') {
         resolve(null);
         return;
@@ -203,7 +203,7 @@ export function useAudioRecorder() {
       };
       mediaRecorder.current.stop();
     });
-  }, [stopLevelMeter, stopSpeechRecognition]);
+  }, [stopLevelMeter]);
 
   const clearRecording = useCallback(() => {
     audioChunks.current = [];
@@ -243,6 +243,6 @@ export function useAudioRecorder() {
     state, duration, audioLevel, devices, selectedDevice, error,
     liveTranscript, interimText, speechSupported,
     setSelectedDevice, startRecording, pauseRecording, resumeRecording,
-    stopRecording, clearRecording, getAudioBlob, getTranscript,
+    stopRecording, clearRecording, getAudioBlob, getTranscript, stopSpeechRecognition,
   };
 }
