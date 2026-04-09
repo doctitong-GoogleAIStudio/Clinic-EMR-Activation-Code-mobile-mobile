@@ -221,32 +221,29 @@ export default function AIConsultationPage() {
   };
 
   const handleStop = async () => {
-    const blob = await recorder.stopRecording();
-    if (!blob) return;
-    setPipelineStatus('transcribing');
+    await recorder.stopRecording();
+
+    // Use browser live transcript instead of server-side Whisper
+    const browserTranscript = recorder.liveTranscript?.trim();
+    if (!browserTranscript) {
+      toast.warning('No speech detected — please try again');
+      setPipelineStatus('idle');
+      return;
+    }
+
+    setTranscript(browserTranscript);
+    setPipelineStatus('ai_processing');
+
+    // Save transcript to session
+    if (sessionId) {
+      dictationAPI.updateSession(sessionId, { raw_transcript: browserTranscript, status: 'transcribed' }).catch(() => {});
+      dictationAPI.logAudit({ session_id: sessionId, action_type: 'transcript_generated', notes: `Browser speech recognition, ${browserTranscript.length} chars` }).catch(() => {});
+    }
 
     try {
-      // Transcribe
-      const formData = new FormData();
-      formData.append('audio', blob, 'recording.webm');
-      formData.append('session_id', sessionId || '');
-      formData.append('language', 'en');
-      formData.append('prompt', 'Medical clinic consultation. Doctor dictating patient encounter notes, medications, diagnoses, and treatment plans.');
-
-      const tRes = await dictationAPI.transcribe(formData);
-      const newTranscript = tRes.data.transcript || '';
-      setTranscript(newTranscript);
-
-      if (!newTranscript.trim()) {
-        toast.warning('No speech detected');
-        setPipelineStatus('idle');
-        return;
-      }
-
       // AI Structure
-      setPipelineStatus('ai_processing');
       const sRes = await dictationAPI.structure({
-        transcript: newTranscript,
+        transcript: browserTranscript,
         mode: dictMode,
         session_id: sessionId,
         patient_context: patient ? {
@@ -269,7 +266,7 @@ export default function AIConsultationPage() {
         setPipelineStatus('review');
       }
     } catch (e) {
-      toast.error(getErrorMessage(e, 'Processing failed'));
+      toast.error(getErrorMessage(e, 'AI processing failed'));
       setPipelineStatus('error');
     }
   };
@@ -842,6 +839,20 @@ export default function AIConsultationPage() {
                     <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reprocess
                   </Button>
                 )}
+              </div>
+            )}
+
+            {/* Live Transcript (during recording) */}
+            {(isRecording || isPaused) && (recorder.liveTranscript || recorder.interimText) && (
+              <div>
+                <p className="text-xs font-semibold text-red-500 uppercase tracking-wider flex items-center gap-1 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  Live Transcript
+                </p>
+                <div className="p-3 bg-red-50/50 rounded-lg border border-red-200 max-h-40 overflow-y-auto text-sm text-slate-700 leading-relaxed" data-testid="live-transcript-panel">
+                  {recorder.liveTranscript}
+                  {recorder.interimText && <span className="text-slate-400 italic"> {recorder.interimText}</span>}
+                </div>
               </div>
             )}
 
