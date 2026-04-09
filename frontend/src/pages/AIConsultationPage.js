@@ -223,8 +223,8 @@ export default function AIConsultationPage() {
   const handleStop = async () => {
     await recorder.stopRecording();
 
-    // Use browser live transcript instead of server-side Whisper
-    const browserTranscript = recorder.liveTranscript?.trim();
+    // Use getTranscript() to get latest value (avoids stale closure)
+    const browserTranscript = recorder.getTranscript();
     if (!browserTranscript) {
       toast.warning('No speech detected — please try again');
       setPipelineStatus('idle');

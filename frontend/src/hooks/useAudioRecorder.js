@@ -23,6 +23,7 @@ export function useAudioRecorder() {
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
   const finalTranscriptRef = useRef('');
+  const isRecordingRef = useRef(false);
 
   // Enumerate mic devices
   useEffect(() => {
@@ -105,7 +106,7 @@ export function useAudioRecorder() {
 
       // Auto-restart on end (browser stops after silence)
       recognition.onend = () => {
-        if (recognitionRef.current && (state === 'recording')) {
+        if (recognitionRef.current && isRecordingRef.current) {
           try { recognition.start(); } catch (e) { /* already started */ }
         }
       };
@@ -146,6 +147,7 @@ export function useAudioRecorder() {
 
       recorder.start(1000);
       setState('recording');
+      isRecordingRef.current = true;
       startTimeRef.current = Date.now();
       pausedDuration.current = 0;
       setDuration(0);
@@ -165,6 +167,7 @@ export function useAudioRecorder() {
     if (mediaRecorder.current?.state === 'recording') {
       mediaRecorder.current.pause();
       setState('paused');
+      isRecordingRef.current = false;
       pausedDuration.current -= Date.now();
       stopLevelMeter();
       stopSpeechRecognition();
@@ -175,6 +178,7 @@ export function useAudioRecorder() {
     if (mediaRecorder.current?.state === 'paused') {
       mediaRecorder.current.resume();
       setState('recording');
+      isRecordingRef.current = true;
       pausedDuration.current += Date.now();
       if (streamRef.current) startLevelMeter(streamRef.current);
       startSpeechRecognition();
@@ -183,6 +187,7 @@ export function useAudioRecorder() {
 
   const stopRecording = useCallback(() => {
     return new Promise((resolve) => {
+      isRecordingRef.current = false;
       stopSpeechRecognition();
       if (!mediaRecorder.current || mediaRecorder.current.state === 'inactive') {
         resolve(null);
@@ -203,6 +208,7 @@ export function useAudioRecorder() {
   const clearRecording = useCallback(() => {
     audioChunks.current = [];
     setState('idle');
+    isRecordingRef.current = false;
     setDuration(0);
     setLiveTranscript('');
     setInterimText('');
@@ -228,10 +234,15 @@ export function useAudioRecorder() {
     };
   }, [stopLevelMeter, stopSpeechRecognition]);
 
+  // Get the latest transcript (avoids stale closure issues)
+  const getTranscript = useCallback(() => {
+    return finalTranscriptRef.current?.trim() || '';
+  }, []);
+
   return {
     state, duration, audioLevel, devices, selectedDevice, error,
     liveTranscript, interimText, speechSupported,
     setSelectedDevice, startRecording, pauseRecording, resumeRecording,
-    stopRecording, clearRecording, getAudioBlob,
+    stopRecording, clearRecording, getAudioBlob, getTranscript,
   };
 }
