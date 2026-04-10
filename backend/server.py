@@ -1297,13 +1297,26 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
             prc_no=current_user.get("prc_no", "") or "",
             specialization=current_user.get("specialization", "") or "",
         ).model_dump()
+    # Never expose the full API key — return masked version
+    raw_key = settings.get("openai_api_key") or ""
+    if raw_key and len(raw_key) > 8:
+        settings["openai_api_key_masked"] = raw_key[:5] + "..." + raw_key[-4:]
+    else:
+        settings["openai_api_key_masked"] = ""
+    settings.pop("openai_api_key", None)
     return settings
 
 @api_router.put("/settings")
 async def update_settings(settings: ClinicSettings, current_user: dict = Depends(get_current_user)):
+    update_data = settings.model_dump()
+    # If openai_api_key is empty/None, preserve the existing key in DB
+    if not update_data.get("openai_api_key"):
+        existing = await db.settings.find_one({"owner_id": current_user["id"]}, {"_id": 0, "openai_api_key": 1})
+        if existing and existing.get("openai_api_key"):
+            update_data["openai_api_key"] = existing["openai_api_key"]
     await db.settings.update_one(
         {"owner_id": current_user["id"]},
-        {"$set": {**settings.model_dump(), "owner_id": current_user["id"]}},
+        {"$set": {**update_data, "owner_id": current_user["id"]}},
         upsert=True
     )
     await log_audit(current_user["id"], current_user["full_name"], "update", "settings", "clinic")

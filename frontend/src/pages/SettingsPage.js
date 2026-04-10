@@ -630,44 +630,33 @@ const SettingsPage = () => {
                   Voice Dictation (AI Transcription)
                 </CardTitle>
                 <CardDescription>
-                  Add your own OpenAI API key to enable Whisper voice-to-text in AI Consultation.
-                  Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">platform.openai.com/api-keys</a>
+                  OpenAI Whisper is used for voice-to-text in AI Consultation.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-w-md space-y-3">
                   <div className="space-y-2">
                     <Label>OpenAI API Key</Label>
-                    <div className="relative">
-                      <Input
-                        type={showOpenAIKey ? 'text' : 'password'}
-                        value={settings.openai_api_key || ''}
-                        onChange={(e) => setSettings({ ...settings, openai_api_key: e.target.value })}
-                        placeholder="sk-..."
-                        data-testid="openai-api-key-input"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
+                    {settings.openai_api_key_masked ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-sm text-slate-600" data-testid="openai-api-key-masked">
+                          {settings.openai_api_key_masked}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-green-600">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Configured
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        No API key configured. Contact your administrator.
+                      </div>
+                    )}
                     <p className="text-xs text-slate-500">
-                      This key is used only for Whisper speech-to-text. It is stored securely in your account settings.
+                      This key is used only for Whisper speech-to-text. The full key is never displayed.
                     </p>
                   </div>
-                  {settings.openai_api_key && (
-                    <div className="flex items-center gap-2 text-xs text-green-600">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      API key configured
-                    </div>
-                  )}
-                  <Button onClick={handleSaveSettings} className="bg-[#0F766E] hover:bg-[#115E59]" data-testid="save-openai-key-btn">
-                    <Save className="w-4 h-4 mr-2" />
-                    Save API Key
-                  </Button>
                 </div>
               </CardContent>
             </Card>
