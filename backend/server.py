@@ -34,6 +34,7 @@ JWT_ALGORITHM = "HS256"
 
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 app = FastAPI(title="Private Clinic EMR API")
 api_router = APIRouter(prefix="/api")
@@ -1298,7 +1299,7 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
             specialization=current_user.get("specialization", "") or "",
         ).model_dump()
     # Never expose the full API key — return masked version
-    raw_key = settings.get("openai_api_key") or ""
+    raw_key = settings.get("openai_api_key") or OPENAI_API_KEY or ""
     if raw_key and len(raw_key) > 8:
         settings["openai_api_key_masked"] = raw_key[:5] + "..." + raw_key[-4:]
     else:
@@ -2192,11 +2193,12 @@ async def transcribe_audio(
     if current_user["role"] not in ["doctor", "admin"]:
         raise HTTPException(status_code=403, detail="Only doctors can use transcription")
 
-    # Get user's OpenAI key from settings
+    # Get user's OpenAI key from settings, fall back to global env key
     user_settings = await db.settings.find_one({"owner_id": current_user["id"]}, {"_id": 0})
     user_openai_key = user_settings.get("openai_api_key") if user_settings else None
+    openai_key = user_openai_key or OPENAI_API_KEY
 
-    if not user_openai_key:
+    if not openai_key:
         raise HTTPException(status_code=400, detail="OpenAI API key not configured. Go to Settings > Dictation to add your key.")
 
     try:
@@ -2208,7 +2210,7 @@ async def transcribe_audio(
         async with aiofiles.open(temp_path, 'wb') as f:
             await f.write(audio_bytes)
 
-        client = openai_sdk.AsyncOpenAI(api_key=user_openai_key)
+        client = openai_sdk.AsyncOpenAI(api_key=openai_key)
         with open(temp_path, "rb") as audio_file:
             response = await client.audio.transcriptions.create(
                 file=audio_file,
