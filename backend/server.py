@@ -161,6 +161,7 @@ class VisitUpdate(BaseModel):
     follow_up_date: Optional[str] = None
     patient_instructions: Optional[str] = None
     warning_signs: Optional[str] = None
+    created_at: Optional[str] = None
 
 class VisitResponse(VisitBase):
     id: str

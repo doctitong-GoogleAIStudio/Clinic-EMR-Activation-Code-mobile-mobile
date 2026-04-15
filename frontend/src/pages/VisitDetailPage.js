@@ -95,7 +95,9 @@ const VisitDetailPage = () => {
     soap_objective: '',
     soap_assessment: '',
     soap_plan: '',
-    follow_up_date: ''
+    follow_up_date: '',
+    visit_date: '',
+    visit_time: ''
   });
 
   useEffect(() => {
@@ -352,24 +354,40 @@ const VisitDetailPage = () => {
 
   // SOAP Edit handlers
   const openEditSoap = () => {
+    const visitDate = visit.created_at ? new Date(visit.created_at) : new Date();
     setSoapEditData({
       soap_subjective: visit.soap_subjective || '',
       soap_objective: visit.soap_objective || '',
       soap_assessment: visit.soap_assessment || '',
       soap_plan: visit.soap_plan || '',
-      follow_up_date: visit.follow_up_date || ''
+      follow_up_date: visit.follow_up_date || '',
+      visit_date: format(visitDate, 'yyyy-MM-dd'),
+      visit_time: format(visitDate, 'HH:mm')
     });
     setShowEditSoap(true);
   };
 
   const saveSoapEdit = async () => {
     try {
-      await visitAPI.update(visitId, soapEditData);
-      toast.success('SOAP notes updated');
+      const updatePayload = {
+        soap_subjective: soapEditData.soap_subjective,
+        soap_objective: soapEditData.soap_objective,
+        soap_assessment: soapEditData.soap_assessment,
+        soap_plan: soapEditData.soap_plan,
+        follow_up_date: soapEditData.follow_up_date
+      };
+      // Combine date + time into created_at ISO string
+      if (soapEditData.visit_date) {
+        const timePart = soapEditData.visit_time || '00:00';
+        const combined = new Date(`${soapEditData.visit_date}T${timePart}:00`);
+        updatePayload.created_at = combined.toISOString();
+      }
+      await visitAPI.update(visitId, updatePayload);
+      toast.success('Visit updated');
       setShowEditSoap(false);
-      fetchData(); // Refresh data
+      fetchData();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to update SOAP notes'));
+      toast.error(getErrorMessage(error, 'Failed to update visit'));
     }
   };
 
@@ -1507,6 +1525,26 @@ const VisitDetailPage = () => {
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Visit Date</Label>
+                      <Input
+                        type="date"
+                        value={soapEditData.visit_date}
+                        onChange={(e) => setSoapEditData({ ...soapEditData, visit_date: e.target.value })}
+                        data-testid="edit-visit-date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Visit Time</Label>
+                      <Input
+                        type="time"
+                        value={soapEditData.visit_time}
+                        onChange={(e) => setSoapEditData({ ...soapEditData, visit_time: e.target.value })}
+                        data-testid="edit-visit-time"
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Badge className="bg-blue-100 text-blue-800">S</Badge>
