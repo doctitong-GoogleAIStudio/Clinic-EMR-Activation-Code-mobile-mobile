@@ -575,6 +575,7 @@ const PrintPreviewDialog = ({
                 ${clinicSettings.print_header_subtitle ? `<div class="clinic-subtitle">${clinicSettings.print_header_subtitle}</div>` : ''}
                 ${clinicSettings.address ? `<div class="clinic-address">${clinicSettings.address}</div>` : ''}
                 ${clinicSettings.phone ? `<div class="clinic-address">Tel: ${clinicSettings.phone}</div>` : ''}
+                ${clinicSettings.email ? `<div class="clinic-address">Email: ${clinicSettings.email}</div>` : ''}
                 ${clinicSettings.print_header_extra ? `<div class="clinic-address">${clinicSettings.print_header_extra}</div>` : ''}
               </div>
             ` : ''}
@@ -857,6 +858,11 @@ const PrintPreviewDialog = ({
                       {clinicSettings.phone && (
                         <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
                           Tel: {clinicSettings.phone}
+                        </div>
+                      )}
+                      {clinicSettings.email && (
+                        <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                          Email: {clinicSettings.email}
                         </div>
                       )}
                       {clinicSettings.print_header_extra && (

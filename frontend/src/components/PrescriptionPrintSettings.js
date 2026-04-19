@@ -734,6 +734,11 @@ const PrescriptionPrintSettings = ({ doctor = null, clinicSettings = {}, onUpdat
                             Tel: {clinicSettings.phone}
                           </div>
                         )}
+                        {clinicSettings.email && (
+                          <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                            Email: {clinicSettings.email}
+                          </div>
+                        )}
                         {clinicSettings.print_header_extra && (
                           <div className="text-slate-400" style={{ fontSize: `${(settings.fontSize - 3) * previewScale}px` }}>
                             {clinicSettings.print_header_extra}
