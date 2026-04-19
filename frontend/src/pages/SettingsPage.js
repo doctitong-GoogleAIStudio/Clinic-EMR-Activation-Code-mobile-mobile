@@ -606,6 +606,7 @@ const SettingsPage = () => {
                   )}
                   {settings.address && <p className="text-sm text-slate-600">{settings.address}</p>}
                   {settings.phone && <p className="text-sm text-slate-600">Tel: {settings.phone}</p>}
+                  {settings.email && <p className="text-sm text-slate-600">Email: {settings.email}</p>}
                   {settings.print_header_extra && (
                     <p className="text-xs text-slate-500 mt-1">{settings.print_header_extra}</p>
                   )}
