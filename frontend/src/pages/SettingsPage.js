@@ -1695,7 +1695,7 @@ const SettingsPage = () => {
         {/* Print Settings Tab */}
         {(isAdmin || isDoctor) && (
           <TabsContent value="print-settings">
-            <PrescriptionPrintSettings doctor={user} />
+            <PrescriptionPrintSettings doctor={user} clinicSettings={settings} onUpdateClinicSettings={setSettings} onSaveClinicSettings={handleSaveSettings} />
           </TabsContent>
         )}
       </Tabs>

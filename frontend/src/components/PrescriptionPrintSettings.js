@@ -100,7 +100,7 @@ const getSectionOptions = (formType) => {
   return common;
 };
 
-const PrescriptionPrintSettings = ({ doctor = null }) => {
+const PrescriptionPrintSettings = ({ doctor = null, clinicSettings = {}, onUpdateClinicSettings, onSaveClinicSettings }) => {
   const [activeFormType, setActiveFormType] = useState('prescription');
   const [settings, setSettings] = useState(() => loadPrintSettings('prescription'));
 
@@ -516,6 +516,81 @@ const PrescriptionPrintSettings = ({ doctor = null }) => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Header Customization - shown when Show Header is enabled */}
+                  {settings.showHeader && (
+                    <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                      <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Header Content</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Header Title</Label>
+                          <Input
+                            value={clinicSettings.print_header_title || ''}
+                            onChange={(e) => onUpdateClinicSettings?.({ ...clinicSettings, print_header_title: e.target.value })}
+                            placeholder="Clinic name or title"
+                            className="text-sm"
+                            data-testid="print-header-title"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Subtitle / Tagline</Label>
+                          <Input
+                            value={clinicSettings.print_header_subtitle || ''}
+                            onChange={(e) => onUpdateClinicSettings?.({ ...clinicSettings, print_header_subtitle: e.target.value })}
+                            placeholder="e.g. Your Trusted Healthcare"
+                            className="text-sm"
+                            data-testid="print-header-subtitle"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Clinic Logo (Optional)</Label>
+                          <Input
+                            type="file"
+                            accept="image/png,image/jpeg"
+                            className="text-sm"
+                            data-testid="print-header-logo-upload"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (file.size > 500 * 1024) { toast.error('Logo must be under 500KB'); return; }
+                                const reader = new FileReader();
+                                reader.onload = (ev) => onUpdateClinicSettings?.({ ...clinicSettings, print_header_logo: ev.target.result });
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          {clinicSettings.print_header_logo && (
+                            <div className="flex items-center gap-2">
+                              <img src={clinicSettings.print_header_logo} alt="Logo" className="h-6 rounded" />
+                              <button
+                                className="text-xs text-red-500 hover:underline"
+                                onClick={() => onUpdateClinicSettings?.({ ...clinicSettings, print_header_logo: '' })}
+                              >Remove</button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Additional Header Text</Label>
+                          <Input
+                            value={clinicSettings.print_header_extra || ''}
+                            onChange={(e) => onUpdateClinicSettings?.({ ...clinicSettings, print_header_extra: e.target.value })}
+                            placeholder="e.g. Open Mon-Sat 8AM-5PM"
+                            className="text-sm"
+                            data-testid="print-header-extra"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={onSaveClinicSettings}
+                        size="sm"
+                        className="bg-[#0F766E] hover:bg-[#115E59]"
+                        data-testid="save-header-content-btn"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        Save Header Content
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* Typography Settings */}
@@ -638,12 +713,32 @@ const PrescriptionPrintSettings = ({ doctor = null }) => {
                   >
                     {settings.showHeader && (
                       <div className="text-center border-b-2 border-[#0F766E] pb-2 mb-2">
+                        {clinicSettings.print_header_logo && (
+                          <img src={clinicSettings.print_header_logo} alt="Logo" className="mx-auto mb-1" style={{ height: `${12 * previewScale}px` }} />
+                        )}
                         <div className="font-bold text-[#0F766E]" style={{ fontSize: `${(settings.fontSize + 4) * previewScale}px` }}>
-                          Medical Clinic
+                          {clinicSettings.print_header_title || clinicSettings.clinic_name || 'Medical Clinic'}
                         </div>
-                        <div className="text-slate-500 italic" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
-                          Healthcare Services
-                        </div>
+                        {clinicSettings.print_header_subtitle && (
+                          <div className="text-slate-500 italic" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                            {clinicSettings.print_header_subtitle}
+                          </div>
+                        )}
+                        {clinicSettings.address && (
+                          <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                            {clinicSettings.address}
+                          </div>
+                        )}
+                        {clinicSettings.phone && (
+                          <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                            Tel: {clinicSettings.phone}
+                          </div>
+                        )}
+                        {clinicSettings.print_header_extra && (
+                          <div className="text-slate-400" style={{ fontSize: `${(settings.fontSize - 3) * previewScale}px` }}>
+                            {clinicSettings.print_header_extra}
+                          </div>
+                        )}
                       </div>
                     )}
                     

@@ -575,6 +575,7 @@ const PrintPreviewDialog = ({
                 ${clinicSettings.print_header_subtitle ? `<div class="clinic-subtitle">${clinicSettings.print_header_subtitle}</div>` : ''}
                 ${clinicSettings.address ? `<div class="clinic-address">${clinicSettings.address}</div>` : ''}
                 ${clinicSettings.phone ? `<div class="clinic-address">Tel: ${clinicSettings.phone}</div>` : ''}
+                ${clinicSettings.print_header_extra ? `<div class="clinic-address">${clinicSettings.print_header_extra}</div>` : ''}
               </div>
             ` : ''}
             
@@ -837,12 +838,30 @@ const PrintPreviewDialog = ({
                 >
                   {settings.showHeader && (
                     <div className="text-center border-b-2 border-[#0F766E] pb-2 mb-2">
+                      {clinicSettings.print_header_logo && (
+                        <img src={clinicSettings.print_header_logo} alt="Logo" className="mx-auto mb-1" style={{ height: `${12 * previewScale}px` }} />
+                      )}
                       <div className="font-bold text-[#0F766E]" style={{ fontSize: `${(settings.fontSize + 4) * previewScale}px` }}>
                         {clinicSettings.print_header_title || clinicSettings.clinic_name || 'Medical Clinic'}
                       </div>
                       {clinicSettings.print_header_subtitle && (
                         <div className="text-slate-500 italic" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
                           {clinicSettings.print_header_subtitle}
+                        </div>
+                      )}
+                      {clinicSettings.address && (
+                        <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                          {clinicSettings.address}
+                        </div>
+                      )}
+                      {clinicSettings.phone && (
+                        <div className="text-slate-500" style={{ fontSize: `${(settings.fontSize - 2) * previewScale}px` }}>
+                          Tel: {clinicSettings.phone}
+                        </div>
+                      )}
+                      {clinicSettings.print_header_extra && (
+                        <div className="text-slate-400" style={{ fontSize: `${(settings.fontSize - 3) * previewScale}px` }}>
+                          {clinicSettings.print_header_extra}
                         </div>
                       )}
                     </div>
