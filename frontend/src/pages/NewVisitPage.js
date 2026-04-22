@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
 import AIConsultation from '../components/AIConsultation';
+import SOAPDictation from '../components/SOAPDictation';
 
 const NewVisitPage = () => {
   const navigate = useNavigate();
@@ -656,22 +657,25 @@ const NewVisitPage = () => {
                 <Stethoscope className="w-5 h-5 text-[#0F766E]" />
                 SOAP Notes
               </CardTitle>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleAIAssist('soap_convert')}
-                disabled={aiLoading === 'soap_convert'}
-                className="text-[#0F766E] border-[#0F766E]/30 hover:bg-[#0F766E]/10"
-                data-testid="ai-soap-btn"
-              >
-                {aiLoading === 'soap_convert' ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                AI Convert to SOAP
-              </Button>
+              <div className="flex items-center gap-2">
+                <SOAPDictation patient={patient} onApplySOAP={handleApplySOAP} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAIAssist('soap_convert')}
+                  disabled={aiLoading === 'soap_convert'}
+                  className="text-[#0F766E] border-[#0F766E]/30 hover:bg-[#0F766E]/10"
+                  data-testid="ai-soap-btn"
+                >
+                  {aiLoading === 'soap_convert' ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  AI Convert to SOAP
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
