@@ -379,7 +379,7 @@ const NewVisitPage = () => {
     try {
       let text = '';
       if (type === 'soap_convert') {
-        text = formData.soap_subjective || formData.soap_objective || 'Patient complains of...';
+        text = [formData.soap_subjective, formData.soap_objective, formData.soap_assessment, formData.soap_plan].filter(Boolean).join('\n') || 'Patient complains of...';
       } else if (type === 'diagnosis_suggest') {
         text = `${formData.soap_subjective}\n${formData.soap_objective}`;
       } else if (type === 'patient_instructions') {
@@ -390,11 +390,41 @@ const NewVisitPage = () => {
       
       if (type === 'soap_convert') {
         const result = response.data.result;
+        // Parse S/O/A/P sections - handles multiple formats:
+        // "S:", "S -", "## S (Subjective)", "**S:**", "Subjective:", etc.
+        const sectionRegexes = [
+          { key: 'subjective', regex: /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{0,2})?\s*S(?:ubjective)?[\s(:.\-]+/i },
+          { key: 'objective', regex: /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{0,2})?\s*O(?:bjective)?[\s(:.\-]+/i },
+          { key: 'assessment', regex: /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{0,2})?\s*A(?:ssessment)?[\s(:.\-]+/i },
+          { key: 'plan', regex: /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{0,2})?\s*P(?:lan)?[\s(:.\-]+/i },
+        ];
+        const positions = sectionRegexes.map(p => {
+          const match = result.match(p.regex);
+          return { key: p.key, index: match ? result.indexOf(match[0]) : -1, matchLen: match ? match[0].length : 0 };
+        }).filter(p => p.index >= 0).sort((a, b) => a.index - b.index);
+
+        const sections = { subjective: '', objective: '', assessment: '', plan: '' };
+        if (positions.length >= 2) {
+          for (let i = 0; i < positions.length; i++) {
+            const start = positions[i].index + positions[i].matchLen;
+            const end = i + 1 < positions.length ? positions[i + 1].index : result.length;
+            // Clean markdown artifacts like **, ##, trailing ), header labels
+            sections[positions[i].key] = result.slice(start, end)
+              .replace(/^[\s\)]*(?:Subjective|Objective|Assessment|Plan)\)?\*{0,2}\s*/i, '')
+              .replace(/\*\*/g, '')
+              .trim();
+          }
+          setFormData(prev => ({
+            ...prev,
+            soap_subjective: sections.subjective || prev.soap_subjective,
+            soap_objective: sections.objective || prev.soap_objective,
+            soap_assessment: sections.assessment || prev.soap_assessment,
+            soap_plan: sections.plan || prev.soap_plan,
+          }));
+        } else {
+          setFormData(prev => ({ ...prev, soap_subjective: result }));
+        }
         toast.success('AI generated SOAP notes');
-        setFormData(prev => ({
-          ...prev,
-          soap_subjective: result.includes('S:') ? result : prev.soap_subjective
-        }));
       } else if (type === 'diagnosis_suggest') {
         setFormData(prev => ({ ...prev, soap_assessment: response.data.result }));
         toast.success('AI suggested diagnoses');
