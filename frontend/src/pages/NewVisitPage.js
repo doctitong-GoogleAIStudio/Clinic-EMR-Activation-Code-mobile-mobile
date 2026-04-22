@@ -691,7 +691,31 @@ const NewVisitPage = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/patients/${patientId}/ai-consultation`)}
+                  onClick={async () => {
+                    // Save visit first (with vitals), then navigate to AI Dictation
+                    try {
+                      setLoading(true);
+                      const vitals = {};
+                      Object.entries(formData.vitals).forEach(([key, value]) => {
+                        if (value !== '' && value !== null) {
+                          vitals[key] = ['temperature', 'weight', 'height'].includes(key)
+                            ? parseFloat(value) : parseInt(value);
+                        }
+                      });
+                      const visitData = { ...formData, vitals: Object.keys(vitals).length > 0 ? vitals : null };
+                      const response = await visitAPI.create(visitData);
+                      const newVisitId = response.data.id;
+                      if (appointmentId) {
+                        await appointmentAPI.update(appointmentId, { status: 'done' }).catch(() => {});
+                      }
+                      toast.success('Visit saved — opening AI Dictation');
+                      navigate(`/patients/${patientId}/ai-consultation?visit=${newVisitId}`);
+                    } catch (err) {
+                      toast.error(getErrorMessage(err, 'Save visit first before AI Dictation'));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
                   className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
                   data-testid="open-dictation-btn"
                 >
