@@ -21,7 +21,6 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
 import AIConsultation from '../components/AIConsultation';
-import SOAPDictation from '../components/SOAPDictation';
 
 const NewVisitPage = () => {
   const navigate = useNavigate();
@@ -688,7 +687,17 @@ const NewVisitPage = () => {
                 SOAP Notes
               </CardTitle>
               <div className="flex items-center gap-2">
-                <SOAPDictation patient={patient} onApplySOAP={handleApplySOAP} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/patients/${patientId}/ai-consultation`)}
+                  className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+                  data-testid="open-dictation-btn"
+                >
+                  <Brain className="w-4 h-4 mr-2" />
+                  AI Dictation
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
