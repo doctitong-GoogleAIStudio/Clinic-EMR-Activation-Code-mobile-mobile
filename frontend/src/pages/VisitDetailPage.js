@@ -535,9 +535,9 @@ const VisitDetailPage = () => {
         <div className="inline-block text-center">
           <div className="w-48 border-b border-slate-900 mb-1"></div>
           <p className="font-medium">{user?.full_name}</p>
-          {user?.license_no && <p className="text-sm text-slate-600">S2 No: {user.license_no}</p>}
-          {user?.ptr_no && <p className="text-sm text-slate-600">PTR No: {user.ptr_no}</p>}
-          {user?.prc_no && <p className="text-sm text-slate-600">PRC No: {user.prc_no}</p>}
+          {(settings?.license_no || user?.license_no) && <p className="text-sm text-slate-600">S2 No: {settings?.license_no || user?.license_no}</p>}
+          {(settings?.ptr_no || user?.ptr_no) && <p className="text-sm text-slate-600">PTR No: {settings?.ptr_no || user?.ptr_no}</p>}
+          {(settings?.prc_no || user?.prc_no) && <p className="text-sm text-slate-600">PRC No: {settings?.prc_no || user?.prc_no}</p>}
         </div>
       </div>
     </div>
