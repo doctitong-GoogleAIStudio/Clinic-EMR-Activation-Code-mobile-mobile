@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { 
   Printer, Settings, Eye, RotateCcw, Save, FileText, 
   Ruler, Type, Layout, CheckSquare, Download, Upload,
-  Pill, Award, Briefcase, Send, Microscope
+  Pill, Award, Briefcase, Send, Microscope, Smartphone, Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadPrintSettings, savePrintSettings, FORM_TYPES } from './PrintPreviewDialog';
@@ -447,6 +447,24 @@ const PrescriptionPrintSettings = ({ doctor = null, clinicSettings = {}, onUpdat
                           <SelectItem value="mm">mm</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+
+                  {/* Mobile/Tablet Note */}
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex gap-2">
+                      <Smartphone className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs text-amber-800">
+                        <p className="font-semibold mb-1">Android / Tablet Users</p>
+                        <p>Mobile browsers do not support automatic custom paper sizes. To set paper size on Android or tablets:</p>
+                        <ol className="list-decimal ml-4 mt-1 space-y-0.5">
+                          <li>Tap <strong>Print</strong> to open the print dialog</li>
+                          <li>Tap the <strong>dropdown arrow</strong> to expand options</li>
+                          <li>Change <strong>"Paper size"</strong> manually to match your desired size</li>
+                          <li>Adjust <strong>margins</strong> if content is cut off</li>
+                        </ol>
+                        <p className="mt-1 italic">Tip: You can also "Save as PDF" and print from a PDF viewer for more control.</p>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
