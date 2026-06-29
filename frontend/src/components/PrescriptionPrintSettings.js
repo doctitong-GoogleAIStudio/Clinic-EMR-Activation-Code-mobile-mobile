@@ -463,7 +463,24 @@ const PrescriptionPrintSettings = ({ doctor = null, clinicSettings = {}, onUpdat
                           <li>Change <strong>"Paper size"</strong> manually to match your desired size</li>
                           <li>Adjust <strong>margins</strong> if content is cut off</li>
                         </ol>
-                        <p className="mt-1 italic">Tip: You can also "Save as PDF" and print from a PDF viewer for more control.</p>
+
+                        <p className="font-semibold mt-3 mb-1">Workaround for Printing Custom-Size Prescriptions on Android</p>
+                        <p className="mb-1">Since most Android browsers do not support automatic custom paper sizes, you can use the following workaround:</p>
+                        <p className="font-medium mt-1 mb-0.5">Android Phone (Tested on Huawei)</p>
+                        <ol className="list-decimal ml-4 mt-1 space-y-0.5">
+                          <li>In the Clinic EMR, open the prescription and <strong>take a screenshot</strong> of the print preview.</li>
+                          <li>Open the <strong>Gallery</strong>, edit the screenshot if needed (crop or resize), then save the edited image.</li>
+                          <li>Open the saved image in the Gallery, tap <strong>More</strong>, then select <strong>Print</strong> or <strong>Save as PDF</strong> to open the print preview.</li>
+                          <li>In the print settings, choose the paper size:
+                            <ul className="list-disc ml-4 mt-0.5">
+                              <li><strong>3 × 5 inches</strong> (Index Card), or</li>
+                              <li><strong>4 × 6 inches</strong> (Index Card)</li>
+                            </ul>
+                          </li>
+                          <li>Turn on <strong>Borderless Printing</strong> (if your printer supports it).</li>
+                          <li>Select your printer and tap <strong>Print</strong>.</li>
+                        </ol>
+                        <p className="mt-2 italic">This method provides a practical way to print prescriptions on custom-sized paper using most Android phones until native support for custom paper sizes becomes available.</p>
                       </div>
                     </div>
                   </div>
