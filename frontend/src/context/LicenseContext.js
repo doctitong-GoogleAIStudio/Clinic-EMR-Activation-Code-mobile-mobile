@@ -34,13 +34,33 @@ export const LicenseProvider = ({ children }) => {
 
       const meta = getLicenseMeta();
       if (meta && meta.device_id === id) {
-        // We have a stored license for this device
+        // We have a stored license — check server first if online
+        const serverResult = await checkWithServer(id);
+        if (serverResult !== null) {
+          // Server responded
+          if (!serverResult.is_valid) {
+            // Server says invalid (deleted, revoked, expired past grace)
+            clearLicense();
+            clearActivationCode();
+            setLicenseMeta(null);
+            setLicenseStatus({ isValid: false, status: serverResult.status, message: serverResult.message });
+            return;
+          }
+          // Server says valid — use server status
+          setLicenseMeta(meta);
+          setLicenseStatus({
+            isValid: true,
+            status: serverResult.status,
+            inGracePeriod: serverResult.status === 'grace_period',
+            graceDaysRemaining: 0,
+            message: serverResult.message
+          });
+          return;
+        }
+        // Server unreachable — fall back to local check
         const localCheck = checkLicenseLocally(meta);
         setLicenseMeta(meta);
         setLicenseStatus(localCheck);
-
-        // Try online verification if internet available
-        tryOnlineVerify(id, meta);
       } else {
         // No valid license
         setLicenseStatus({ isValid: false, status: 'no_license', message: 'Device not activated.' });
@@ -53,24 +73,14 @@ export const LicenseProvider = ({ children }) => {
     }
   };
 
-  const tryOnlineVerify = async (id, meta) => {
+  const checkWithServer = async (id) => {
     try {
-      const storedCode = getStoredActivationCode();
-      if (!storedCode) return;
-
       const formData = new FormData();
       formData.append('device_id', id);
-      formData.append('signature', 'local');
-      formData.append('signed_payload', JSON.stringify({ device_id: id }));
-
-      const resp = await axios.post(`${API}/license/verify`, formData, { timeout: 5000 });
-      if (resp.data && resp.data.status === 'revoked') {
-        setLicenseStatus({ isValid: false, status: 'revoked', message: 'License has been revoked.' });
-        clearLicense();
-        clearActivationCode();
-      }
+      const resp = await axios.post(`${API}/license/check`, formData, { timeout: 5000 });
+      return resp.data;
     } catch {
-      // Offline or server unreachable — local check is sufficient
+      return null; // Server unreachable
     }
   };
 

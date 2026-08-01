@@ -3054,6 +3054,25 @@ async def get_public_key():
     """Return Ed25519 public key for offline license verification."""
     return {"public_key": ED25519_PUBLIC_KEY_B64}
 
+# --- Device License Check (lightweight, no auth needed) ---
+
+@api_router.post("/license/check")
+async def check_device_license(device_id: str = Form(...)):
+    """Quick check if a device has a valid license on the server.
+    Used by client on startup to detect revoked/deleted licenses."""
+    lic = await db.licenses.find_one(
+        {"device_id": device_id},
+        {"_id": 0, "status": 1, "license_type": 1, "expires_at": 1}
+    )
+    if not lic:
+        return {"exists": False, "is_valid": False, "status": "deleted", "message": "License not found on server."}
+    
+    if lic.get("status") == "revoked":
+        return {"exists": True, "is_valid": False, "status": "revoked", "message": "License has been revoked."}
+    
+    check = compute_license_check(lic)
+    return {"exists": True, "is_valid": check["is_valid"], "status": check["status"], "message": check["message"]}
+
 # --- License Stats for Super Admin ---
 
 @api_router.get("/license/admin/stats")

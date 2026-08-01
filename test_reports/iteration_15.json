@@ -1,0 +1,32 @@
+{
+  "summary": "Verified BUG FIX for DDH License invalidation: after admin deletes/revokes a license, the device is blocked on next page load. Added 6 new backend tests for POST /api/license/check (nonexistent/active/revoked/deleted/no-auth/missing-device-id). All 26 backend licensing tests pass. Ran full E2E Playwright flow (activation -> login page -> delete license -> reload -> activation page reappears) and the same for revoke. Both bug-fix scenarios verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_licensing_system.py",
+    "/app/test_reports/pytest/test_licensing_system.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py line 3063: /api/license/check projection excludes device_id but compute_license_check may want it; currently OK because logic only uses status/license_type/expires_at.",
+    "LicenseContext.js: checkWithServer swallows all errors as 'server unreachable' (offline fallback). This is intentional but a non-2xx server response (e.g., 500) will silently fall back to local license, which could keep a deleted license alive if the server is misbehaving. Consider distinguishing network error vs HTTP error.",
+    "API base URL in LicenseContext.js uses window.location.origin instead of process.env.REACT_APP_BACKEND_URL. Works because same origin in this deployment, but inconsistent with the project rule of using REACT_APP_BACKEND_URL everywhere."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_licensing_system.py"
+  ],
+  "success_rate": {"backend": "100% (26/26)", "frontend": "100% (E2E delete + revoke both verified)"},
+  "test_credentials": "Super Admin: superadmin@ddhapps.com / DDH_SuperAdmin_2026!",
+  "seed_data_creation": "Created TEST_ prefixed licenses during tests; cleaned up in test_cleanup_test_licenses and manually in E2E script.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bug fix verified end-to-end. /api/license/check endpoint contract: form-data device_id in, returns {exists, is_valid, status, message}. LicenseContext.initLicense calls it on startup; if !is_valid it clears local license. E2E test executed on live preview URL using in-page fetch() for admin API calls (avoids CORS). Both delete and revoke scenarios cause the reloaded app to show ActivationPage (device-id-display testid).",
+  "rca of the issue": "Original bug: LicenseContext.tryOnlineVerify was broken (silent failure), so local license persisted even after admin deleted/revoked it. Fix: new /api/license/check server endpoint + LicenseContext calls it on every mount, clearing local license if server says invalid. Verified with 6 new pytest tests and Playwright E2E."
+}

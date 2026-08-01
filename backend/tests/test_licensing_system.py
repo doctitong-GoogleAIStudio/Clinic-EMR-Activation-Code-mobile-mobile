@@ -245,6 +245,87 @@ def test_offline_activation(admin_headers):
     assert ro.json()["status"] == "activated"
 
 
+# ---------- License check endpoint (bug fix: revoked/deleted licenses must block clients) ----------
+def test_license_check_nonexistent_device():
+    """Server should say a random unknown device is 'deleted' / not valid."""
+    r = requests.post(f"{API}/license/check", data={"device_id": _mk_device_id()})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["exists"] is False
+    assert data["is_valid"] is False
+    assert data["status"] == "deleted"
+
+
+def test_license_check_active_device(admin_headers):
+    device_id = _mk_device_id()
+    gen = requests.post(f"{API}/license/admin/generate", json={
+        "device_id": device_id, "customer_name": "TEST_CheckActive", "license_type": "lifetime"
+    }, headers=admin_headers).json()
+    # Activate
+    act = requests.post(f"{API}/license/activate", json={
+        "device_id": device_id, "activation_code": gen["activation_code"]
+    })
+    assert act.status_code == 200
+    # Check
+    r = requests.post(f"{API}/license/check", data={"device_id": device_id})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["exists"] is True
+    assert data["is_valid"] is True
+    assert data["status"] == "active"
+
+
+def test_license_check_revoked_device(admin_headers):
+    device_id = _mk_device_id()
+    gen = requests.post(f"{API}/license/admin/generate", json={
+        "device_id": device_id, "customer_name": "TEST_CheckRevoked", "license_type": "lifetime"
+    }, headers=admin_headers).json()
+    requests.post(f"{API}/license/activate", json={
+        "device_id": device_id, "activation_code": gen["activation_code"]
+    })
+    # Revoke
+    rv = requests.put(f"{API}/license/admin/revoke/{gen['license_id']}", headers=admin_headers)
+    assert rv.status_code == 200
+    # Check
+    r = requests.post(f"{API}/license/check", data={"device_id": device_id})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["exists"] is True
+    assert data["is_valid"] is False
+    assert data["status"] == "revoked"
+
+
+def test_license_check_deleted_device(admin_headers):
+    device_id = _mk_device_id()
+    gen = requests.post(f"{API}/license/admin/generate", json={
+        "device_id": device_id, "customer_name": "TEST_CheckDeleted", "license_type": "lifetime"
+    }, headers=admin_headers).json()
+    requests.post(f"{API}/license/activate", json={
+        "device_id": device_id, "activation_code": gen["activation_code"]
+    })
+    # Delete license
+    rd = requests.delete(f"{API}/license/admin/licenses/{gen['license_id']}", headers=admin_headers)
+    assert rd.status_code == 200
+    # Check - should report deleted
+    r = requests.post(f"{API}/license/check", data={"device_id": device_id})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["exists"] is False
+    assert data["is_valid"] is False
+    assert data["status"] == "deleted"
+
+
+def test_license_check_no_auth_required():
+    """Endpoint should not require any auth token."""
+    r = requests.post(f"{API}/license/check", data={"device_id": _mk_device_id()})
+    assert r.status_code == 200
+
+
+def test_license_check_missing_device_id():
+    r = requests.post(f"{API}/license/check", data={})
+    assert r.status_code == 422
+
+
 # ---------- Cleanup: delete TEST_ licenses ----------
 def test_cleanup_test_licenses(admin_headers):
     r = requests.get(f"{API}/license/admin/licenses", headers=admin_headers)
