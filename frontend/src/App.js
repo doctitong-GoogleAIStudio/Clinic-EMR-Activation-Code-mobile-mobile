@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LicenseProvider, useLicense } from './context/LicenseContext';
 import { Toaster } from './components/ui/sonner';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -19,6 +20,32 @@ import AIConsultationPage from './pages/AIConsultationPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
+import ActivationPage from './pages/ActivationPage';
+import LicenseAdminLoginPage from './pages/LicenseAdminLoginPage';
+import LicenseAdminPage from './pages/LicenseAdminPage';
+import GracePeriodBanner from './components/GracePeriodBanner';
+
+// License Gate - blocks access until device is activated
+const LicenseGate = ({ children }) => {
+  const { loading, isActivated } = useLicense();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-[#0F766E]/30 border-t-[#0F766E] rounded-full animate-spin mx-auto" />
+          <p className="text-slate-400 text-sm">Checking license...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isActivated) {
+    return <ActivationPage />;
+  }
+
+  return children;
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -75,24 +102,36 @@ const FullScreenRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
+      {/* License Admin Routes (outside license gate) */}
+      <Route path="/license-admin/login" element={<LicenseAdminLoginPage />} />
+      <Route path="/license-admin" element={<LicenseAdminPage />} />
 
-      {/* Protected Routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/patients" element={<ProtectedRoute><PatientsPage /></ProtectedRoute>} />
-      <Route path="/patients/new" element={<ProtectedRoute><NewPatientPage /></ProtectedRoute>} />
-      <Route path="/patients/:patientId" element={<ProtectedRoute><PatientProfilePage /></ProtectedRoute>} />
-      <Route path="/visits/new" element={<ProtectedRoute><NewVisitPage /></ProtectedRoute>} />
-      <Route path="/visits/:visitId" element={<ProtectedRoute><VisitDetailPage /></ProtectedRoute>} />
-      <Route path="/patients/:patientId/ai-consultation" element={<FullScreenRoute><AIConsultationPage /></FullScreenRoute>} />
-      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      {/* All other routes go through license gate */}
+      <Route path="/*" element={
+        <LicenseGate>
+          <GracePeriodBanner />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
 
-      {/* Redirects */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/patients" element={<ProtectedRoute><PatientsPage /></ProtectedRoute>} />
+            <Route path="/patients/new" element={<ProtectedRoute><NewPatientPage /></ProtectedRoute>} />
+            <Route path="/patients/:patientId" element={<ProtectedRoute><PatientProfilePage /></ProtectedRoute>} />
+            <Route path="/visits/new" element={<ProtectedRoute><NewVisitPage /></ProtectedRoute>} />
+            <Route path="/visits/:visitId" element={<ProtectedRoute><VisitDetailPage /></ProtectedRoute>} />
+            <Route path="/patients/:patientId/ai-consultation" element={<FullScreenRoute><AIConsultationPage /></FullScreenRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+
+            {/* Redirects */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </LicenseGate>
+      } />
     </Routes>
   );
 }
@@ -100,14 +139,16 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AutoExportProvider>
-          <OfflineIndicator />
-          <AppRoutes />
-          <Toaster position="top-right" richColors closeButton />
-          <PWAInstallPrompt />
-        </AutoExportProvider>
-      </AuthProvider>
+      <LicenseProvider>
+        <AuthProvider>
+          <AutoExportProvider>
+            <OfflineIndicator />
+            <AppRoutes />
+            <Toaster position="top-right" richColors closeButton />
+            <PWAInstallPrompt />
+          </AutoExportProvider>
+        </AuthProvider>
+      </LicenseProvider>
     </BrowserRouter>
   );
 }

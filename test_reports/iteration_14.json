@@ -1,0 +1,68 @@
+{
+  "summary": "Comprehensive testing of Device-bound Activation Licensing System. All 20 backend pytest tests passed (100%). Frontend E2E flow verified: Activation gate → invalid code rejection → super-admin API generates code → device activates → EMR login page reached. Super Admin portal (/license-admin/login → /license-admin) accessible without device activation, stats/table/generate/audit UI all functional.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "LicenseAdminPage license table", "issues": ["React hydration warning: '<span> cannot be a child of <tbody>' and '<tr>'. Appears to originate from an Emergent instrumentation wrapper (x-excluded='true', data-ve-dynamic) that wraps the mapped <tr> elements. Non-blocking dev-mode warning but should be reported to Emergent tooling / not user-fixable."]}
+    ]
+  },
+  "passed_tests": [
+    "Backend: POST /api/license/admin/login with valid credentials returns super_admin JWT",
+    "Backend: POST /api/license/admin/login with invalid password returns 401",
+    "Backend: Admin endpoints require Bearer token (401/403 without)",
+    "Backend: GET /api/license/public-key returns 32-byte Ed25519 key",
+    "Backend: GET /api/license/admin/stats returns total/active/pending/revoked/expired and by_type breakdown",
+    "Backend: POST /api/license/admin/generate creates Lifetime license with DDH-XXXX-XXXX-XXXX-XXXX activation_code and offline_key",
+    "Backend: POST /api/license/activate with correct device+code activates (status 'activated', check.is_valid=true)",
+    "Backend: POST /api/license/activate with wrong code returns 400 'Invalid activation code for this device.'",
+    "Backend: Device binding — code generated for device A does NOT work for device B (400)",
+    "Backend: Generate license for types: yearly (365-day expiry), trial (custom trial_days expiry), hospital (no expiry)",
+    "Backend: PUT /api/license/admin/revoke/{id} sets status='revoked'; PUT /reactivate/{id} restores to 'active'",
+    "Backend: PUT /api/license/admin/transfer/{id} changes device_id, re-signs payload, sets status back to 'pending'",
+    "Backend: PUT /api/license/admin/extend/{id} with additional_days updates expires_at and returns new_activation_code",
+    "Backend: DELETE /api/license/admin/licenses/{id} removes license (subsequent GET returns 404)",
+    "Backend: GET /api/license/admin/audit returns audit log entries with actions {generated, activated, revoked, transferred, extended, deleted}",
+    "Backend: GET /api/license/admin/licenses returns list of licenses (with computed check per license)",
+    "Backend: POST /api/license/activate-offline with base64 offline_key activates using Ed25519 verification",
+    "Frontend: Activation page displays Device ID in DDH-XXXX-XXXX-XXXX-XXXX format (data-testid='device-id-display')",
+    "Frontend: Entering invalid code shows red error 'Invalid activation code for this device.'",
+    "Frontend: After entering valid code, page transitions to EMR login (Welcome Back, doctor@clinic.com placeholder) and shows toast 'Device activated successfully!'",
+    "Frontend: /license-admin/login accessible without device activation (bypasses activation gate)",
+    "Frontend: Super Admin login (superadmin@ddhapps.com / DDH_SuperAdmin_2026!) redirects to /license-admin dashboard",
+    "Frontend: Admin dashboard shows stats-grid, license-table, Generate License button, Audit Log button",
+    "Frontend: Generate License form opens, accepts device_id + customer_name, and displays generated activation code + offline key on success",
+    "Frontend: Audit Log panel opens and displays past operations"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_licensing_system.py",
+    "/app/test_reports/pytest/test_licensing_system.xml"
+  ],
+  "action_items": [
+    "(Low priority / dev-only) Hydration warnings about <span> under <tbody>/<tr>: caused by Emergent's instrumentation wrapper (data-ve-dynamic span) — no user-code fix required, but if it must be silenced, replace the .map() over rows to avoid the wrapper being injected inside <tbody>."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 3116 lines — should be split into modular routers (licensing, patients, visits, etc.).",
+    "Activation code is derived deterministically via HMAC(device_id|app|type). Two consecutive lifetime licenses for the same device+type will produce identical activation codes; acceptable because generate endpoint blocks duplicate active licenses per device, but worth noting.",
+    "License extend endpoint re-generates activation_code even for already-activated licenses; the newly generated code is what future re-activation would need — acceptable but should be documented in UI.",
+    "Ed25519 keys and MASTER_SECRET correctly loaded from env (backend/.env). Good.",
+    "All license admin endpoints properly gated with get_super_admin JWT dependency.",
+    "MongoDB _id correctly excluded via projection {'_id': 0} in queries."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_licensing_system.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 pytest)",
+    "frontend": "100% (all requested flows verified)"
+  },
+  "test_credentials": {
+    "super_admin": "superadmin@ddhapps.com / DDH_SuperAdmin_2026!",
+    "emr_doctor": "doctitong@yahoo.com / admin123"
+  },
+  "seed_data_creation": "Test licenses were created during tests and cleaned up (TEST_/PW_ prefixed licenses removed via DELETE endpoint).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "License system fully validated end-to-end. Key testids: device-id-display, activation-code-input, activate-btn, offline-key-input, admin-email-input, admin-password-input, admin-login-btn, stats-grid, license-table, generate-license-btn, gen-device-id, gen-customer-name, gen-license-type, gen-submit-btn, generated-result, view-audit-btn, audit-log, transfer-modal, extend-modal. To test in a new browser session: (1) read device_id from data-testid='device-id-display'; (2) call /api/license/admin/login then /api/license/admin/generate via fetch() in-page; (3) fill activation-code-input and click activate-btn. /license-admin/* bypasses the license gate."
+}
