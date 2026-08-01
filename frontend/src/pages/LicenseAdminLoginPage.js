@@ -63,7 +63,7 @@ const LicenseAdminLoginPage = () => {
               <Label className="text-slate-300">Email</Label>
               <Input
                 type="email"
-                placeholder="admin@ddhapps.com"
+                placeholder="Enter email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
