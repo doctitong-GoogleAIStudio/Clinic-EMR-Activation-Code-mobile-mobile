@@ -10,7 +10,7 @@ import requests
 import os
 import io
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://patient-data-export.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://voicedoc-system.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "testvoice@test.com"
