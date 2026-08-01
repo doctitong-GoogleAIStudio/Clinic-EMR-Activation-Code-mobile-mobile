@@ -97,7 +97,7 @@ const LoginPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
               {error && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-red-700 text-sm">
                   <AlertCircle className="w-4 h-4" />
@@ -114,6 +114,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="new-password"
                   className="h-12 bg-white border-slate-200 focus:border-[#0F766E] focus:ring-[#0F766E]"
                   data-testid="login-email-input"
                 />
@@ -128,6 +129,7 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  autoComplete="new-password"
                   className="h-12 bg-white border-slate-200 focus:border-[#0F766E] focus:ring-[#0F766E]"
                   data-testid="login-password-input"
                 />

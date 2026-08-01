@@ -52,7 +52,7 @@ const LicenseAdminLoginPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
             {error && (
               <div className="p-3 rounded-lg bg-red-950/40 border border-red-800/50 flex items-center gap-2 text-red-300 text-sm">
                 <AlertCircle className="w-4 h-4" />
@@ -67,6 +67,7 @@ const LicenseAdminLoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="new-password"
                 className="h-12 bg-slate-900/80 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500"
                 data-testid="admin-email-input"
               />
@@ -79,6 +80,7 @@ const LicenseAdminLoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="new-password"
                 className="h-12 bg-slate-900/80 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500"
                 data-testid="admin-password-input"
               />
