@@ -1,12 +1,13 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import json
 import logging
+import requests
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict, Any
@@ -39,6 +40,41 @@ JWT_ALGORITHM = "HS256"
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+# Object Storage (Emergent) — private file storage for attachments
+STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+STORAGE_APP_NAME = "private-clinic-emr"
+_storage_key = None
+
+def init_storage():
+    """Initialize object storage session key once and reuse it."""
+    global _storage_key
+    if _storage_key:
+        return _storage_key
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_LLM_KEY}, timeout=30)
+    resp.raise_for_status()
+    _storage_key = resp.json()["storage_key"]
+    return _storage_key
+
+def storage_put(path: str, data: bytes, content_type: str) -> dict:
+    key = init_storage()
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type or "application/octet-stream"},
+        data=data, timeout=120
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+def storage_get(path: str) -> tuple:
+    key = init_storage()
+    resp = requests.get(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key}, timeout=60
+    )
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 # Licensing
 ED25519_PRIVATE_KEY_B64 = os.environ.get('ED25519_PRIVATE_KEY')
@@ -328,7 +364,7 @@ def calculate_age(birthdate_str: str) -> int:
         today = date.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
         return age
-    except:
+    except Exception:
         return 0
 
 def generate_patient_id() -> str:
@@ -955,23 +991,21 @@ async def upload_attachment(
     if not await verify_patient_ownership(patient_id, current_user["id"]):
         raise HTTPException(status_code=404, detail="Patient not found")
     
-    # Generate unique filename and save to disk
+    # Generate unique object path and upload to object storage
     attachment_id = str(uuid.uuid4())
     file_ext = Path(file.filename).suffix if file.filename else ''
-    stored_filename = f"{attachment_id}{file_ext}"
-    file_path = UPLOADS_DIR / stored_filename
-    
-    # Save file to disk
+    owner_id = await get_owner_id_for_user(current_user)
+    storage_path = f"{STORAGE_APP_NAME}/attachments/{owner_id}/{attachment_id}{file_ext}"
+
     content = await file.read()
-    async with aiofiles.open(file_path, 'wb') as f:
-        await f.write(content)
-    
+    put_result = storage_put(storage_path, content, file.content_type or "application/octet-stream")
+
     attachment = {
         "id": attachment_id,
         "patient_id": patient_id,
         "visit_id": visit_id,
         "filename": file.filename,
-        "stored_filename": stored_filename,  # Local file name
+        "storage_path": put_result.get("path", storage_path),  # Object storage key
         "content_type": file.content_type,
         "file_size": len(content),
         "tag": tag,
@@ -1038,7 +1072,21 @@ async def get_attachment_file(attachment_id: str, current_user: dict = Depends(g
     if not await verify_patient_ownership(attachment["patient_id"], owner_id):
         raise HTTPException(status_code=404, detail="Attachment not found")
     
-    # Check for local file (new system)
+    # New system: object storage
+    storage_path = attachment.get("storage_path")
+    if storage_path:
+        try:
+            content, ct = storage_get(storage_path)
+        except Exception as e:
+            logger.error(f"Storage fetch failed for {storage_path}: {e}")
+            raise HTTPException(status_code=404, detail="File not found")
+        return Response(
+            content=content,
+            media_type=attachment.get("content_type") or ct,
+            headers={"Content-Disposition": f"inline; filename={attachment.get('filename', 'file')}"}
+        )
+
+    # Legacy: local disk file
     stored_filename = attachment.get("stored_filename")
     if stored_filename:
         file_path = UPLOADS_DIR / stored_filename
@@ -1483,11 +1531,17 @@ async def extract_text_from_image(request: OCRRequest, current_user: dict = Depe
         if not content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="OCR only works with image files (JPG, PNG, etc.)")
         
-        # Get the file content - check both stored_filename (disk) and file_data (base64)
+        # Get the file content - object storage (new) then legacy fallbacks
         file_content = None
-        
-        if attachment.get("stored_filename"):
-            # File is stored on disk (new format)
+
+        if attachment.get("storage_path"):
+            try:
+                file_content, _ = storage_get(attachment["storage_path"])
+            except Exception as e:
+                logger.error(f"OCR storage fetch failed: {e}")
+
+        if file_content is None and attachment.get("stored_filename"):
+            # Legacy: file stored on disk
             file_path = UPLOADS_DIR / attachment.get("stored_filename")
             if file_path.exists():
                 async with aiofiles.open(file_path, 'rb') as f:
@@ -2772,6 +2826,7 @@ async def activate_license(req: LicenseActivateRequest):
             "device_id": license_doc["device_id"],
             "license_type": license_doc["license_type"],
             "customer_name": license_doc["customer_name"],
+            "customer_email": license_doc.get("customer_email"),
             "expires_at": license_doc.get("expires_at"),
             "trial_patient_limit": license_doc.get("trial_patient_limit"),
             "activated_at": now,
@@ -3073,6 +3128,98 @@ async def check_device_license(device_id: str = Form(...)):
     check = compute_license_check(lic)
     return {"exists": True, "is_valid": check["is_valid"], "status": check["status"], "message": check["message"]}
 
+# --- Self-Service Trial ---
+
+TRIAL_DAYS = 7
+
+class StartTrialRequest(BaseModel):
+    device_id: str
+    customer_name: str
+    customer_email: str
+    password: str
+
+def _build_license_response(license_doc: dict, check: dict) -> dict:
+    return {
+        "success": True,
+        "license": {
+            "device_id": license_doc["device_id"],
+            "license_type": license_doc["license_type"],
+            "customer_name": license_doc["customer_name"],
+            "customer_email": license_doc.get("customer_email"),
+            "expires_at": license_doc.get("expires_at"),
+            "trial_patient_limit": license_doc.get("trial_patient_limit"),
+            "activated_at": license_doc.get("activated_at"),
+            "app_name": license_doc.get("app_name"),
+            "signature": license_doc["signature"],
+            "signed_payload": license_doc["signed_payload"]
+        },
+        "check": check
+    }
+
+@api_router.post("/license/start-trial")
+async def start_trial(req: StartTrialRequest):
+    """Self-service 7-day trial. Device-bound: one trial per device."""
+    existing = await db.licenses.find_one({"device_id": req.device_id})
+    if existing:
+        check = compute_license_check(existing)
+        if check["is_valid"]:
+            # Device already has a valid license/trial — return it
+            return _build_license_response(existing, check)
+        # Device already used its trial (or license expired/revoked) — must activate
+        raise HTTPException(
+            status_code=403,
+            detail="This device has already used its free trial. Please enter an activation code to continue."
+        )
+
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(days=TRIAL_DAYS)).isoformat()
+    activation_code = generate_activation_code(req.device_id, LicenseType.TRIAL, "Private Clinic EMR")
+
+    license_payload = json.dumps({
+        "device_id": req.device_id,
+        "app_name": "Private Clinic EMR",
+        "license_type": LicenseType.TRIAL,
+        "expires_at": expires_at,
+        "customer_name": req.customer_name,
+        "issued_at": now.isoformat()
+    }, sort_keys=True)
+    signature = sign_license_payload(license_payload)
+
+    license_doc = {
+        "id": str(uuid.uuid4()),
+        "device_id": req.device_id,
+        "activation_code": activation_code,
+        "app_name": "Private Clinic EMR",
+        "customer_name": req.customer_name,
+        "customer_email": req.customer_email,
+        "trial_password_hash": hash_password(req.password),
+        "license_type": LicenseType.TRIAL,
+        "status": "active",
+        "expires_at": expires_at,
+        "trial_patient_limit": None,
+        "signature": signature,
+        "signed_payload": license_payload,
+        "notes": "Self-service 7-day trial",
+        "is_self_trial": True,
+        "activated_at": now.isoformat(),
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat()
+    }
+    await db.licenses.insert_one(license_doc)
+
+    await db.license_audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "license_id": license_doc["id"],
+        "device_id": req.device_id,
+        "action": "trial_started",
+        "details": f"7-day self-service trial started for {req.customer_name} ({req.customer_email})",
+        "performed_by": "self_service",
+        "timestamp": now.isoformat()
+    })
+
+    check = compute_license_check(license_doc)
+    return _build_license_response(license_doc, check)
+
 # --- License Stats for Super Admin ---
 
 @api_router.get("/license/admin/stats")
@@ -3114,6 +3261,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
+    # Initialize object storage session
+    try:
+        init_storage()
+        logger.info("Object storage initialized")
+    except Exception as e:
+        logger.error(f"Object storage init failed: {e}")
     # Create indexes
     await db.users.create_index("email", unique=True)
     await db.patients.create_index("patient_id", unique=True)

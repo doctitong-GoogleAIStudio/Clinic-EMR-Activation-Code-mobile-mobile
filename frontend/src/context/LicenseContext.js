@@ -33,24 +33,30 @@ export const LicenseProvider = ({ children }) => {
       setDeviceId(id);
 
       const meta = getLicenseMeta();
+      const serverResult = await checkWithServer(id);
+
       if (meta && meta.device_id === id) {
-        // We have a stored license — check server first if online
-        const serverResult = await checkWithServer(id);
+        // We have a stored license — trust server if online
         if (serverResult !== null) {
-          // Server responded
           if (!serverResult.is_valid) {
             // Server says invalid (deleted, revoked, expired past grace)
             clearLicense();
             clearActivationCode();
             setLicenseMeta(null);
-            setLicenseStatus({ isValid: false, status: serverResult.status, message: serverResult.message });
+            setLicenseStatus({
+              isValid: false,
+              status: serverResult.status,
+              trialEligible: !serverResult.exists,
+              message: serverResult.message
+            });
             return;
           }
-          // Server says valid — use server status
           setLicenseMeta(meta);
           setLicenseStatus({
             isValid: true,
             status: serverResult.status,
+            licenseType: meta.license_type,
+            expiresAt: meta.expires_at,
             inGracePeriod: serverResult.status === 'grace_period',
             graceDaysRemaining: 0,
             message: serverResult.message
@@ -60,14 +66,22 @@ export const LicenseProvider = ({ children }) => {
         // Server unreachable — fall back to local check
         const localCheck = checkLicenseLocally(meta);
         setLicenseMeta(meta);
-        setLicenseStatus(localCheck);
+        setLicenseStatus({ ...localCheck, licenseType: meta.license_type, expiresAt: meta.expires_at });
       } else {
-        // No valid license
-        setLicenseStatus({ isValid: false, status: 'no_license', message: 'Device not activated.' });
+        // No local license on this device
+        const trialEligible = !serverResult || !serverResult.exists;
+        setLicenseStatus({
+          isValid: false,
+          status: serverResult && serverResult.exists ? serverResult.status : 'no_license',
+          trialEligible,
+          message: serverResult && serverResult.exists
+            ? serverResult.message
+            : 'Start your free 7-day trial.'
+        });
       }
     } catch (err) {
       console.error('License init error:', err);
-      setLicenseStatus({ isValid: false, status: 'error', message: 'License check failed.' });
+      setLicenseStatus({ isValid: false, status: 'error', trialEligible: true, message: 'License check failed.' });
     } finally {
       setLoading(false);
     }
@@ -102,6 +116,7 @@ export const LicenseProvider = ({ children }) => {
         device_id: deviceId,
         license_type: license.license_type,
         customer_name: license.customer_name,
+        customer_email: license.customer_email,
         expires_at: license.expires_at,
         activated_at: license.activated_at,
         app_name: license.app_name
@@ -140,6 +155,7 @@ export const LicenseProvider = ({ children }) => {
         device_id: deviceId,
         license_type: license.license_type,
         customer_name: license.customer_name,
+        customer_email: license.customer_email,
         expires_at: license.expires_at,
         activated_at: license.activated_at,
         app_name: license.app_name
@@ -159,6 +175,48 @@ export const LicenseProvider = ({ children }) => {
     }
   }, [deviceId]);
 
+  const startTrial = useCallback(async (customerName, customerEmail, password) => {
+    if (!deviceId) throw new Error('Device ID not ready');
+
+    try {
+      const resp = await axios.post(`${API}/license/start-trial`, {
+        device_id: deviceId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        password
+      });
+
+      const { license, check } = resp.data;
+      const trialCode = `TRIAL-${deviceId}`;
+
+      await storeLicense(deviceId, trialCode, license);
+      storeActivationCode(trialCode);
+      setLicenseMeta({
+        device_id: deviceId,
+        license_type: license.license_type,
+        customer_name: license.customer_name,
+        customer_email: license.customer_email,
+        expires_at: license.expires_at,
+        activated_at: license.activated_at,
+        app_name: license.app_name
+      });
+      setLicenseStatus({
+        isValid: check.is_valid,
+        status: check.status,
+        licenseType: license.license_type,
+        expiresAt: license.expires_at,
+        inGracePeriod: check.in_grace_period,
+        graceDaysRemaining: check.grace_days_remaining,
+        message: check.message
+      });
+
+      return { success: true, license };
+    } catch (err) {
+      const msg = err?.response?.data?.detail || 'Could not start trial. Please try again.';
+      throw new Error(msg);
+    }
+  }, [deviceId]);
+
   const deactivate = useCallback(() => {
     clearLicense();
     clearActivationCode();
@@ -168,6 +226,8 @@ export const LicenseProvider = ({ children }) => {
 
   const isActivated = licenseStatus?.isValid === true;
   const inGracePeriod = licenseStatus?.inGracePeriod === true;
+  const trialEligible = licenseStatus?.trialEligible === true;
+  const isTrial = licenseMeta?.license_type === 'trial';
 
   return (
     <LicenseContext.Provider value={{
@@ -177,8 +237,11 @@ export const LicenseProvider = ({ children }) => {
       loading,
       isActivated,
       inGracePeriod,
+      trialEligible,
+      isTrial,
       activate,
       activateOffline,
+      startTrial,
       deactivate
     }}>
       {children}

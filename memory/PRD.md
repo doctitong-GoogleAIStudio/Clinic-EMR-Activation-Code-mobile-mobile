@@ -61,12 +61,23 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - [x] **Audit Trail** - Full audit log of all license operations with timestamps
 - [x] **Online Revocation Check** - App silently checks server for revocation on startup when internet is available
 
+## Self-Service 7-Day Trial - Implemented (Sep 1, 2026)
+- [x] **Instant Trial Gate** - Fresh/new device sees a Trial Sign-up screen (Full Name, Email, Password) instead of a hard activation block. Signing up starts a fully functional 7-day trial.
+- [x] **Device-Bound (one trial per device)** - Backend `POST /api/license/start-trial` enforces one trial per device fingerprint; expired/used-trial devices get HTTP 403 and must enter an activation code.
+- [x] **Live Countdown** - Top banner (all pages) + Dashboard card show remaining time to minute/second granularity. "Activate Now" available anytime -> `/activate` route.
+- [x] **Trial is separate from EMR login** - After the trial unlocks the app, the user still logs in / signs up for an EMR doctor account.
+- [x] **Send Device ID** - mailto button on Trial + Activation pages, prefilled to docvincent2022@yahoo.com and including the customer's registered email.
+- [x] **After 7 days** - Device locks and shows the Activation screen requiring an activation code (trialEligible=false path in `UnactivatedGate`).
+
+## Object Storage Migration - Implemented (Sep 1, 2026)
+- [x] **Attachments moved to Emergent Object Storage** (was pod-local disk, which broke on deployed/production). Upload -> `storage_put`, download/OCR -> `storage_get`. DB stores `storage_path` object key. Legacy `stored_filename`/`file_data` still read as fallback.
+
 ## Key DB Schema
 - **users**: `{id, email, hashed_password, full_name, role, license_no, ptr_no, prc_no, specialization, created_by}`
 - **patients**: `{id, patient_id, full_name, birthdate, sex, ..., owner_id, created_by}`
 - **visits**: `{id, patient_id, vitals, soap_*, ..., created_by, owner_id}`
 - **appointments**: `{id, patient_id, date, time, status, ..., owner_id, created_by}`
-- **attachments**: `{id, patient_id, visit_id, filename, file_data, content_type, tag, notes, uploaded_by}`
+- **attachments**: `{id, patient_id, visit_id, filename, storage_path, content_type, file_size, tag, notes, uploaded_by, uploaded_at}` (legacy: stored_filename/file_data)
 - **prescriptions**: `{id, patient_id, visit_id, medications, notes, created_by}`
 - **certificates**: `{id, patient_id, visit_id, certificate_type, content, created_by}`
 - **lab_requests**: `{id, patient_id, visit_id, request_type, tests, clinical_info, urgency, created_by, created_at}`
@@ -89,6 +100,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - `POST /api/dictation/transcribe` | `POST /api/dictation/structure`
 - `POST /api/restore` | `GET /api/export/patients` | `GET /api/export/visits`
 - **License System:**
+  - `POST /api/license/start-trial` - Self-service 7-day trial (device-bound)
+  - `POST /api/license/check` - Check if a stored device license is still valid on server
   - `POST /api/license/activate` - Online device activation
   - `POST /api/license/activate-offline` - Offline device activation
   - `POST /api/license/verify` - Verify existing license
@@ -112,6 +125,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 ## 3rd Party Integrations
 - OpenAI GPT-5.2 via Emergent LLM Key (`emergentintegrations`)
 - OpenAI Whisper (Audio Transcription) via user's `OPENAI_API_KEY` in backend `.env`
+- Emergent Object Storage (private file attachments) via `INTEGRATION_PROXY_URL` + `EMERGENT_LLM_KEY`
 
 ## P1 - Upcoming Tasks
 - [ ] Admin approval for new Doctor/Admin sign-ups

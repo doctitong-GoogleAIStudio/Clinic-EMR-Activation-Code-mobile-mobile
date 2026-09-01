@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
 import VitalsTooltip from '../components/VitalsTooltip';
 import RestoreBackupDialog from '../components/RestoreBackupDialog';
+import TrialStatusCard from '../components/TrialStatusCard';
 
 const DashboardPage = () => {
   const { user, isDoctor } = useAuth();
@@ -190,6 +191,7 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
+      <TrialStatusCard />
       {/* Non-dismissible backup reminder banner */}
       {backupOverdue && (
         <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-red-50 border border-red-200" data-testid="backup-overdue-banner">

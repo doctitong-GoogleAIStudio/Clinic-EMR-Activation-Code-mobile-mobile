@@ -1,0 +1,37 @@
+{
+  "summary": "Full functional + regression test of the new self-service 7-day trial system and the object-storage attachment migration. Backend: 9/9 pytest cases pass (start-trial fresh device, device-bound repeat returns existing valid trial, /license/check via form for known+unknown device, attachment upload returns storage_path with prefix 'private-clinic-emr/attachments/', download returns exact bytes, list, update metadata, delete + 404 verification). Frontend: Fresh browser context correctly shows TrialSignupPage with all required data-testids (trial-signup-card, trial-fullname/email/password/confirm-input, start-trial-btn, trial-device-id-display, trial-send-device-id-btn, have-code-btn). Submitting valid trial form starts the trial, unlocks the app, shows top TrialBanner with countdown '6d 23h 59m' and Activate Now button, and redirects to /login (EMR login is properly separate). /activate page renders device-id-card, activation-code-input, activate-btn, and activation-back-btn (back button returns to /login/dashboard). After registering an EMR doctor via /signup, the dashboard shows trial-status-card with the required live D:H:M:S countdown ('06Days:23Hrs:59Min:52Sec') and trial-card-activate-btn. Password validation (short pw, mismatched pw) shows trial-error element correctly. /license-admin/login is NOT blocked by the trial gate (admin-login-card visible directly).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "TrialSignupPage", "issues": ["Invalid-email validation is enforced by the browser's native HTML5 tooltip (because <Input type=\"email\"> is used) instead of surfacing the JS-level data-testid='trial-error' message. The spec expects trial-error to appear for invalid email. Short/mismatched password errors do use trial-error correctly. Optional fix: add noValidate on the form or change type to 'text' + rely on regex check so trial-error is used consistently."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_trial_and_storage.py",
+    "/app/test_reports/pytest/trial_and_storage.xml"
+  ],
+  "action_items": [
+    "OPTIONAL/minor: make invalid-email validation on TrialSignupPage display the trial-error element instead of relying on the browser's native HTML5 email tooltip (add noValidate to the form or switch input type to text)."
+  ],
+  "critical_code_review_comments": [
+    "Trial start endpoint correctly enforces device-bound behavior: repeat call with same device_id returns the existing valid trial without extending the expiry (verified — same expires_at across two calls).",
+    "Attachment upload/download roundtrip integrity is preserved through object storage (exact byte comparison passes).",
+    "LicenseGate correctly excludes /license-admin routes from the trial gate.",
+    "server.py is 3288 lines — recommend splitting into modules (auth, patients, visits, attachments, licensing) for maintainability. Not a functional issue."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_trial_and_storage.py (new pytest regression suite)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "~95% (all required flows verified; one minor UX validation deviation)"},
+  "test_credentials": "Super Admin (verified accessible without trial gate): superadmin@ddhapps.com / DDH_SuperAdmin_2026!. Trial and EMR accounts are created fresh per test run using random emails.",
+  "seed_data_creation": "Each test run creates a fresh trial license (TEST_ prefix on device_id) and a fresh doctor account. Also creates a TEST patient + attachment which is cleaned up by the delete test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest file /app/backend/tests/test_trial_and_storage.py covers: trial start (fresh/repeat), /license/check via form, and full attachment CRUD over object storage. Frontend fully verified end-to-end: TrialSignupPage -> TrialBanner+/login -> /activate (with back button) -> /signup EMR -> /dashboard TrialStatusCard with live D:H:M:S countdown -> /license-admin/login accessible outside gate. The one open item is a minor UX preference: invalid-email uses HTML5 native tooltip rather than the JS trial-error element.",
+  "rca of the issue": "TrialSignupPage renders its email input as <Input type='email'>, so the browser's HTML5 constraint validation intercepts the submit before React's onSubmit handler runs. As a result the JS validation branch that sets the trial-error state for invalid emails is unreachable in a normal browser. Mitigation: add noValidate to the <form> element or change the input type to 'text' and rely on the existing regex check."
+}

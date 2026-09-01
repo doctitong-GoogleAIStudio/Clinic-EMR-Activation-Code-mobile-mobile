@@ -21,6 +21,8 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 import ActivationPage from './pages/ActivationPage';
+import UnactivatedGate from './components/UnactivatedGate';
+import TrialBanner from './components/TrialBanner';
 import LicenseAdminLoginPage from './pages/LicenseAdminLoginPage';
 import LicenseAdminPage from './pages/LicenseAdminPage';
 import GracePeriodBanner from './components/GracePeriodBanner';
@@ -41,7 +43,7 @@ const LicenseGate = ({ children }) => {
   }
 
   if (!isActivated) {
-    return <ActivationPage />;
+    return <UnactivatedGate />;
   }
 
   return children;
@@ -109,11 +111,15 @@ function AppRoutes() {
       {/* All other routes go through license gate */}
       <Route path="/*" element={
         <LicenseGate>
+          <TrialBanner />
           <GracePeriodBanner />
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
+
+            {/* Activation / upgrade during trial */}
+            <Route path="/activate" element={<ActivationPage />} />
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLicense } from '../context/LicenseContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Stethoscope, Shield, Copy, Check, Key, Wifi, WifiOff, AlertTriangle, ChevronDown, ChevronUp, Mail } from 'lucide-react';
+import { Stethoscope, Shield, Copy, Check, Key, Wifi, WifiOff, AlertTriangle, ChevronDown, ChevronUp, Mail, ArrowLeft, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-const ActivationPage = () => {
-  const { deviceId, activate, activateOffline, licenseStatus } = useLicense();
+const ActivationPage = ({ onTrialInstead }) => {
+  const { deviceId, activate, activateOffline, licenseStatus, licenseMeta, isActivated } = useLicense();
+  const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [offlineKey, setOfflineKey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +39,7 @@ const ActivationPage = () => {
     try {
       await activate(code.trim().toUpperCase());
       toast.success('Device activated successfully!');
+      if (isActivated) navigate('/dashboard');
     } catch (err) {
       setError(err.message);
       toast.error('Activation failed');
@@ -54,6 +57,7 @@ const ActivationPage = () => {
     try {
       await activateOffline(offlineKey.trim());
       toast.success('Device activated (offline)!');
+      if (isActivated) navigate('/dashboard');
     } catch (err) {
       setError(err.message);
       toast.error('Offline activation failed');
@@ -68,6 +72,17 @@ const ActivationPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
+        {/* Back to app (visible when upgrading during an active trial) */}
+        {isActivated && (
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm transition-colors"
+            data-testid="activation-back-btn"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to app
+          </button>
+        )}
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#0F766E] shadow-lg shadow-[#0F766E]/30">
@@ -124,7 +139,9 @@ const ActivationPage = () => {
                 variant="outline"
                 className="w-full mt-3 border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-300"
                 onClick={() => {
-                  window.location.href = `mailto:docvincent2022@yahoo.com?subject=Device Activation Request - ${deviceId}&body=Hello,%0A%0AI would like to request an activation code for my device.%0A%0ADevice ID: ${deviceId}%0AApp: Private Clinic EMR%0A%0AThank you.`;
+                  const custEmail = licenseMeta?.customer_email || '';
+                  const body = `Hello,%0A%0AI would like to request an activation code for my device.%0A%0ADevice ID: ${deviceId}%0ARegistered Email: ${custEmail || '(not provided)'}%0AApp: Private Clinic EMR%0A%0AThank you.`;
+                  window.location.href = `mailto:docvincent2022@yahoo.com?subject=Device Activation Request - ${deviceId}&body=${body}`;
                 }}
                 data-testid="send-device-id-btn"
               >
@@ -224,6 +241,18 @@ const ActivationPage = () => {
             </Card>
           )}
         </div>
+
+        {/* Start free trial (only for devices that haven't used one) */}
+        {onTrialInstead && (
+          <button
+            onClick={onTrialInstead}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[#0F766E]/40 bg-[#0F766E]/10 text-[#5EEAD4] hover:bg-[#0F766E]/20 text-sm transition-colors"
+            data-testid="start-trial-instead-btn"
+          >
+            <Sparkles className="w-4 h-4" />
+            Start a free 7-day trial instead
+          </button>
+        )}
 
         {/* Footer */}
         <div className="text-center space-y-2">

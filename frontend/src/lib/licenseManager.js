@@ -67,6 +67,7 @@ export async function storeLicense(deviceId, activationCode, licenseData) {
       device_id: deviceId,
       license_type: licenseData.license_type,
       customer_name: licenseData.customer_name,
+      customer_email: licenseData.customer_email,
       expires_at: licenseData.expires_at,
       activated_at: licenseData.activated_at,
       app_name: licenseData.app_name
@@ -114,6 +115,28 @@ export function storeActivationCode(code) {
 
 export function clearActivationCode() {
   localStorage.removeItem('ddh_activation_code');
+}
+
+/**
+ * Compute remaining time for a trial/timed license.
+ * Returns granular days/hours/minutes/seconds for a live countdown.
+ */
+export function getTrialRemaining(expiresAt) {
+  if (!expiresAt) return null;
+  const end = new Date(expiresAt).getTime();
+  const totalMs = end - Date.now();
+  if (Number.isNaN(end)) return null;
+  if (totalMs <= 0) {
+    return { expired: true, days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 };
+  }
+  return {
+    expired: false,
+    days: Math.floor(totalMs / 86400000),
+    hours: Math.floor((totalMs % 86400000) / 3600000),
+    minutes: Math.floor((totalMs % 3600000) / 60000),
+    seconds: Math.floor((totalMs % 60000) / 1000),
+    totalMs
+  };
 }
 
 /**

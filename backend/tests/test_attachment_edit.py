@@ -57,7 +57,7 @@ class TestAttachmentEdit:
         try:
             requests.delete(f"{BASE_URL}/api/attachments/{self.attachment_id}", headers=self.headers)
             requests.delete(f"{BASE_URL}/api/patients/{self.patient_id}", headers=self.headers)
-        except:
+        except Exception:
             pass
     
     def test_edit_filename_success(self):
