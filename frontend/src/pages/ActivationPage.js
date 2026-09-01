@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Stethoscope, Shield, Copy, Check, Key, Wifi, WifiOff, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Stethoscope, Shield, Copy, Check, Key, Wifi, WifiOff, AlertTriangle, ChevronDown, ChevronUp, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ActivationPage = () => {
@@ -119,6 +119,19 @@ const ActivationPage = () => {
                 {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
+            {deviceId && (
+              <Button
+                variant="outline"
+                className="w-full mt-3 border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-300"
+                onClick={() => {
+                  window.location.href = `mailto:docvincent2022@yahoo.com?subject=Device Activation Request - ${deviceId}&body=Hello,%0A%0AI would like to request an activation code for my device.%0A%0ADevice ID: ${deviceId}%0AApp: Private Clinic EMR%0A%0AThank you.`;
+                }}
+                data-testid="send-device-id-btn"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Send Device ID to Admin
+              </Button>
+            )}
           </CardContent>
         </Card>
 
