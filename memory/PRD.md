@@ -64,6 +64,7 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 ## Bug Fixes (Sep 4, 2026)
 - [x] **Unlimited backup/export** - `/api/export/patients` and `/api/export/visits` no longer cap results (removed skip/limit; `to_list(length=None)`). Backup is now limited only by storage.
 - [x] **Birthdate picker fix** - Replaced flaky native `type="date"` (reverted to current date on mobile) with `BirthdatePicker` (shadcn Calendar + Month/Year dropdowns, 1900–today). Used in NewPatientPage and PatientProfilePage edit mode.
+- [x] **Age auto-fill** - BirthdatePicker shows the computed age ("Age: N years old") live the moment a birthdate is picked (both new-patient and edit screens).
 
 ## Self-Service 7-Day Trial - Implemented (Sep 1, 2026)
 - [x] **Instant Trial Gate** - Fresh/new device sees a Trial Sign-up screen (Full Name, Email, Password) instead of a hard activation block. Signing up starts a fully functional 7-day trial.

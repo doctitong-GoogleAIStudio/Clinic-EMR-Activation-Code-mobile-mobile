@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid, differenceInYears } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -13,6 +13,7 @@ const BirthdatePicker = ({ value, onChange, testId = 'birthdate-picker' }) => {
 
   const selected = value && isValid(parseISO(value)) ? parseISO(value) : undefined;
   const currentYear = new Date().getFullYear();
+  const age = selected ? differenceInYears(new Date(), selected) : null;
 
   const handleSelect = (date) => {
     if (date) {
@@ -51,6 +52,11 @@ const BirthdatePicker = ({ value, onChange, testId = 'birthdate-picker' }) => {
           initialFocus
         />
       </PopoverContent>
+      {age !== null && age >= 0 && (
+        <p className="mt-1.5 text-sm text-slate-500" data-testid={`${testId}-age`}>
+          Age: <span className="font-medium text-slate-700">{age}</span> {age === 1 ? 'year' : 'years'} old
+        </p>
+      )}
     </Popover>
   );
 };
