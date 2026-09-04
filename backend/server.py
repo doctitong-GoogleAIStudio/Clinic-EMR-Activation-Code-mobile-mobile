@@ -1748,26 +1748,22 @@ async def get_audit_logs(
 # ============== EXPORT ROUTES ==============
 @api_router.get("/export/patients")
 async def export_patients(
-    limit: int = Query(default=1000, le=5000),
-    skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: only export own patients
+    # Data isolation: only export own patients. No cap — full backup limited only by storage.
     query = {"owner_id": current_user["id"]}
     total_count = await db.patients.count_documents(query)
-    patients = await db.patients.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-    return {"data": patients, "count": len(patients), "total": total_count, "skip": skip, "limit": limit}
+    patients = await db.patients.find(query, {"_id": 0}).sort("created_at", -1).to_list(length=None)
+    return {"data": patients, "count": len(patients), "total": total_count}
 
 @api_router.get("/export/visits")
 async def export_visits(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
-    limit: int = Query(default=1000, le=5000),
-    skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    # Data isolation: only export visits for own patients
-    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(1000)
+    # Data isolation: only export visits for own patients. No cap — full backup.
+    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(length=None)
     patient_map = {p["id"]: p for p in owned_patients}
     owned_patient_ids = [p["id"] for p in owned_patients]
     
@@ -1781,7 +1777,7 @@ async def export_visits(
             query["created_at"] = {"$lte": date_to}
     
     total_count = await db.visits.count_documents(query)
-    visits = await db.visits.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    visits = await db.visits.find(query, {"_id": 0}).sort("created_at", -1).to_list(length=None)
     
     # Enrich visits with patient info for easier re-import
     enriched_visits = []
@@ -1791,7 +1787,7 @@ async def export_visits(
         visit["patient_name"] = patient.get("full_name", "")
         enriched_visits.append(visit)
     
-    return {"data": enriched_visits, "count": len(enriched_visits), "total": total_count, "skip": skip, "limit": limit}
+    return {"data": enriched_visits, "count": len(enriched_visits), "total": total_count}
 
 # ============== IMPORT DATA ==============
 class ImportResult(BaseModel):

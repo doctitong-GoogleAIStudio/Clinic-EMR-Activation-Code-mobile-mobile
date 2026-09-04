@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, Save, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/utils';
+import BirthdatePicker from '../components/BirthdatePicker';
 
 const NewPatientPage = () => {
   const navigate = useNavigate();
@@ -88,13 +89,10 @@ const NewPatientPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="birthdate">Birthdate *</Label>
-                <Input
-                  id="birthdate"
-                  type="date"
+                <BirthdatePicker
                   value={formData.birthdate}
-                  onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-                  required
-                  data-testid="patient-birthdate-input"
+                  onChange={(v) => setFormData({ ...formData, birthdate: v })}
+                  testId="patient-birthdate"
                 />
               </div>
               <div className="space-y-2">

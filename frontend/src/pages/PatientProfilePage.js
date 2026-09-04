@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { getErrorMessage } from '../lib/utils';
+import BirthdatePicker from '../components/BirthdatePicker';
 
 const PatientProfilePage = () => {
   const { patientId } = useParams();
@@ -656,7 +657,11 @@ const PatientProfilePage = () => {
                 <div className="space-y-2">
                   <Label className="text-slate-500">Birthdate</Label>
                   {editing ? (
-                    <Input type="date" value={editData.birthdate} onChange={(e) => setEditData({ ...editData, birthdate: e.target.value })} />
+                    <BirthdatePicker
+                      value={editData.birthdate}
+                      onChange={(v) => setEditData({ ...editData, birthdate: v })}
+                      testId="edit-patient-birthdate"
+                    />
                   ) : (
                     <p className="font-medium text-slate-900">{patient.birthdate && format(parseISO(patient.birthdate), 'MMMM d, yyyy')}</p>
                   )}

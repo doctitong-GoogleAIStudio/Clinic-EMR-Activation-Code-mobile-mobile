@@ -1,3 +1,4 @@
+/* global clients */
 const CACHE_NAME = 'clinic-emr-v1';
 const STATIC_ASSETS = [
   '/',
