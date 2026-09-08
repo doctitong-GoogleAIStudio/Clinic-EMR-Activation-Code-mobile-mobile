@@ -1,0 +1,25 @@
+{
+  "summary": "Verified fix for '>1000 patients cannot save SOAP' bug. Created regression test that seeds 1000 filler patients + 1 TARGET patient (1001st) directly in MongoDB for a fresh doctor, creates a visit with SOAP for the target, then confirms retrieval via GET /api/visits?patient_id, GET /api/visits/{id}, PUT /api/visits/{id}. Also verified related endpoints (attachments, prescriptions, certificates, lab-requests) return the target patient's records, plus cross-owner isolation. All 12 tests PASSED in ~4s.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_soap_1000_patient_cap.py",
+    "/app/test_reports/pytest/soap_1000_cap.xml"
+  ],
+  "action_items": [
+    "Pre-existing /app/backend/tests/test_soap_persistence_and_cache.py fails collection because it does not load /app/frontend/.env for REACT_APP_BACKEND_URL. Not in scope of this fix but easy improvement: add load_dotenv() calls at top of that file (as done in the new test)."
+  ],
+  "critical_code_review_comments": [
+    "Fix is correct: `.to_list(length=None)` used consistently in get_visits (l.808), get_attachments (l.1042), get_prescriptions (l.1193), get_certificates (l.1258), get_lab_requests (l.1323), and license-stats (l.2513).",
+    "Other still-capped enumerations found (not in scope of this bug but worth flagging): server.py:1874 `.to_list(10000)`, :2017/:2032/:2078 `.to_list(100000)` for patient owner enumeration in other code paths. If a doctor exceeds 10k patients these will silently truncate.",
+    "Consider adding an index on patients.owner_id to keep the unbounded find fast at scale."
+  ],
+  "updated_files": ["/app/backend/tests/test_soap_1000_patient_cap.py"],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "Dynamic doctors registered per run (RUN_TAG_a@example.com / RUN_TAG_b@example.com, password TestPass123!); users + all seeded data cleaned up in teardown.",
+  "seed_data_creation": "1000 filler patients + 1 TARGET patient (1001st) inserted directly via motor for doctor A; 1 patient for doctor B; all removed in module teardown by owner_id/created_by.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression test lives at /app/backend/tests/test_soap_1000_patient_cap.py and self-contains seed + teardown. Run with `pytest backend/tests/test_soap_1000_patient_cap.py -v`. It requires both /app/backend/.env and /app/frontend/.env to be loadable.",
+  "rca of the issue": "get_visits and 4 sibling list endpoints enumerated the doctor's owned patients with `.to_list(1000)`; for any patient beyond position 1000 the id was missing from the ownership `$in` list, so their visits/prescriptions/etc. were filtered out and the API returned an empty list. UI interpreted the empty response as 'notes not saved'. Fix removed the cap via `.to_list(length=None)`. Reproduction: seed >1000 patients for a doctor (target inserted last), POST /api/visits with SOAP for the target, GET /api/visits?patient_id=target — before fix returned [], after fix returns the visit with SOAP intact. Mitigation confirmed by the passing regression test."
+}

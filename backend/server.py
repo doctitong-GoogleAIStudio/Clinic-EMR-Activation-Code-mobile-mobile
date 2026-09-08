@@ -805,7 +805,7 @@ async def get_visits(
     if current_user["role"] == "receptionist":
         raise HTTPException(status_code=403, detail="Receptionists cannot access visit records")
     # Data isolation: only get visits for patients owned by current user
-    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+    owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(length=None)
     owned_patient_ids = [p["id"] for p in owned_patients]
     
     query = {"patient_id": {"$in": owned_patient_ids}}
@@ -1039,7 +1039,7 @@ async def get_attachments(
     
     # If no patient_id specified, scope to accessible patients
     if not patient_id:
-        owned_patients = await db.patients.find({"owner_id": owner_id}, {"id": 1}).to_list(1000)
+        owned_patients = await db.patients.find({"owner_id": owner_id}, {"id": 1}).to_list(length=None)
         owned_patient_ids = [p["id"] for p in owned_patients]
         query["patient_id"] = {"$in": owned_patient_ids}
     
@@ -1190,7 +1190,7 @@ async def get_prescriptions(
     
     # If no patient_id specified, only return prescriptions for owned patients
     if not patient_id:
-        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(length=None)
         owned_patient_ids = [p["id"] for p in owned_patients]
         query["patient_id"] = {"$in": owned_patient_ids}
     
@@ -1255,7 +1255,7 @@ async def get_certificates(
     
     # If no patient_id specified, only return certificates for owned patients
     if not patient_id:
-        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(length=None)
         owned_patient_ids = [p["id"] for p in owned_patients]
         query["patient_id"] = {"$in": owned_patient_ids}
     
@@ -1320,7 +1320,7 @@ async def get_lab_requests(
     
     # If no patient_id specified, only return requests for owned patients
     if not patient_id:
-        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(1000)
+        owned_patients = await db.patients.find({"owner_id": current_user["id"]}, {"id": 1}).to_list(length=None)
         owned_patient_ids = [p["id"] for p in owned_patients]
         query["patient_id"] = {"$in": owned_patient_ids}
     
@@ -1871,7 +1871,7 @@ async def import_visits(
     result = {"success": 0, "failed": 0, "errors": [], "imported_ids": [], "warnings": []}
     
     # Get all patient IDs owned by this user for matching
-    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(10000)
+    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1, "patient_id": 1, "full_name": 1}).to_list(length=None)
     patient_id_map = {p["patient_id"]: p for p in owned_patients}
     patient_internal_id_map = {p["id"]: p for p in owned_patients}
     # Also map by full_name for flexible matching (strip whitespace, lowercase)
@@ -2014,7 +2014,7 @@ async def restore_backup(
     if request.restore_type in ["patients", "both"] and request.patients:
         if request.mode == "replace":
             # Delete all existing patients and their related data
-            owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1}).to_list(100000)
+            owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1}).to_list(length=None)
             owned_ids = [p["id"] for p in owned_patients]
             del_patients = await db.patients.delete_many({"owner_id": user_id})
             result["patients_deleted"] = del_patients.deleted_count
@@ -2029,7 +2029,7 @@ async def restore_backup(
         # Build existing name set for merge dedup
         existing_names = set()
         if request.mode == "merge":
-            existing = await db.patients.find({"owner_id": user_id}, {"_id": 0, "full_name": 1, "birthdate": 1}).to_list(100000)
+            existing = await db.patients.find({"owner_id": user_id}, {"_id": 0, "full_name": 1, "birthdate": 1}).to_list(length=None)
             existing_names = {(p["full_name"].strip().lower(), p.get("birthdate", "")) for p in existing}
 
         for i, p in enumerate(request.patients):
@@ -2075,7 +2075,7 @@ async def restore_backup(
     # --- RESTORE VISITS ---
     if request.restore_type in ["visits", "both"] and request.visits:
         # Build patient lookup map from current DB state
-        owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1, "patient_id": 1, "full_name": 1}).to_list(100000)
+        owned_patients = await db.patients.find({"owner_id": user_id}, {"_id": 0, "id": 1, "patient_id": 1, "full_name": 1}).to_list(length=None)
         name_map = {p["full_name"].strip().lower(): p for p in owned_patients}
         pid_map = {p["patient_id"]: p for p in owned_patients}
         id_map = {p["id"]: p for p in owned_patients}
@@ -2510,7 +2510,7 @@ async def get_dashboard_stats(
     done_count = await db.appointments.count_documents({"date": today, "status": "done", "owner_id": user_id})
     
     # This week's visits - only for owned patients
-    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1}).to_list(1000)
+    owned_patients = await db.patients.find({"owner_id": user_id}, {"id": 1}).to_list(length=None)
     owned_patient_ids = [p["id"] for p in owned_patients]
     week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
     week_visits = await db.visits.count_documents({
