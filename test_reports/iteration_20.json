@@ -1,0 +1,24 @@
+{
+  "summary": "Verified SOAP persistence bug fix and no-store cache headers. Backend: 3/3 pytest tests pass (root /api and GET /api/visits/{id} both return 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0'; POST->GET->PUT->GET lifecycle on /api/visits persists all four SOAP fields correctly). Frontend E2E via Playwright on the production preview URL: trial sign-up -> doctor signup -> create patient (Apr 15, 1985, Male) -> /visits/new?patient={id} filled all four SOAP fields -> Save Visit landed on /visits/{id} -> FULL PAGE RELOAD kept all S/O/A/P text visible -> Edit dialog updated Subjective+Assessment -> Save -> reload persisted the edits. Screenshot confirms visible SOAP sections after edit+reload. Cache-Control header on /api/visits/{id} confirmed via in-browser fetch: 'no-store, no-cache, must-revalidate'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_soap_persistence_and_cache.py",
+    "/app/test_reports/pytest/soap_cache.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "add_no_cache_headers middleware correctly targets only /api paths and sets Cache-Control/Pragma/Expires — good.",
+    "Service worker v3 (network-only navigations, old caches purged on activate) — implementation looks correct; not directly tested in this iteration but backend-side cache mitigation confirmed.",
+    "Edit SOAP dialog textareas (Subjective/Objective/Assessment/Plan) lack their own data-testid attributes — tests currently rely on placeholder text. Consider adding e.g. edit-soap-subjective-input etc. for more robust testing.",
+    "VisitDetailPage.js is ~1943 lines; consider splitting into subcomponents (SOAP display, edit dialog, uploads) per file-size guidelines (>700 lines)."
+  ],
+  "updated_files": ["/app/backend/tests/test_soap_persistence_and_cache.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "Fresh trial + doctor accounts generated per run (dynamic emails).",
+  "seed_data_creation": "1 TEST_ patient (Apr 15 1985, Male) + 1 visit with SOAP; 1 additional visit from backend pytest via unique doctor account.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "SOAP persistence bug is resolved. Both create path (NewVisitPage.js -> visitAPI.create) and edit path (VisitDetailPage.js openEditSoap -> visitAPI.update -> fetchData) persist across full reload. Backend /api middleware add_no_cache_headers (server.py ~line 3250) sets 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' on ALL /api responses (verified). Test file at /app/backend/tests/test_soap_persistence_and_cache.py.",
+  "rca of the issue": "User reported blank SOAP notes on refresh only in Chrome. Root cause hypothesis was PWA service worker serving stale HTML/JS + browser caching GET responses. Backend was persisting correctly all along. Fix: (a) HTTP middleware sets no-store on /api responses, preventing browsers/proxies from serving stale visit data; (b) service-worker.js v3 uses network-only for navigations and app code, and purges old caches on activate. Verified: reload after create and after edit both display the saved SOAP text correctly."
+}

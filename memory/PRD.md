@@ -66,6 +66,9 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - [x] **Birthdate picker fix** - Replaced flaky native `type="date"` (reverted to current date on mobile) with `BirthdatePicker` (shadcn Calendar + Month/Year dropdowns, 1900–today). Used in NewPatientPage and PatientProfilePage edit mode.
 - [x] **Age auto-fill** - BirthdatePicker shows the computed age ("Age: N years old") live the moment a birthdate is picked (both new-patient and edit screens).
 
+## Bug Fixes (Sep 8, 2026)
+- [x] **SOAP notes disappearing after refresh** - Root cause: PWA/browser serving stale cached app + API responses. Fix: (a) backend HTTP middleware sets `Cache-Control: no-store` on all `/api` responses so browsers/proxies never serve stale visit/SOAP data; (b) `service-worker.js` rewritten (cache `clinic-emr-v3`, network-only for navigations/app code, purges all old caches on activate) so users never get stuck on an old build. Backend was persisting SOAP correctly all along. Verified via testing agent (create + edit both persist across full reload).
+
 ## Self-Service 7-Day Trial - Implemented (Sep 1, 2026)
 - [x] **Instant Trial Gate** - Fresh/new device sees a Trial Sign-up screen (Full Name, Email, Password) instead of a hard activation block. Signing up starts a fully functional 7-day trial.
 - [x] **Device-Bound (one trial per device)** - Backend `POST /api/license/start-trial` enforces one trial per device fingerprint; expired/used-trial devices get HTTP 403 and must enter an activation code.

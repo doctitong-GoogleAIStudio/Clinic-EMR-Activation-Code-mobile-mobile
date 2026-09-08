@@ -1555,6 +1555,7 @@ const VisitDetailPage = () => {
                       onChange={(e) => setSoapEditData({ ...soapEditData, soap_subjective: e.target.value })}
                       placeholder="Chief complaint, HPI, ROS..."
                       rows={3}
+                      data-testid="edit-soap-subjective-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1567,6 +1568,7 @@ const VisitDetailPage = () => {
                       onChange={(e) => setSoapEditData({ ...soapEditData, soap_objective: e.target.value })}
                       placeholder="Physical examination findings..."
                       rows={3}
+                      data-testid="edit-soap-objective-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1579,6 +1581,7 @@ const VisitDetailPage = () => {
                       onChange={(e) => setSoapEditData({ ...soapEditData, soap_assessment: e.target.value })}
                       placeholder="Diagnosis / Differential diagnoses..."
                       rows={3}
+                      data-testid="edit-soap-assessment-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1591,6 +1594,7 @@ const VisitDetailPage = () => {
                       onChange={(e) => setSoapEditData({ ...soapEditData, soap_plan: e.target.value })}
                       placeholder="Treatment plan, medications, follow-up..."
                       rows={3}
+                      data-testid="edit-soap-plan-input"
                     />
                   </div>
                   <div className="space-y-2">
