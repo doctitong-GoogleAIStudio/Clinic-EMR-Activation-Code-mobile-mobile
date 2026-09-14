@@ -40,6 +40,8 @@ const PatientProfilePage = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [allergiesText, setAllergiesText] = useState('');
+  const [chronicText, setChronicText] = useState('');
   const [editData, setEditData] = useState({});
   const [showUpload, setShowUpload] = useState(false);
   const [uploadData, setUploadData] = useState({ tag: 'other', notes: '' });
@@ -128,7 +130,11 @@ const PatientProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      const response = await patientAPI.update(patientId, editData);
+      const response = await patientAPI.update(patientId, {
+        ...editData,
+        allergies: allergiesText.split(',').map(s => s.trim()).filter(Boolean),
+        chronic_conditions: chronicText.split(',').map(s => s.trim()).filter(Boolean),
+      });
       setPatient(response.data);
       setEditing(false);
       toast.success('Patient updated');
@@ -627,7 +633,12 @@ const PatientProfilePage = () => {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading">Patient Information</CardTitle>
               {!editing ? (
-                <Button variant="outline" onClick={() => setEditing(true)} data-testid="edit-patient-btn">
+                <Button variant="outline" onClick={() => {
+                  setEditData(patient);
+                  setAllergiesText((patient.allergies || []).join(', '));
+                  setChronicText((patient.chronic_conditions || []).join(', '));
+                  setEditing(true);
+                }} data-testid="edit-patient-btn">
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
                 </Button>
@@ -752,9 +763,10 @@ const PatientProfilePage = () => {
                     <Label className="text-slate-500">Allergies</Label>
                     {editing ? (
                       <Textarea 
-                        value={editData.allergies?.join(', ') || ''} 
-                        onChange={(e) => setEditData({ ...editData, allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        value={allergiesText} 
+                        onChange={(e) => setAllergiesText(e.target.value)}
                         placeholder="Separate with commas"
+                        data-testid="edit-patient-allergies-input"
                       />
                     ) : (
                       <div className="flex flex-wrap gap-1">
@@ -768,9 +780,10 @@ const PatientProfilePage = () => {
                     <Label className="text-slate-500">Chronic Conditions</Label>
                     {editing ? (
                       <Textarea 
-                        value={editData.chronic_conditions?.join(', ') || ''} 
-                        onChange={(e) => setEditData({ ...editData, chronic_conditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        value={chronicText} 
+                        onChange={(e) => setChronicText(e.target.value)}
                         placeholder="Separate with commas"
+                        data-testid="edit-patient-chronic-input"
                       />
                     ) : (
                       <div className="flex flex-wrap gap-1">

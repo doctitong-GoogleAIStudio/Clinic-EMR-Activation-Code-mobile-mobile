@@ -24,8 +24,8 @@ const NewPatientPage = () => {
     email: '',
     emergency_contact_name: '',
     emergency_contact_phone: '',
-    allergies: [],
-    chronic_conditions: []
+    allergies: '',
+    chronic_conditions: ''
   });
 
   const handleSubmit = async (e) => {
@@ -41,6 +41,8 @@ const NewPatientPage = () => {
         mobile: formData.mobile?.trim() || null,
         emergency_contact_name: formData.emergency_contact_name?.trim() || null,
         emergency_contact_phone: formData.emergency_contact_phone?.trim() || null,
+        allergies: formData.allergies.split(',').map(s => s.trim()).filter(Boolean),
+        chronic_conditions: formData.chronic_conditions.split(',').map(s => s.trim()).filter(Boolean),
       };
       const response = await patientAPI.create(cleanData);
       toast.success(`Patient ${response.data.full_name} registered successfully`);
@@ -182,11 +184,8 @@ const NewPatientPage = () => {
                   <Label htmlFor="allergies">Allergies</Label>
                   <Textarea
                     id="allergies"
-                    value={formData.allergies.join(', ')}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                    })}
+                    value={formData.allergies}
+                    onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
                     placeholder="Penicillin, Aspirin (separate with commas)"
                     rows={2}
                     data-testid="patient-allergies-input"
@@ -196,11 +195,8 @@ const NewPatientPage = () => {
                   <Label htmlFor="chronic">Chronic Conditions</Label>
                   <Textarea
                     id="chronic"
-                    value={formData.chronic_conditions.join(', ')}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      chronic_conditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                    })}
+                    value={formData.chronic_conditions}
+                    onChange={(e) => setFormData({ ...formData, chronic_conditions: e.target.value })}
                     placeholder="Hypertension, Diabetes (separate with commas)"
                     rows={2}
                     data-testid="patient-chronic-input"
