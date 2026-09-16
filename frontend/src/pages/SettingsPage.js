@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logo from '../assets/logo.png';
 import { useAuth } from '../context/AuthContext';
 import { settingsAPI, userAPI, auditAPI, exportAPI, authAPI, importAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
@@ -1438,9 +1439,7 @@ const SettingsPage = () => {
         <TabsContent value="about">
           <Card className="bg-white border-slate-100 shadow-sm">
             <CardHeader className="text-center pb-2">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#0F766E] to-[#115E59] flex items-center justify-center shadow-lg mb-4">
-                <Stethoscope className="w-10 h-10 text-white" />
-              </div>
+              <img src={logo} alt="Clinic EMR" className="w-20 h-20 mx-auto rounded-2xl shadow-lg mb-4" />
               <CardTitle className="font-heading text-2xl">Private Clinic EMR</CardTitle>
               <CardDescription className="text-base">Electronic Medical Records System</CardDescription>
             </CardHeader>
@@ -1461,7 +1460,7 @@ const SettingsPage = () => {
                     </div>
                     <div className="text-left">
                       <p className="font-heading font-bold text-lg text-slate-900">aivicventures</p>
-                      <p className="text-sm text-slate-500">Physician & Developer</p>
+                      <p className="text-sm text-slate-500">Developer</p>
                     </div>
                   </div>
                 </div>
@@ -1601,14 +1600,6 @@ const SettingsPage = () => {
                       <p className="text-sm font-medium text-slate-900">Upload SOAP Notes with OCR</p>
                       <p className="text-xs text-slate-600">Upload scanned/handwritten SOAP notes and extract text using AI vision. Auto-populates SOAP fields. Files carry over to Visit Details</p>
                       <p className="text-xs text-slate-400 mt-1">Mar 1, 2026</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
-                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500"></div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">PWA Support</p>
-                      <p className="text-xs text-slate-600">Install app on mobile/desktop, offline caching, app-like experience</p>
-                      <p className="text-xs text-slate-400 mt-1">Feb 27, 2026</p>
                     </div>
                   </div>
                   <div className="flex gap-3 p-3 rounded-lg bg-slate-50">

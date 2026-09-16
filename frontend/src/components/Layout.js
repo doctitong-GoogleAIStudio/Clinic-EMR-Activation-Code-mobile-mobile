@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import logo from '../assets/logo.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { settingsAPI } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { 
   LayoutDashboard, Users, Calendar, Settings, LogOut, 
-  Menu, X, Stethoscope, ChevronRight
+  Menu, X, ChevronRight
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -44,9 +45,7 @@ const Layout = ({ children }) => {
             <Menu className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#0F766E] flex items-center justify-center">
-              <Stethoscope className="w-4 h-4 text-white" />
-            </div>
+            <img src={logo} alt="Clinic EMR" className="w-8 h-8 rounded-lg" />
             <span className="font-heading font-bold text-slate-900">EMR</span>
           </div>
         </div>
@@ -73,9 +72,7 @@ const Layout = ({ children }) => {
         <div className="p-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#0F766E] flex items-center justify-center shadow-md">
-                <Stethoscope className="w-5 h-5 text-white" />
-              </div>
+              <img src={logo} alt="Clinic EMR" className="w-10 h-10 rounded-xl shadow-md" />
               <div>
                 <h1 className="font-heading font-bold text-slate-900">{clinicName}</h1>
                 <p className="text-xs text-slate-500">Private Practice</p>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logo from '../assets/logo.png';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../lib/api';
@@ -6,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Stethoscope, UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/utils';
 
@@ -80,9 +81,7 @@ const SignUpPage = () => {
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center space-y-2 pb-4">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-[#0F766E] flex items-center justify-center shadow-lg">
-                <Stethoscope className="w-6 h-6 text-white" />
-              </div>
+              <img src={logo} alt="Clinic EMR" className="w-12 h-12 rounded-xl shadow-lg" />
             </div>
             <CardTitle className="text-2xl font-heading font-bold text-slate-900">Create Account</CardTitle>
             <CardDescription className="font-body text-slate-500">
