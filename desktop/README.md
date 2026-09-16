@@ -1,4 +1,4 @@
-# Clinic EMR – Windows desktop app (Electron)
+# Clinic EMR – desktop app (Electron)
 
 Wraps the React production build in Electron and packages it as an NSIS
 installer for Windows 10/11 (x64). Like the Android app, the UI is bundled
@@ -37,3 +37,16 @@ needed; Desktop + Start Menu shortcuts).
   deep links work, allows the microphone (dictation), opens external links in
   the default browser, and always shows a Save dialog for exports/backups.
   `window.print()` works natively (prescriptions/forms).
+
+## macOS and Linux installers
+
+`.dmg` (macOS) and `.AppImage` / `.deb` (Linux) cannot be built on Windows
+(DMG needs Apple's `hdiutil`, deb needs `fpm`, AppImage needs symlink rights).
+They are built by the GitHub Actions workflow `.github/workflows/desktop-installers.yml`,
+which runs on every push touching `desktop/` or `frontend/`, or on demand from
+the repo's **Actions → Desktop installers → Run workflow** (where the backend
+URL can be overridden). Download the installers from the run's *Artifacts*.
+
+The macOS app is unsigned/not notarized: on first launch right-click the app →
+**Open** (or `xattr -d com.apple.quarantine "/Applications/Clinic EMR.app"`).
+Notarizing needs an Apple Developer account.

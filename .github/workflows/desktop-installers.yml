@@ -1,0 +1,77 @@
+# Builds the Clinic EMR desktop installers for macOS, Linux and Windows.
+#
+# Runs automatically when desktop/ or frontend/ changes on the branches below,
+# or start it by hand from the Actions tab ("Run workflow"), optionally with a
+# different backend URL. Installers are attached to the run as artifacts.
+name: Desktop installers
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: Backend URL baked into the app
+        default: https://voicedoc-system.preview.emergentagent.com
+        required: true
+  push:
+    branches: [main, remove-activation]
+    paths:
+      - desktop/**
+      - frontend/**
+      - .github/workflows/desktop-installers.yml
+
+env:
+  BACKEND_URL: ${{ github.event.inputs.backend_url || 'https://voicedoc-system.preview.emergentagent.com' }}
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (dmg, x64 + Apple Silicon)
+            os: macos-latest
+            script: dist:mac
+          - name: Linux (AppImage + deb)
+            os: ubuntu-latest
+            script: dist:linux
+          - name: Windows (exe)
+            os: windows-latest
+            script: dist
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build web app
+        working-directory: frontend
+        env:
+          REACT_APP_BACKEND_URL: ${{ env.BACKEND_URL }}
+          GENERATE_SOURCEMAP: "false"
+          CI: "false"   # keep ESLint warnings from failing the CRA build
+        run: |
+          npm install --legacy-peer-deps --no-audit --no-fund
+          npm run build
+
+      - name: Package desktop app
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"   # unsigned builds (no Apple / Windows certificate)
+        run: |
+          npm ci --no-audit --no-fund
+          npm run ${{ matrix.script }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Clinic-EMR-${{ runner.os }}
+          if-no-files-found: error
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+            desktop/dist/*.AppImage
+            desktop/dist/*.deb
+            desktop/dist/*.exe

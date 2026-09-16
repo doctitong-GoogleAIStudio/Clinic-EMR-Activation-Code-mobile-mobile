@@ -2,14 +2,16 @@
   "name": "clinic-emr-desktop",
   "productName": "Clinic EMR",
   "version": "1.0.1",
-  "description": "Private Clinic EMR – Electronic Medical Records for private clinics",
+  "description": "Private Clinic EMR \u2013 Electronic Medical Records for private clinics",
   "author": "aivicventures",
   "private": true,
   "main": "main.js",
   "scripts": {
     "prepare-app": "node scripts/prepare-app.js",
     "start": "npm run prepare-app && electron .",
-    "dist": "npm run prepare-app && electron-builder --win --x64"
+    "dist": "npm run prepare-app && electron-builder --win --x64",
+    "dist:linux": "npm run prepare-app && electron-builder --linux --x64",
+    "dist:mac": "npm run prepare-app && electron-builder --mac"
   },
   "devDependencies": {
     "electron": "^31.7.7",
@@ -18,7 +20,7 @@
   "build": {
     "appId": "com.ddhapps.clinicemr",
     "productName": "Clinic EMR",
-    "copyright": "Copyright © 2026 aivicventures",
+    "copyright": "Copyright \u00a9 2026 aivicventures",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -29,7 +31,14 @@
       "package.json"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.ico",
       "artifactName": "Clinic EMR Setup ${version}.${ext}"
     },
@@ -43,6 +52,77 @@
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
       "uninstallDisplayName": "Clinic EMR"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "maintainer": "aivicventures",
+      "synopsis": "Electronic Medical Records for private clinics",
+      "artifactName": "Clinic EMR-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ]
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.medical",
+      "artifactName": "Clinic EMR-${version}-${arch}.${ext}",
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 190
+        },
+        {
+          "x": 410,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     }
-  }
+  },
+  "homepage": "https://github.com/doctitong-GoogleAIStudio/Clinic-EMR-Activation-Code-mobile-mobile"
 }
