@@ -1,0 +1,48 @@
+{
+  "name": "clinic-emr-desktop",
+  "productName": "Clinic EMR",
+  "version": "1.0.1",
+  "description": "Private Clinic EMR – Electronic Medical Records for private clinics",
+  "author": "aivicventures",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "prepare-app": "node scripts/prepare-app.js",
+    "start": "npm run prepare-app && electron .",
+    "dist": "npm run prepare-app && electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.ddhapps.clinicemr",
+    "productName": "Clinic EMR",
+    "copyright": "Copyright © 2026 aivicventures",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "app/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico",
+      "artifactName": "Clinic EMR Setup ${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Clinic EMR",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "uninstallDisplayName": "Clinic EMR"
+    }
+  }
+}

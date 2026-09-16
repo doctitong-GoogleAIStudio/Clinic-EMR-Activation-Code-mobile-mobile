@@ -14,9 +14,10 @@ root.render(
   </React.StrictMode>,
 );
 
-// Register service worker for PWA functionality (not inside the Android app,
-// where the bundled assets are already local)
-if (!isNative) serviceWorkerRegistration.register({
+// Register service worker for PWA functionality (not inside the Android or
+// Windows desktop app, where the bundled assets are already local)
+const isDesktop = /Electron/i.test(navigator.userAgent);
+if (!isNative && !isDesktop) serviceWorkerRegistration.register({
   onUpdate: (registration) => {
     // New version available - could show a toast notification here
     console.log('New version available! Refresh to update.');
