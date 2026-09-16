@@ -14,7 +14,6 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - **Backend**: FastAPI, Pydantic, Motor (async MongoDB), JWT auth
 - **Database**: MongoDB
 - **AI**: Emergent LLM Key (GPT-5.2 via emergentintegrations)
-- **Security**: Ed25519 digital signatures, AES-256-GCM encryption, HMAC-SHA256, Web Crypto API
 
 ## Core Features - Implemented
 - [x] Login & public Sign Up (Doctor, Admin only - Receptionist removed from public signup)
@@ -46,21 +45,6 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - [x] **Change Password** - With strength meter and rate limiting
 - [x] **User Guide** - Step-by-step guides for Doctors and Receptionists
 
-## Licensing System - Implemented (Aug 1, 2026)
-- [x] **Device Fingerprinting** - Generates unique DDH-XXXX-XXXX-XXXX-XXXX Device IDs from browser/hardware characteristics (OS, GPU, screen, timezone, language, WebGL, canvas, random seed)
-- [x] **Activation Gate** - Blocks all app access (including login) until device is activated
-- [x] **Online Activation** - Short activation codes (DDH-XXXX-XXXX-XXXX-XXXX format) verified against server
-- [x] **Offline Activation** - Base64-encoded signed license keys for offline verification
-- [x] **Ed25519 Digital Signatures** - License payloads signed with Ed25519 private key, verifiable with public key
-- [x] **AES-256-GCM Encrypted Storage** - License data stored encrypted in localStorage, key derived from device fingerprint + activation code via PBKDF2
-- [x] **Device Binding Protection** - Copying license data to another device fails (different fingerprint = wrong decryption key)
-- [x] **License Types**: Lifetime, 1-Year, Trial (configurable days + patient limit), Hospital
-- [x] **Grace Period** - 7-day grace period after license expiry with warning banner, then full lockout
-- [x] **Super Admin Portal** - Separate auth, dashboard with stats, license table, search, CRUD operations
-- [x] **License Operations**: Generate, Activate, Revoke, Reactivate, Transfer (to new device), Extend, Delete
-- [x] **Audit Trail** - Full audit log of all license operations with timestamps
-- [x] **Online Revocation Check** - App silently checks server for revocation on startup when internet is available
-
 ## Bug Fixes (Sep 4, 2026)
 - [x] **Unlimited backup/export** - `/api/export/patients` and `/api/export/visits` no longer cap results (removed skip/limit; `to_list(length=None)`). Backup is now limited only by storage.
 - [x] **Birthdate picker fix** - Replaced flaky native `type="date"` (reverted to current date on mobile) with `BirthdatePicker` (shadcn Calendar + Month/Year dropdowns, 1900–today). Used in NewPatientPage and PatientProfilePage edit mode.
@@ -71,13 +55,8 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - [x] **>1000 patients could not save/see SOAP** - Root cause: `get_visits` and sibling per-patient list endpoints (attachments, prescriptions, certificates, lab-requests, license-stats) enumerated the doctor's owned patients with a hard `.to_list(1000)` cap. For any patient beyond the first 1000, their id was excluded from the ownership `$in` filter, so their visits/records returned empty — SOAP looked unsaved. Fix: all owned-patient enumerations now use `.to_list(length=None)` (no cap; limited only by storage). Also removed 10k/100k caps in backup/restore/import paths. Verified via testing agent (12/12) by seeding 1001 patients and confirming the 1001st patient's SOAP persists and lists correctly. Indexes on `patients.owner_id` and `visits.patient_id` already exist for scale.
 - [x] **SOAP notes disappearing after refresh** - Root cause: PWA/browser serving stale cached app + API responses. Fix: (a) backend HTTP middleware sets `Cache-Control: no-store` on all `/api` responses; (b) `service-worker.js` rewritten (cache `clinic-emr-v3`, network-only for navigations/app code, purges all old caches on activate).
 
-## Self-Service 7-Day Trial - Implemented (Sep 1, 2026)
-- [x] **Instant Trial Gate** - Fresh/new device sees a Trial Sign-up screen (Full Name, Email, Password) instead of a hard activation block. Signing up starts a fully functional 7-day trial.
-- [x] **Device-Bound (one trial per device)** - Backend `POST /api/license/start-trial` enforces one trial per device fingerprint; expired/used-trial devices get HTTP 403 and must enter an activation code.
-- [x] **Live Countdown** - Top banner (all pages) + Dashboard card show remaining time to minute/second granularity. "Activate Now" available anytime -> `/activate` route.
-- [x] **Trial is separate from EMR login** - After the trial unlocks the app, the user still logs in / signs up for an EMR doctor account.
-- [x] **Send Device ID** - mailto button on Trial + Activation pages, prefilled to docvincent2022@yahoo.com and including the customer's registered email.
-- [x] **After 7 days** - Device locks and shows the Activation screen requiring an activation code (trialEligible=false path in `UnactivatedGate`).
+## Licensing / Trial Removed (Sep 16, 2026)
+- Device activation gate, self-service 7-day trial, activation codes, grace period and the super-admin license portal were all removed. The app opens straight to the EMR login/signup; access is controlled only by EMR user accounts.
 
 ## Object Storage Migration - Implemented (Sep 1, 2026)
 - [x] **Attachments moved to Emergent Object Storage** (was pod-local disk, which broke on deployed/production). Upload -> `storage_put`, download/OCR -> `storage_get`. DB stores `storage_path` object key. Legacy `stored_filename`/`file_data` still read as fallback.
@@ -94,8 +73,6 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - **ai_drafts**: `{id, patient_id, owner_id, clinical_notes, ai_result, red_flags, created_by_name, created_at}`
 - **dictation_sessions**: `{id, patient_id, visit_id, provider_id, ...dictation data...}`
 - **dictation_audit_logs**: `{id, dictation_session_id, action_type, action_by, ...}`
-- **licenses**: `{id, device_id, activation_code, app_name, customer_name, customer_email, license_type, status, expires_at, trial_patient_limit, signature, signed_payload, notes, activated_at, created_at, updated_at}`
-- **license_audit_logs**: `{id, license_id, device_id, action, details, performed_by, timestamp}`
 
 ## Key API Endpoints
 - `POST /api/auth/register` | `POST /api/auth/login` | `GET /api/auth/me`
@@ -109,25 +86,6 @@ Build a fast, simple, and profitable **Private Clinic EMR** web application with
 - `POST /api/ai/ocr` | `POST /api/ai/assist` | `GET/POST/DELETE /api/ai/drafts`
 - `POST /api/dictation/transcribe` | `POST /api/dictation/structure`
 - `POST /api/restore` | `GET /api/export/patients` | `GET /api/export/visits`
-- **License System:**
-  - `POST /api/license/start-trial` - Self-service 7-day trial (device-bound)
-  - `POST /api/license/check` - Check if a stored device license is still valid on server
-  - `POST /api/license/activate` - Online device activation
-  - `POST /api/license/activate-offline` - Offline device activation
-  - `POST /api/license/verify` - Verify existing license
-  - `GET /api/license/public-key` - Ed25519 public key for offline verification
-  - `POST /api/license/admin/login` - Super admin authentication
-  - `GET /api/license/admin/stats` - License statistics
-  - `GET /api/license/admin/licenses` - List all licenses
-  - `GET /api/license/admin/licenses/{id}` - Get single license
-  - `POST /api/license/admin/generate` - Generate new license + activation code
-  - `PUT /api/license/admin/revoke/{id}` - Revoke a license
-  - `PUT /api/license/admin/reactivate/{id}` - Reactivate a revoked license
-  - `PUT /api/license/admin/extend/{id}` - Extend license expiry
-  - `PUT /api/license/admin/transfer/{id}` - Transfer to new device
-  - `DELETE /api/license/admin/licenses/{id}` - Delete license
-  - `GET /api/license/admin/audit` - View audit logs
-
 ## Credentials
 - EMR Admin: doctitong@yahoo.com / admin123
 - Super Admin (Licensing): superadmin@ddhapps.com / DDH_SuperAdmin_2026!
