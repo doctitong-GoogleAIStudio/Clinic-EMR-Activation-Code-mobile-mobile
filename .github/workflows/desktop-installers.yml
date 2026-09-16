@@ -33,9 +33,10 @@ jobs:
           - name: macOS (dmg, x64 + Apple Silicon)
             os: macos-latest
             script: dist:mac
-          - name: Linux (AppImage + deb)
-            os: ubuntu-latest
-            script: dist:linux
+          # Linux is on hold — re-enable when needed:
+          # - name: Linux (AppImage + deb)
+          #   os: ubuntu-latest
+          #   script: dist:linux
           - name: Windows (exe)
             os: windows-latest
             script: dist
