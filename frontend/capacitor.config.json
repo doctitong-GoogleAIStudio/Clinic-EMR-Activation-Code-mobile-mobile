@@ -8,5 +8,9 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#ffffff"
   }
 }
