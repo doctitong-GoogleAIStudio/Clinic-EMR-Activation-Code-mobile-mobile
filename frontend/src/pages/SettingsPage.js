@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Settings, Building, Users, FileText, Shield, Save, 
   Plus, Download, Clock, User, Edit, Info, Stethoscope, Heart, Code, UserPlus,
-  Sparkles, Microscope, Calendar, Upload, Smartphone, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2, Mic, RotateCcw, ShieldCheck
+  Sparkles, Microscope, Calendar, Upload, Brain, ScanText, FolderOpen, GitCompare, Printer, Trash2, Key, Eye, EyeOff, Lock, BookOpen, FileUp, AlertCircle, CheckCircle2, Mic, RotateCcw, ShieldCheck
 } from 'lucide-react';
 import UserGuidePage from './UserGuidePage';
 import PrescriptionPrintSettings from '../components/PrescriptionPrintSettings';
@@ -1443,7 +1443,6 @@ const SettingsPage = () => {
               </div>
               <CardTitle className="font-heading text-2xl">Private Clinic EMR</CardTitle>
               <CardDescription className="text-base">Electronic Medical Records System</CardDescription>
-              <Badge className="mt-2 bg-[#0F766E]/10 text-[#0F766E] hover:bg-[#0F766E]/20">PWA Enabled</Badge>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center py-4">
@@ -1461,7 +1460,7 @@ const SettingsPage = () => {
                       <User className="w-6 h-6 text-[#0F766E]" />
                     </div>
                     <div className="text-left">
-                      <p className="font-heading font-bold text-lg text-slate-900">Vicente C. Cavalida, Jr. MD</p>
+                      <p className="font-heading font-bold text-lg text-slate-900">aivicventures</p>
                       <p className="text-sm text-slate-500">Physician & Developer</p>
                     </div>
                   </div>
@@ -1526,11 +1525,6 @@ const SettingsPage = () => {
                     <Sparkles className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
                     <p className="font-medium text-sm text-slate-900">AI Assist</p>
                     <p className="text-xs text-slate-500">Smart suggestions</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-50 text-center">
-                    <Smartphone className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
-                    <p className="font-medium text-sm text-slate-900">PWA</p>
-                    <p className="text-xs text-slate-500">Install on device</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 text-center">
                     <Download className="w-5 h-5 text-[#0F766E] mx-auto mb-1" />
@@ -1678,7 +1672,7 @@ const SettingsPage = () => {
 
               <div className="text-center pt-4 border-t">
                 <p className="text-xs text-slate-400">
-                  Version 2.0.0 • Built with React & FastAPI
+                  Version 1.0.1 • Built with React & FastAPI
                 </p>
                 <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
                   Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> for healthcare professionals
