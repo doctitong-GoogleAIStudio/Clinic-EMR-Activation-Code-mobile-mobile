@@ -604,7 +604,15 @@ const PrintPreviewDialog = ({
         </div>
         <script>
           window.onload = function() {
-            setTimeout(function() { window.print(); }, 100);
+            setTimeout(function() {
+              // Inside the Android app the WebView cannot print; hand the
+              // document to the native print bridge instead.
+              if (window.parent && window.parent.__nativePrint) {
+                window.parent.__nativePrint('<!DOCTYPE html>' + document.documentElement.outerHTML);
+              } else {
+                window.print();
+              }
+            }, 100);
             window.onafterprint = function() { window.close(); };
           };
         </script>

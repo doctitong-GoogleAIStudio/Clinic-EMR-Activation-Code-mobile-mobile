@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Clinic EMR</string>
+    <string name="title_activity_main">Clinic EMR</string>
+    <string name="package_name">com.ddhapps.clinicemr</string>
+    <string name="custom_url_scheme">com.ddhapps.clinicemr</string>
+</resources>

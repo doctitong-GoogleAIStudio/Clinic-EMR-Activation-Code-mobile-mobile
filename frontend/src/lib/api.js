@@ -1,10 +1,14 @@
 import axios from 'axios';
 
-// Always use current window origin for API calls - works on any deployed domain
-// This ensures the frontend always calls the same domain it's served from
-const API = typeof window !== 'undefined' 
-  ? `${window.location.origin}/api`
-  : '/api';
+// Default to the current window origin for API calls - works on any deployed domain.
+// REACT_APP_BACKEND_URL overrides it for builds that are not served from the
+// backend's domain (e.g. the Capacitor Android app, which loads from https://localhost).
+const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
+const API = BACKEND_URL
+  ? `${BACKEND_URL}/api`
+  : typeof window !== 'undefined'
+    ? `${window.location.origin}/api`
+    : '/api';
 
 // Auth APIs
 export const authAPI = {

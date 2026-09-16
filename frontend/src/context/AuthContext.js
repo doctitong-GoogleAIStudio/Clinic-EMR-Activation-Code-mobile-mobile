@@ -3,10 +3,14 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-// Use current window origin for API calls - works on any deployed domain
-const API = typeof window !== 'undefined' 
-  ? `${window.location.origin}/api`
-  : '/api';
+// Use current window origin for API calls - works on any deployed domain.
+// REACT_APP_BACKEND_URL overrides it (see lib/api.js).
+const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
+const API = BACKEND_URL
+  ? `${BACKEND_URL}/api`
+  : typeof window !== 'undefined'
+    ? `${window.location.origin}/api`
+    : '/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
