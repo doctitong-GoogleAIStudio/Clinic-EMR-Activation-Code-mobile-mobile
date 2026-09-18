@@ -10,12 +10,12 @@ on:
     inputs:
       backend_url:
         description: Backend URL baked into the app
-        default: https://voicedoc-system.preview.emergentagent.com
+        default: https://emr-licensing-gate.emergent.host
         required: true
   # Automatic runs disabled (macOS runner minutes are billed 10x); use "Run workflow".
 
 env:
-  BACKEND_URL: ${{ github.event.inputs.backend_url || 'https://voicedoc-system.preview.emergentagent.com' }}
+  BACKEND_URL: ${{ github.event.inputs.backend_url || 'https://emr-licensing-gate.emergent.host' }}
 
 jobs:
   build:

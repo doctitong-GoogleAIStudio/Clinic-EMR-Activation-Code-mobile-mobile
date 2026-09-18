@@ -1663,7 +1663,7 @@ const SettingsPage = () => {
 
               <div className="text-center pt-4 border-t">
                 <p className="text-xs text-slate-400">
-                  Version 1.0.1 • Built with React & FastAPI
+                  Version 1.0.2 • Built with React & FastAPI
                 </p>
                 <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
                   Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> for healthcare professionals

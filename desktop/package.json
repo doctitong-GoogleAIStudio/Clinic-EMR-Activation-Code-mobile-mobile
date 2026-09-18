@@ -1,7 +1,7 @@
 {
   "name": "clinic-emr-desktop",
   "productName": "Clinic EMR",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Private Clinic EMR \u2013 Electronic Medical Records for private clinics",
   "author": "aivicventures",
   "private": true,

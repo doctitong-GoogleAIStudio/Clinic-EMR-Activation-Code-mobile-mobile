@@ -65,7 +65,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "build:android": "cross-env REACT_APP_BACKEND_URL=https://voicedoc-system.preview.emergentagent.com GENERATE_SOURCEMAP=false craco build && cap sync android",
+    "build:android": "cross-env REACT_APP_BACKEND_URL=https://emr-licensing-gate.emergent.host GENERATE_SOURCEMAP=false craco build && cap sync android",
     "test": "craco test"
   },
   "browserslist": {

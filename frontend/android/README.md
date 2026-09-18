@@ -3,6 +3,7 @@
 The Android app is the React frontend bundled into a WebView via Capacitor 6.
 It talks to the hosted backend; the URL is baked in at build time through
 `REACT_APP_BACKEND_URL` (see `build:android` in `../package.json`).
+Production backend: https://emr-licensing-gate.emergent.host
 
 ## Build
 

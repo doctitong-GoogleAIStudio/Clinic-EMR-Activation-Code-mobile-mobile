@@ -18,7 +18,7 @@ on:
     inputs:
       backend_url:
         description: Backend URL baked into the app
-        default: https://voicedoc-system.preview.emergentagent.com
+        default: https://emr-licensing-gate.emergent.host
         required: true
   push:
     branches: [main, remove-activation]
@@ -27,8 +27,8 @@ on:
       - .github/workflows/ios-ipa.yml
 
 env:
-  BACKEND_URL: ${{ github.event.inputs.backend_url || 'https://voicedoc-system.preview.emergentagent.com' }}
-  APP_VERSION: 1.0.1
+  BACKEND_URL: ${{ github.event.inputs.backend_url || 'https://emr-licensing-gate.emergent.host' }}
+  APP_VERSION: 1.0.2
 
 jobs:
   ipa:
